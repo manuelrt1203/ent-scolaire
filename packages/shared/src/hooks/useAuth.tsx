@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session } from "@supabase/supabase-js";
 import type { EntSupabaseClient } from "../supabase/createClient";
 import { getProfile, signIn as apiSignIn, signOut as apiSignOut, type Profile } from "../api/auth";
@@ -18,30 +18,49 @@ export function AuthProvider({ client, children }: { client: EntSupabaseClient; 
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Évite les appels concurrents à getProfile (deux événements auth successifs
+  // — ex. SIGNED_IN puis TOKEN_REFRESHED — ne doivent pas déclencher deux
+  // requêtes en vol pour le même utilisateur en même temps).
+  const loadedProfileUserId = useRef<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
 
-    async function loadInitialSession() {
-      const {
-        data: { session: current },
-      } = await client.auth.getSession();
-      if (!mounted) return;
-      setSession(current);
-      if (current) {
-        const p = await getProfile(client);
+    async function loadProfileIfNeeded(userId: string) {
+      if (loadedProfileUserId.current === userId) return;
+      loadedProfileUserId.current = userId;
+      try {
+        const p = await getProfile(client, userId);
         if (mounted) setProfile(p);
+      } catch (err) {
+        console.error("[auth] Échec du chargement du profil :", err);
+        loadedProfileUserId.current = null;
+        if (mounted) setProfile(null);
       }
-      if (mounted) setLoading(false);
+    }
+
+    async function loadInitialSession() {
+      try {
+        const {
+          data: { session: current },
+        } = await client.auth.getSession();
+        if (!mounted) return;
+        setSession(current);
+        if (current) await loadProfileIfNeeded(current.user.id);
+      } catch (err) {
+        console.error("[auth] Échec du chargement de la session/profil :", err);
+      } finally {
+        if (mounted) setLoading(false);
+      }
     }
     loadInitialSession();
 
     const { data: subscription } = client.auth.onAuthStateChange(async (_event, newSession) => {
       setSession(newSession);
       if (newSession) {
-        const p = await getProfile(client);
-        setProfile(p);
+        await loadProfileIfNeeded(newSession.user.id);
       } else {
+        loadedProfileUserId.current = null;
         setProfile(null);
       }
     });

@@ -8,9 +8,9 @@
   "scripts": {
     "desktop": "npm run dev --workspace=apps/desktop",
     "types:generate": "echo 'Types générés via Supabase MCP dans packages/shared/src/types/database.types.ts'",
-    "test:workflow": "node scripts/test-workflow.mjs"
+    "test:workflow": "node --require ./scripts/ws-polyfill.cjs scripts/test-workflow.mjs"
   },
-  "overrides": {
-    "@supabase/supabase-js": "2.45.4"
+  "devDependencies": {
+    "ws": "^8.18.0"
   }
 }

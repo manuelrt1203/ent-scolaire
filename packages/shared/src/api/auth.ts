@@ -14,13 +14,8 @@ export async function signOut(client: EntSupabaseClient) {
   if (error) throw error;
 }
 
-export async function getProfile(client: EntSupabaseClient): Promise<Profile | null> {
-  const {
-    data: { user },
-  } = await client.auth.getUser();
-  if (!user) return null;
-
-  const { data, error } = await client.from("profiles").select("*").eq("id", user.id).single();
+export async function getProfile(client: EntSupabaseClient, userId: string): Promise<Profile | null> {
+  const { data, error } = await client.from("profiles").select("*").eq("id", userId).single();
   if (error) throw error;
   return data;
 }

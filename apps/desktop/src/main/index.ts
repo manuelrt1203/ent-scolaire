@@ -6,7 +6,7 @@ function createWindow() {
     width: 1280,
     height: 800,
     webPreferences: {
-      preload: path.join(__dirname, "../preload/index.js"),
+      preload: path.join(__dirname, "../preload/index.mjs"),
       contextIsolation: true,
       nodeIntegration: false,
     },
@@ -14,6 +14,7 @@ function createWindow() {
 
   if (process.env.ELECTRON_RENDERER_URL) {
     win.loadURL(process.env.ELECTRON_RENDERER_URL);
+    win.webContents.openDevTools();
   } else {
     win.loadFile(path.join(__dirname, "../renderer/index.html"));
   }
