@@ -1,0 +1,753 @@
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
+
+export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "14.5"
+  }
+  public: {
+    Tables: {
+      affectations: {
+        Row: {
+          id: string
+          matiere_classe_id: string
+          professeur_id: string
+        }
+        Insert: {
+          id?: string
+          matiere_classe_id: string
+          professeur_id: string
+        }
+        Update: {
+          id?: string
+          matiere_classe_id?: string
+          professeur_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affectations_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "matiere_classe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affectations_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "v_bulletin"
+            referencedColumns: ["matiere_classe_id"]
+          },
+          {
+            foreignKeyName: "affectations_professeur_id_fkey"
+            columns: ["professeur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      annees_scolaires: {
+        Row: {
+          date_debut: string
+          date_fin: string
+          est_active: boolean
+          etablissement_id: string
+          id: string
+          libelle: string
+        }
+        Insert: {
+          date_debut: string
+          date_fin: string
+          est_active?: boolean
+          etablissement_id: string
+          id?: string
+          libelle: string
+        }
+        Update: {
+          date_debut?: string
+          date_fin?: string
+          est_active?: boolean
+          etablissement_id?: string
+          id?: string
+          libelle?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "annees_scolaires_etablissement_id_fkey"
+            columns: ["etablissement_id"]
+            isOneToOne: false
+            referencedRelation: "etablissements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      classes: {
+        Row: {
+          annee_scolaire_id: string
+          etablissement_id: string
+          id: string
+          niveau: string | null
+          nom: string
+        }
+        Insert: {
+          annee_scolaire_id: string
+          etablissement_id: string
+          id?: string
+          niveau?: string | null
+          nom: string
+        }
+        Update: {
+          annee_scolaire_id?: string
+          etablissement_id?: string
+          id?: string
+          niveau?: string | null
+          nom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "classes_annee_scolaire_id_fkey"
+            columns: ["annee_scolaire_id"]
+            isOneToOne: false
+            referencedRelation: "annees_scolaires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "classes_etablissement_id_fkey"
+            columns: ["etablissement_id"]
+            isOneToOne: false
+            referencedRelation: "etablissements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      etablissements: {
+        Row: {
+          adresse: string | null
+          created_at: string
+          id: string
+          nom: string
+        }
+        Insert: {
+          adresse?: string | null
+          created_at?: string
+          id?: string
+          nom: string
+        }
+        Update: {
+          adresse?: string | null
+          created_at?: string
+          id?: string
+          nom?: string
+        }
+        Relationships: []
+      }
+      historique_releves: {
+        Row: {
+          ancien_statut: Database["public"]["Enums"]["statut_note"] | null
+          commentaire: string | null
+          created_at: string
+          id: string
+          nouveau_statut: Database["public"]["Enums"]["statut_note"]
+          par: string | null
+          releve_id: string
+        }
+        Insert: {
+          ancien_statut?: Database["public"]["Enums"]["statut_note"] | null
+          commentaire?: string | null
+          created_at?: string
+          id?: string
+          nouveau_statut: Database["public"]["Enums"]["statut_note"]
+          par?: string | null
+          releve_id: string
+        }
+        Update: {
+          ancien_statut?: Database["public"]["Enums"]["statut_note"] | null
+          commentaire?: string | null
+          created_at?: string
+          id?: string
+          nouveau_statut?: Database["public"]["Enums"]["statut_note"]
+          par?: string | null
+          releve_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historique_releves_par_fkey"
+            columns: ["par"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "historique_releves_releve_id_fkey"
+            columns: ["releve_id"]
+            isOneToOne: false
+            referencedRelation: "releves_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inscriptions: {
+        Row: {
+          annee_scolaire_id: string
+          classe_id: string
+          date_inscription: string
+          eleve_id: string
+          id: string
+        }
+        Insert: {
+          annee_scolaire_id: string
+          classe_id: string
+          date_inscription?: string
+          eleve_id: string
+          id?: string
+        }
+        Update: {
+          annee_scolaire_id?: string
+          classe_id?: string
+          date_inscription?: string
+          eleve_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inscriptions_annee_scolaire_id_fkey"
+            columns: ["annee_scolaire_id"]
+            isOneToOne: false
+            referencedRelation: "annees_scolaires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_classe_id_fkey"
+            columns: ["classe_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "inscriptions_eleve_id_fkey"
+            columns: ["eleve_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      liens_parents_eleves: {
+        Row: {
+          eleve_id: string
+          id: string
+          parent_id: string
+        }
+        Insert: {
+          eleve_id: string
+          id?: string
+          parent_id: string
+        }
+        Update: {
+          eleve_id?: string
+          id?: string
+          parent_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "liens_parents_eleves_eleve_id_fkey"
+            columns: ["eleve_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "liens_parents_eleves_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matiere_classe: {
+        Row: {
+          annee_scolaire_id: string
+          classe_id: string
+          coefficient: number
+          id: string
+          matiere_id: string
+        }
+        Insert: {
+          annee_scolaire_id: string
+          classe_id: string
+          coefficient?: number
+          id?: string
+          matiere_id: string
+        }
+        Update: {
+          annee_scolaire_id?: string
+          classe_id?: string
+          coefficient?: number
+          id?: string
+          matiere_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matiere_classe_annee_scolaire_id_fkey"
+            columns: ["annee_scolaire_id"]
+            isOneToOne: false
+            referencedRelation: "annees_scolaires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matiere_classe_classe_id_fkey"
+            columns: ["classe_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "matiere_classe_matiere_id_fkey"
+            columns: ["matiere_id"]
+            isOneToOne: false
+            referencedRelation: "matieres"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      matieres: {
+        Row: {
+          code: string | null
+          etablissement_id: string
+          id: string
+          nom: string
+        }
+        Insert: {
+          code?: string | null
+          etablissement_id: string
+          id?: string
+          nom: string
+        }
+        Update: {
+          code?: string | null
+          etablissement_id?: string
+          id?: string
+          nom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "matieres_etablissement_id_fkey"
+            columns: ["etablissement_id"]
+            isOneToOne: false
+            referencedRelation: "etablissements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          coefficient_note: number
+          commentaire: string | null
+          created_at: string
+          eleve_id: string
+          id: string
+          libelle: string | null
+          releve_id: string
+          updated_at: string
+          valeur: number | null
+        }
+        Insert: {
+          coefficient_note?: number
+          commentaire?: string | null
+          created_at?: string
+          eleve_id: string
+          id?: string
+          libelle?: string | null
+          releve_id: string
+          updated_at?: string
+          valeur?: number | null
+        }
+        Update: {
+          coefficient_note?: number
+          commentaire?: string | null
+          created_at?: string
+          eleve_id?: string
+          id?: string
+          libelle?: string | null
+          releve_id?: string
+          updated_at?: string
+          valeur?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_eleve_id_fkey"
+            columns: ["eleve_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_releve_id_fkey"
+            columns: ["releve_id"]
+            isOneToOne: false
+            referencedRelation: "releves_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periodes: {
+        Row: {
+          annee_scolaire_id: string
+          date_debut: string
+          date_fin: string
+          id: string
+          nom: string
+          ordre: number
+        }
+        Insert: {
+          annee_scolaire_id: string
+          date_debut: string
+          date_fin: string
+          id?: string
+          nom: string
+          ordre: number
+        }
+        Update: {
+          annee_scolaire_id?: string
+          date_debut?: string
+          date_fin?: string
+          id?: string
+          nom?: string
+          ordre?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodes_annee_scolaire_id_fkey"
+            columns: ["annee_scolaire_id"]
+            isOneToOne: false
+            referencedRelation: "annees_scolaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          actif: boolean
+          created_at: string
+          email: string
+          etablissement_id: string
+          id: string
+          nom: string
+          prenom: string
+          role: Database["public"]["Enums"]["role_utilisateur"]
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          email: string
+          etablissement_id: string
+          id: string
+          nom: string
+          prenom: string
+          role: Database["public"]["Enums"]["role_utilisateur"]
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          email?: string
+          etablissement_id?: string
+          id?: string
+          nom?: string
+          prenom?: string
+          role?: Database["public"]["Enums"]["role_utilisateur"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_etablissement_id_fkey"
+            columns: ["etablissement_id"]
+            isOneToOne: false
+            referencedRelation: "etablissements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      releves_notes: {
+        Row: {
+          commentaire_direction: string | null
+          created_at: string
+          id: string
+          matiere_classe_id: string
+          periode_id: string
+          professeur_id: string | null
+          publie_le: string | null
+          soumis_le: string | null
+          statut: Database["public"]["Enums"]["statut_note"]
+          updated_at: string
+          valide_le: string | null
+          valide_par: string | null
+        }
+        Insert: {
+          commentaire_direction?: string | null
+          created_at?: string
+          id?: string
+          matiere_classe_id: string
+          periode_id: string
+          professeur_id?: string | null
+          publie_le?: string | null
+          soumis_le?: string | null
+          statut?: Database["public"]["Enums"]["statut_note"]
+          updated_at?: string
+          valide_le?: string | null
+          valide_par?: string | null
+        }
+        Update: {
+          commentaire_direction?: string | null
+          created_at?: string
+          id?: string
+          matiere_classe_id?: string
+          periode_id?: string
+          professeur_id?: string | null
+          publie_le?: string | null
+          soumis_le?: string | null
+          statut?: Database["public"]["Enums"]["statut_note"]
+          updated_at?: string
+          valide_le?: string | null
+          valide_par?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "releves_notes_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "matiere_classe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "releves_notes_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "v_bulletin"
+            referencedColumns: ["matiere_classe_id"]
+          },
+          {
+            foreignKeyName: "releves_notes_periode_id_fkey"
+            columns: ["periode_id"]
+            isOneToOne: false
+            referencedRelation: "periodes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "releves_notes_professeur_id_fkey"
+            columns: ["professeur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "releves_notes_valide_par_fkey"
+            columns: ["valide_par"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Views: {
+      v_bulletin: {
+        Row: {
+          coefficient: number | null
+          eleve_id: string | null
+          matiere: string | null
+          matiere_classe_id: string | null
+          moyenne: number | null
+          periode_id: string | null
+          publie_le: string | null
+          statut: Database["public"]["Enums"]["statut_note"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_eleve_id_fkey"
+            columns: ["eleve_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "releves_notes_periode_id_fkey"
+            columns: ["periode_id"]
+            isOneToOne: false
+            referencedRelation: "periodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+    }
+    Functions: {
+      calculer_moyenne_generale: {
+        Args: { p_eleve_id: string; p_periode_id: string }
+        Returns: number
+      }
+      calculer_moyenne_matiere: {
+        Args: {
+          p_eleve_id: string
+          p_matiere_classe_id: string
+          p_periode_id: string
+        }
+        Returns: number
+      }
+      current_etablissement_id: { Args: never; Returns: string }
+      current_profile_role: {
+        Args: never
+        Returns: Database["public"]["Enums"]["role_utilisateur"]
+      }
+      publier_releve: { Args: { p_releve_id: string }; Returns: undefined }
+      rejeter_releve: {
+        Args: { p_commentaire: string; p_releve_id: string }
+        Returns: undefined
+      }
+      soumettre_releve: { Args: { p_releve_id: string }; Returns: undefined }
+      valider_releve: {
+        Args: { p_commentaire?: string; p_releve_id: string }
+        Returns: undefined
+      }
+    }
+    Enums: {
+      role_utilisateur: "direction" | "professeur" | "eleve" | "parent"
+      statut_note: "brouillon" | "soumise" | "validee" | "publiee"
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
+}
+
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+
+export type Tables<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+      Row: infer R
+    }
+    ? R
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R
+      }
+      ? R
+      : never
+    : never
+
+export type TablesInsert<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Insert: infer I
+    }
+    ? I
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Insert: infer I
+      }
+      ? I
+      : never
+    : never
+
+export type TablesUpdate<
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
+    | { schema: keyof DatabaseWithoutInternals },
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    : never = never,
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+      Update: infer U
+    }
+    ? U
+    : never
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+        Update: infer U
+      }
+      ? U
+      : never
+    : never
+
+export type Enums<
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
+    | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    : never = never,
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+    : never
+
+export type CompositeTypes<
+  PublicCompositeTypeNameOrOptions extends
+    | keyof DefaultSchema["CompositeTypes"]
+    | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals
+  }
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    : never = never,
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+    : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      role_utilisateur: ["direction", "professeur", "eleve", "parent"],
+      statut_note: ["brouillon", "soumise", "validee", "publiee"],
+    },
+  },
+} as const

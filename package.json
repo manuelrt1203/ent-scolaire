@@ -1,0 +1,16 @@
+{
+  "name": "ent-scolaire",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "desktop": "npm run dev --workspace=apps/desktop",
+    "types:generate": "echo 'Types générés via Supabase MCP dans packages/shared/src/types/database.types.ts'",
+    "test:workflow": "node scripts/test-workflow.mjs"
+  },
+  "overrides": {
+    "@supabase/supabase-js": "2.45.4"
+  }
+}
