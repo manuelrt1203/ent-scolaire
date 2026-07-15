@@ -3,31 +3,34 @@
 Logiciel de gestion scolaire reliant direction, professeurs, élèves et parents
 autour du cycle de vie des notes : saisie par le professeur → soumission →
 validation/correction par la direction → calcul de la moyenne → publication
-aux élèves et parents.
-
-La messagerie interne (v2) est hors périmètre de cette première version.
+aux élèves et parents. Inclut aussi une messagerie interne type webmail,
+ouverte entre tous les rôles.
 
 ## Architecture
 
 - **Backend** : Supabase (Postgres + Auth + Row Level Security). Projet
   `ent-scolaire`, région `eu-west-1`.
 - **`packages/shared`** : client Supabase, types générés, fonctions API,
-  hooks `@tanstack/react-query` — partagés entre les futurs clients desktop
-  et mobile.
+  hooks `@tanstack/react-query` — partagés entre les clients desktop et
+  mobile (aucune logique métier dupliquée entre les deux).
 - **`apps/desktop`** : application Electron (React + Tailwind v4) pour la
   direction et les professeurs.
+- **`apps/mobile`** : application Expo/React Native (expo-router +
+  NativeWind) pour les élèves et parents — consultation des notes et
+  messagerie.
 - **`supabase/`** : migrations SQL (schéma, RLS, fonctions RPC du cycle de
-  vie des notes, moyennes), edge function `admin-create-user`.
+  vie des notes, moyennes, messagerie), edge function `admin-create-user`.
 
 ## Démarrage
 
 ```bash
 npm install
-npm run desktop   # lance l'app Electron en dev
+npm run desktop        # lance l'app Electron en dev (direction/professeur)
+cd apps/mobile && npx expo start   # lance l'app mobile en dev (élève/parent), scanner le QR code avec Expo Go
 ```
 
-Les variables d'environnement Supabase sont dans `apps/desktop/.env`
-(voir `.env.example` à la racine pour les valeurs).
+Les variables d'environnement Supabase sont dans `apps/desktop/.env` et
+`apps/mobile/.env` (voir `.env.example` à la racine pour les valeurs).
 
 ## Comptes de test (mot de passe : `Test1234!`)
 
@@ -60,9 +63,9 @@ les notes d'un autre enfant, etc.).
 - [x] M2 — Écrans admin direction (classes, matières, affectations, comptes)
 - [x] M3 — Saisie et soumission des notes (professeur)
 - [x] M4 — Validation, moyenne, publication (direction)
-- [ ] M5 — Application mobile (Expo) : consultation élève/parent
+- [x] Messagerie interne (desktop + mobile), ouverte entre tous les rôles
+- [x] M5 — Application mobile (Expo) : consultation élève/parent + messagerie
 - [ ] M6 — Packaging (electron-builder, EAS)
-- [ ] v2 — Messagerie interne
 
 ## Notes de sécurité
 
