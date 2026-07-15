@@ -7,7 +7,9 @@
     "start": "expo start",
     "web": "expo start --web",
     "android": "expo start --android",
-    "ios": "expo start --ios"
+    "ios": "expo start --ios",
+    "build:preview": "eas build --profile preview --platform android",
+    "build:production": "eas build --profile production --platform android"
   },
   "dependencies": {
     "@ent/shared": "*",
@@ -32,6 +34,7 @@
     "@babel/core": "^7.25.0",
     "@types/react": "~19.1.10",
     "babel-preset-expo": "~54.0.0",
+    "eas-cli": "^15.0.0",
     "tailwindcss": "^3.4.0",
     "typescript": "^5.6.0"
   }
