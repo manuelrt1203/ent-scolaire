@@ -16,17 +16,17 @@ export function UtilisateursScreen() {
   const [prenom, setPrenom] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("professeur");
-  const [lastLink, setLastLink] = useState<string | null>(null);
+  const [lastCreated, setLastCreated] = useState<{ prenom: string; nom: string; email: string } | null>(null);
 
   const usersQuery = useQuery({ queryKey: ["utilisateurs"], queryFn: () => getUtilisateurs(client) });
 
   const createMutation = useMutation({
     mutationFn: () => inviteUser(client, { email, role, nom, prenom }),
-    onSuccess: (data: any) => {
+    onSuccess: () => {
+      setLastCreated({ prenom, nom, email });
       setNom("");
       setPrenom("");
       setEmail("");
-      setLastLink(data?.setPasswordLink ?? null);
       queryClient.invalidateQueries({ queryKey: ["utilisateurs"] });
     },
   });
@@ -69,9 +69,10 @@ export function UtilisateursScreen() {
       {createMutation.isError && (
         <p className="mb-4 text-sm text-red-600">{(createMutation.error as Error).message}</p>
       )}
-      {lastLink && (
-        <p className="mb-4 break-all rounded-md bg-amber-50 p-3 text-xs text-amber-800">
-          Compte créé. Lien de définition du mot de passe à transmettre : {lastLink}
+      {lastCreated && (
+        <p className="mb-4 rounded-md bg-emerald-50 p-3 text-xs text-emerald-800">
+          Compte créé pour {lastCreated.prenom} {lastCreated.nom}. Cette personne peut l'activer elle-même via
+          « Première connexion » avec l'email {lastCreated.email} (un code lui sera envoyé par email).
         </p>
       )}
 

@@ -3,6 +3,7 @@ import { RequireRole } from "./components/RequireRole";
 import { RootRedirect } from "./components/RootRedirect";
 import { Layout } from "./components/Layout";
 import { LoginScreen } from "./screens/auth/LoginScreen";
+import { ActivationScreen } from "./screens/auth/ActivationScreen";
 import { DashboardScreen } from "./screens/direction/DashboardScreen";
 import { ClassesScreen } from "./screens/direction/ClassesScreen";
 import { MatieresScreen } from "./screens/direction/MatieresScreen";
@@ -38,6 +39,7 @@ export function App() {
     <HashRouter>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
+        <Route path="/activation" element={<ActivationScreen />} />
         <Route path="/" element={<RootRedirect />} />
 
         <Route

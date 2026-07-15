@@ -83,22 +83,11 @@ Deno.serve(async (req: Request) => {
     return new Response(JSON.stringify({ error: profileError.message }), { status: 400 });
   }
 
-  const { data: resetLink, error: linkError } = await adminClient.auth.admin.generateLink({
-    type: "recovery",
-    email,
+  // Pas de lien à transmettre : la personne active elle-même son compte via
+  // "Première connexion" (code à 6 chiffres envoyé par email, voir
+  // requestActivationCode/verifyActivationCode dans packages/shared).
+  return new Response(JSON.stringify({ userId: created.user.id }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
   });
-  if (linkError) {
-    return new Response(JSON.stringify({ error: linkError.message }), { status: 400 });
-  }
-
-  return new Response(
-    JSON.stringify({
-      userId: created.user.id,
-      // Lien à transmettre manuellement au nouvel utilisateur (pas d'envoi
-      // d'email automatique en v1 — la messagerie/notifications sont hors
-      // périmètre de cette version).
-      setPasswordLink: resetLink.properties.action_link,
-    }),
-    { status: 200, headers: { "Content-Type": "application/json" } },
-  );
 });

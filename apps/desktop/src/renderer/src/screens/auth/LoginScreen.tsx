@@ -56,6 +56,14 @@ export function LoginScreen() {
         >
           {loading ? "Connexion…" : "Se connecter"}
         </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/activation")}
+          className="mt-3 w-full text-center text-xs text-slate-500 hover:underline"
+        >
+          Première connexion ? Activer mon compte
+        </button>
       </form>
     </div>
   );
