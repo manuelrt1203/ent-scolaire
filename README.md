@@ -65,7 +65,35 @@ les notes d'un autre enfant, etc.).
 - [x] M4 — Validation, moyenne, publication (direction)
 - [x] Messagerie interne (desktop + mobile), ouverte entre tous les rôles
 - [x] M5 — Application mobile (Expo) : consultation élève/parent + messagerie
-- [ ] M6 — Packaging (electron-builder, EAS)
+- [x] M6 — Packaging desktop (electron-builder, Linux AppImage + .deb)
+- [ ] M6 — Packaging mobile (EAS Build) — config prête (`apps/mobile/eas.json`), premier build cloud à lancer manuellement (nécessite un compte Expo)
+
+## Packaging
+
+### Desktop (Linux)
+
+```bash
+cd apps/desktop
+npm run package   # produit release/ENT Scolaire-<version>-x86_64.AppImage et .deb
+```
+
+### Mobile (EAS Build)
+
+Nécessite un compte sur [expo.dev](https://expo.dev) (gratuit) :
+
+```bash
+cd apps/mobile
+npx eas login              # une fois, ouvre le navigateur pour se connecter
+npx eas init                # lie le projet à ton compte Expo (génère un projectId)
+npm run build:preview       # build Android APK de test (distribution interne)
+npm run build:production    # build Android App Bundle (production, Play Store)
+```
+
+Le build tourne sur les serveurs Expo (gratuit avec des limites mensuelles
+sur le plan gratuit) — pas besoin d'Android Studio en local. Un lien de
+téléchargement de l'APK est fourni à la fin, installable directement sur un
+téléphone Android. Un build iOS nécessite en plus un compte Apple
+Developer (payant, 99$/an).
 
 ## Notes de sécurité
 
