@@ -14,6 +14,7 @@ import {
   getRelevesForDirection,
   getBulletin,
   getMoyenneGenerale,
+  getNotesEleveMatiere,
   getPeriodes,
 } from "../api/notes";
 
@@ -127,5 +128,18 @@ export function useMoyenneGenerale(client: EntSupabaseClient, eleveId: string | 
     queryKey: ["moyenne-generale", eleveId, periodeId],
     queryFn: () => getMoyenneGenerale(client, eleveId as string, periodeId as string),
     enabled: Boolean(eleveId && periodeId),
+  });
+}
+
+export function useNotesEleveMatiere(
+  client: EntSupabaseClient,
+  eleveId: string | null,
+  matiereClasseId: string | null,
+  periodeId: string | null,
+) {
+  return useQuery({
+    queryKey: ["notes-eleve-matiere", eleveId, matiereClasseId, periodeId],
+    queryFn: () => getNotesEleveMatiere(client, eleveId as string, matiereClasseId as string, periodeId as string),
+    enabled: Boolean(eleveId && matiereClasseId && periodeId),
   });
 }

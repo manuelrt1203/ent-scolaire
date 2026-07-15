@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "ENT Scolaire",
+    "slug": "ent-scolaire-mobile",
+    "scheme": "entscolaire",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "plugins": ["expo-router"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "fr.entscolaire.mobile"
+    },
+    "android": {
+      "package": "fr.entscolaire.mobile"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}

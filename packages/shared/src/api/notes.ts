@@ -172,6 +172,25 @@ export async function getBulletin(client: EntSupabaseClient, eleveId: string, pe
   return data;
 }
 
+/** Détail des notes individuelles d'un élève pour une matière/période (RLS
+ * notes_select_eleve/parent : uniquement si le relevé est publié). Complète
+ * getBulletin/v_bulletin qui ne donne que la moyenne agrégée. */
+export async function getNotesEleveMatiere(
+  client: EntSupabaseClient,
+  eleveId: string,
+  matiereClasseId: string,
+  periodeId: string,
+) {
+  const { data, error } = await client
+    .from("notes")
+    .select("*, releves_notes!inner(matiere_classe_id, periode_id, statut)")
+    .eq("eleve_id", eleveId)
+    .eq("releves_notes.matiere_classe_id", matiereClasseId)
+    .eq("releves_notes.periode_id", periodeId);
+  if (error) throw error;
+  return data;
+}
+
 export async function getPeriodes(client: EntSupabaseClient) {
   const { data, error } = await client.from("periodes").select("*").order("ordre");
   if (error) throw error;

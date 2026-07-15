@@ -122,6 +122,21 @@ export async function getLiensParentsEleves(client: EntSupabaseClient) {
   return data;
 }
 
+/** Enfants du parent connecté (RLS liens_select : parent_id = auth.uid()). */
+export async function getMesEnfants(client: EntSupabaseClient) {
+  const {
+    data: { user },
+  } = await client.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await client
+    .from("liens_parents_eleves")
+    .select("eleve_id, eleve:eleve_id(id, nom, prenom)")
+    .eq("parent_id", user.id);
+  if (error) throw error;
+  return data;
+}
+
 export interface InviteUserInput {
   email: string;
   role: Role;
