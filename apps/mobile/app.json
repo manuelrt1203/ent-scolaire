@@ -8,7 +8,9 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "icon": "./assets/icon.png",
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -28,6 +30,13 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "3098407d-f05d-43bb-bcc5-a4449fd25410"
+      }
+    },
+    "owner": "manuel1203"
   }
 }

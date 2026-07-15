@@ -66,7 +66,7 @@ les notes d'un autre enfant, etc.).
 - [x] Messagerie interne (desktop + mobile), ouverte entre tous les rôles
 - [x] M5 — Application mobile (Expo) : consultation élève/parent + messagerie
 - [x] M6 — Packaging desktop (electron-builder, Linux AppImage + .deb)
-- [ ] M6 — Packaging mobile (EAS Build) — config prête (`apps/mobile/eas.json`), premier build cloud à lancer manuellement (nécessite un compte Expo)
+- [x] M6 — Packaging mobile (EAS Build, projet lié : `@manuel1203/ent-scolaire-mobile`)
 
 ## Packaging
 
