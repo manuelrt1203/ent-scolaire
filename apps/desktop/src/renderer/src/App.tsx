@@ -16,6 +16,10 @@ import { RelevesAValiderScreen } from "./screens/direction/RelevesAValiderScreen
 import { ReleveReviewScreen } from "./screens/direction/ReleveReviewScreen";
 import { MesClassesScreen } from "./screens/professeur/MesClassesScreen";
 import { SaisieNotesScreen } from "./screens/professeur/SaisieNotesScreen";
+import { InboxScreen } from "./screens/messagerie/InboxScreen";
+import { SentScreen } from "./screens/messagerie/SentScreen";
+import { ComposeScreen } from "./screens/messagerie/ComposeScreen";
+import { MessageDetailScreen } from "./screens/messagerie/MessageDetailScreen";
 
 const DIRECTION_NAV = [
   { to: "/direction", label: "Tableau de bord" },
@@ -27,12 +31,23 @@ const DIRECTION_NAV = [
   { to: "/direction/utilisateurs", label: "Utilisateurs" },
   { to: "/direction/liens", label: "Liens parents-élèves" },
   { to: "/direction/releves", label: "Relevés à examiner" },
+  { to: "/direction/messagerie", label: "Messagerie" },
 ];
 
 const PROFESSEUR_NAV = [
   { to: "/professeur", label: "Mes classes" },
   { to: "/professeur/saisie", label: "Saisie des notes" },
+  { to: "/professeur/messagerie", label: "Messagerie" },
 ];
+
+const messagerieRoutes = (
+  <>
+    <Route path="messagerie" element={<InboxScreen />} />
+    <Route path="messagerie/nouveau" element={<ComposeScreen />} />
+    <Route path="messagerie/envoyes" element={<SentScreen />} />
+    <Route path="messagerie/:id" element={<MessageDetailScreen />} />
+  </>
+);
 
 export function App() {
   return (
@@ -60,6 +75,7 @@ export function App() {
           <Route path="liens" element={<LiensParentsElevesScreen />} />
           <Route path="releves" element={<RelevesAValiderScreen />} />
           <Route path="releves/:id" element={<ReleveReviewScreen />} />
+          {messagerieRoutes}
         </Route>
 
         <Route
@@ -72,6 +88,7 @@ export function App() {
         >
           <Route index element={<MesClassesScreen />} />
           <Route path="saisie" element={<SaisieNotesScreen />} />
+          {messagerieRoutes}
         </Route>
       </Routes>
     </HashRouter>

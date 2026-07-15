@@ -5,5 +5,7 @@ export * from "./domain/moyenne";
 export * from "./api/auth";
 export * from "./api/structure";
 export * from "./api/notes";
+export * from "./api/messagerie";
 export * from "./hooks/useAuth";
 export * from "./hooks/useNotes";
+export * from "./hooks/useMessagerie";

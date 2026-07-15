@@ -348,6 +348,80 @@ export type Database = {
           },
         ]
       }
+      message_destinataires: {
+        Row: {
+          destinataire_id: string
+          id: string
+          lu: boolean
+          lu_le: string | null
+          message_id: string
+          supprime: boolean
+        }
+        Insert: {
+          destinataire_id: string
+          id?: string
+          lu?: boolean
+          lu_le?: string | null
+          message_id: string
+          supprime?: boolean
+        }
+        Update: {
+          destinataire_id?: string
+          id?: string
+          lu?: boolean
+          lu_le?: string | null
+          message_id?: string
+          supprime?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_destinataires_destinataire_id_fkey"
+            columns: ["destinataire_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "message_destinataires_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          corps: string
+          created_at: string
+          expediteur_id: string
+          id: string
+          sujet: string
+        }
+        Insert: {
+          corps: string
+          created_at?: string
+          expediteur_id: string
+          id?: string
+          sujet: string
+        }
+        Update: {
+          corps?: string
+          created_at?: string
+          expediteur_id?: string
+          id?: string
+          sujet?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_expediteur_id_fkey"
+            columns: ["expediteur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notes: {
         Row: {
           coefficient_note: number
@@ -600,16 +674,44 @@ export type Database = {
         }
         Returns: number
       }
+      classe_etablissement_id: {
+        Args: { p_classe_id: string }
+        Returns: string
+      }
       current_etablissement_id: { Args: never; Returns: string }
       current_profile_role: {
         Args: never
         Returns: Database["public"]["Enums"]["role_utilisateur"]
       }
+      eleve_a_acces_classe: { Args: { p_classe_id: string }; Returns: boolean }
+      eleve_a_note_sur_releve: {
+        Args: { p_releve_id: string }
+        Returns: boolean
+      }
+      envoyer_message: {
+        Args: { p_corps: string; p_destinataires: string[]; p_sujet: string }
+        Returns: string
+      }
+      est_destinataire_message: {
+        Args: { p_message_id: string }
+        Returns: boolean
+      }
+      parent_a_acces_classe: { Args: { p_classe_id: string }; Returns: boolean }
+      parent_a_enfant_note_sur_releve: {
+        Args: { p_releve_id: string }
+        Returns: boolean
+      }
+      professeur_a_acces_classe: {
+        Args: { p_classe_id: string }
+        Returns: boolean
+      }
+      profile_etablissement_id: { Args: { p_user_id: string }; Returns: string }
       publier_releve: { Args: { p_releve_id: string }; Returns: undefined }
       rejeter_releve: {
         Args: { p_commentaire: string; p_releve_id: string }
         Returns: undefined
       }
+      releve_est_publie: { Args: { p_releve_id: string }; Returns: boolean }
       soumettre_releve: { Args: { p_releve_id: string }; Returns: undefined }
       valider_releve: {
         Args: { p_commentaire?: string; p_releve_id: string }
