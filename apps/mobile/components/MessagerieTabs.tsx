@@ -4,7 +4,10 @@ import { useRouter, usePathname } from "expo-router";
 export function MessagerieTabs({ basePath }: { basePath: string }) {
   const router = useRouter();
   const pathname = usePathname();
-  const surEnvoyes = pathname === `${basePath}/envoyes`;
+  // usePathname() renvoie le chemin résolu SANS les segments de groupe de
+  // route (ex. "(eleve)"), donc comparer à `${basePath}/envoyes` (qui les
+  // inclut) ne matchait jamais — on compare juste la fin du chemin.
+  const surEnvoyes = pathname.endsWith("/envoyes");
 
   return (
     <View className="flex-row gap-6 border-b border-slate-200 bg-white px-4 pt-1">
