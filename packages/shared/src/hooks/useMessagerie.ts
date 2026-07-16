@@ -7,6 +7,7 @@ import {
   getMessageThread,
   marquerCommeLu,
   supprimerDeReception,
+  supprimerMessageEnvoye,
   getNombreNonLus,
 } from "../api/messagerie";
 
@@ -71,6 +72,16 @@ export function useSupprimerDeReception(client: EntSupabaseClient) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["messagerie", "inbox"] });
       queryClient.invalidateQueries({ queryKey: ["messagerie", "unread-count"] });
+    },
+  });
+}
+
+export function useSupprimerMessageEnvoye(client: EntSupabaseClient) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (messageId: string) => supprimerMessageEnvoye(client, messageId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["messagerie", "sent"] });
     },
   });
 }

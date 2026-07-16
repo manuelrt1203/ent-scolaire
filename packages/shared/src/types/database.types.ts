@@ -398,6 +398,7 @@ export type Database = {
           id: string
           parent_message_id: string | null
           sujet: string
+          supprime_expediteur: boolean
         }
         Insert: {
           corps: string
@@ -406,6 +407,7 @@ export type Database = {
           id?: string
           parent_message_id?: string | null
           sujet: string
+          supprime_expediteur?: boolean
         }
         Update: {
           corps?: string
@@ -414,6 +416,7 @@ export type Database = {
           id?: string
           parent_message_id?: string | null
           sujet?: string
+          supprime_expediteur?: boolean
         }
         Relationships: [
           {
@@ -737,6 +740,7 @@ export type Database = {
       }
       releve_est_publie: { Args: { p_releve_id: string }; Returns: boolean }
       soumettre_releve: { Args: { p_releve_id: string }; Returns: undefined }
+      supprimer_message_envoye: { Args: { p_message_id: string }; Returns: undefined }
       valider_releve: {
         Args: { p_commentaire?: string; p_releve_id: string }
         Returns: undefined

@@ -1,6 +1,7 @@
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth, useBoiteReception, useSupprimerDeReception } from "@ent/shared";
+import { MessagerieTabs } from "../../MessagerieTabs";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -13,7 +14,9 @@ export function InboxScreen({ basePath }: { basePath: string }) {
   const supprimer = useSupprimerDeReception(client);
 
   return (
-    <ScrollView className="flex-1 bg-slate-50 px-4 py-4">
+    <View className="flex-1 bg-slate-50">
+      <MessagerieTabs basePath={basePath} />
+      <ScrollView className="flex-1 px-4 py-4">
       <View className="mb-4 flex-row items-center justify-between">
         <Text className="text-lg font-semibold text-slate-900">Boîte de réception</Text>
         <Pressable
@@ -48,6 +51,7 @@ export function InboxScreen({ basePath }: { basePath: string }) {
       {inboxQuery.data?.length === 0 && (
         <Text className="mt-8 text-center text-sm text-slate-400">Boîte de réception vide.</Text>
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

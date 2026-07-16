@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuth, useBoiteReception, useSupprimerDeReception } from "@ent/shared";
+import { MessagerieTabs } from "./MessagerieTabs";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -12,12 +13,14 @@ export function InboxScreen() {
 
   return (
     <div className="max-w-3xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-lg font-semibold text-slate-900">Boîte de réception</h1>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-lg font-semibold text-slate-900">Messagerie</h1>
         <Link to="../messagerie/nouveau" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white">
           Nouveau message
         </Link>
       </div>
+
+      <MessagerieTabs receptionHref="." envoyesHref="envoyes" />
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">

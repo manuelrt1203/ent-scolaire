@@ -53,9 +53,15 @@ export async function getMessagesEnvoyes(client: EntSupabaseClient) {
     .from("messages")
     .select("*, message_destinataires(destinataire_id, lu, profiles:destinataire_id(nom, prenom, role))")
     .eq("expediteur_id", user.id)
+    .eq("supprime_expediteur", false)
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data;
+}
+
+export async function supprimerMessageEnvoye(client: EntSupabaseClient, messageId: string) {
+  const { error } = await client.rpc("supprimer_message_envoye", { p_message_id: messageId });
+  if (error) throw error;
 }
 
 const THREAD_MESSAGE_SELECT =

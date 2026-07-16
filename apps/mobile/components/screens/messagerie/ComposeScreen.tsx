@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, TextInput, Pressable, ScrollView } from "react-native";
+import { View, Text, TextInput, Pressable, ScrollView, FlatList } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
@@ -50,22 +50,29 @@ export function ComposeScreen({ basePath }: { basePath: string }) {
       <SafeAreaView edges={["top"]} />
       <Text className="mb-4 text-lg font-semibold text-slate-900">Nouveau message</Text>
 
-      <Text className="mb-1 text-xs font-medium text-slate-600">Destinataires</Text>
-      <View className="mb-4 rounded-md border border-slate-300 bg-white p-2">
-        {autresUtilisateurs.map((u) => {
-          const selected = destinataires.includes(u.id);
-          return (
-            <Pressable
-              key={u.id}
-              onPress={() => toggleDestinataire(u.id)}
-              className={`mb-1 rounded px-2 py-2 ${selected ? "bg-slate-900" : "bg-slate-50"}`}
-            >
-              <Text className={`text-sm ${selected ? "text-white" : "text-slate-700"}`}>
-                {u.prenom} {u.nom} ({ROLE_LABELS[u.role]})
-              </Text>
-            </Pressable>
-          );
-        })}
+      <Text className="mb-1 text-xs font-medium text-slate-600">
+        Destinataires {destinataires.length > 0 ? `(${destinataires.length} sélectionné${destinataires.length > 1 ? "s" : ""})` : ""}
+      </Text>
+      <View className="mb-4 rounded-md border border-slate-300 bg-white p-2" style={{ maxHeight: 220 }}>
+        <FlatList
+          data={autresUtilisateurs}
+          keyExtractor={(u) => u.id}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item: u }) => {
+            const selected = destinataires.includes(u.id);
+            return (
+              <Pressable
+                onPress={() => toggleDestinataire(u.id)}
+                className={`mb-1 rounded px-2 py-2 ${selected ? "bg-slate-900" : "bg-slate-50"}`}
+              >
+                <Text className={`text-sm ${selected ? "text-white" : "text-slate-700"}`}>
+                  {u.prenom} {u.nom} ({ROLE_LABELS[u.role]})
+                </Text>
+              </Pressable>
+            );
+          }}
+        />
       </View>
 
       <Text className="mb-1 text-xs font-medium text-slate-600">Sujet</Text>
