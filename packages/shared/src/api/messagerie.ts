@@ -1,9 +1,9 @@
 import type { EntSupabaseClient } from "../supabase/createClient";
 
-/** Annuaire minimal (nom/prénom/rôle, pas d'email) de tout l'établissement,
- * pour le sélecteur de destinataires — la table profiles reste restreinte
- * par relation pour les écrans d'administration, cette fonction contourne
- * volontairement cette restriction pour cet usage précis. */
+/** Annuaire de tout l'établissement (nom/prénom/rôle/email), utilisé par le
+ * sélecteur de destinataires et par l'écran Annuaire — la table profiles
+ * reste restreinte par relation pour les écrans d'administration, cette
+ * fonction contourne volontairement cette restriction pour ces usages. */
 export async function getAnnuaireMessagerie(client: EntSupabaseClient) {
   const { data, error } = await client.rpc("annuaire_etablissement");
   if (error) throw error;
