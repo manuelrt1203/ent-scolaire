@@ -1,6 +1,12 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useAuth, useMessageThread, useMarquerCommeLu, useSupprimerDeReception } from "@ent/shared";
+import {
+  useAuth,
+  useMessageThread,
+  useMarquerCommeLu,
+  useSupprimerDeReception,
+  useSupprimerMessageEnvoye,
+} from "@ent/shared";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -17,6 +23,7 @@ export function MessageDetailScreen() {
   const threadQuery = useMessageThread(client, id ?? null);
   const marquerLu = useMarquerCommeLu(client);
   const supprimer = useSupprimerDeReception(client);
+  const supprimerEnvoye = useSupprimerMessageEnvoye(client);
 
   const thread = threadQuery.data ?? [];
   const mesLignesNonLues = thread
@@ -83,20 +90,22 @@ export function MessageDetailScreen() {
         >
           Répondre
         </button>
-        {thread.some((m: any) => m.expediteur_id !== profile?.id) && (
-          <button
-            onClick={() => {
-              thread.forEach((m: any) => {
-                const row = m.message_destinataires?.find((d: any) => d.destinataire_id === profile?.id);
-                if (row) supprimer.mutate(row.id);
-              });
-              navigate("../../messagerie");
-            }}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-600"
-          >
-            Supprimer
-          </button>
-        )}
+        <button
+          onClick={() => {
+            thread.forEach((m: any) => {
+              if (m.expediteur_id === profile?.id) {
+                supprimerEnvoye.mutate(m.id);
+                return;
+              }
+              const row = m.message_destinataires?.find((d: any) => d.destinataire_id === profile?.id);
+              if (row) supprimer.mutate(row.id);
+            });
+            navigate("../../messagerie");
+          }}
+          className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-600"
+        >
+          Supprimer
+        </button>
       </div>
     </div>
   );

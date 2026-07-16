@@ -2,7 +2,13 @@ import { useEffect } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth, useMessageThread, useMarquerCommeLu, useSupprimerDeReception } from "@ent/shared";
+import {
+  useAuth,
+  useMessageThread,
+  useMarquerCommeLu,
+  useSupprimerDeReception,
+  useSupprimerMessageEnvoye,
+} from "@ent/shared";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -19,6 +25,7 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
   const threadQuery = useMessageThread(client, id ?? null);
   const marquerLu = useMarquerCommeLu(client);
   const supprimer = useSupprimerDeReception(client);
+  const supprimerEnvoye = useSupprimerMessageEnvoye(client);
 
   const thread = threadQuery.data ?? [];
   const mesLignesNonLues = thread
@@ -94,20 +101,22 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
         >
           <Text className="text-sm font-medium text-white">Répondre</Text>
         </Pressable>
-        {thread.some((m: any) => m.expediteur_id !== profile?.id) && (
-          <Pressable
-            onPress={() => {
-              thread.forEach((m: any) => {
-                const row = m.message_destinataires?.find((d: any) => d.destinataire_id === profile?.id);
-                if (row) supprimer.mutate(row.id);
-              });
-              router.replace(basePath as never);
-            }}
-            className="rounded-md border border-slate-300 px-4 py-2"
-          >
-            <Text className="text-sm text-slate-600">Supprimer</Text>
-          </Pressable>
-        )}
+        <Pressable
+          onPress={() => {
+            thread.forEach((m: any) => {
+              if (m.expediteur_id === profile?.id) {
+                supprimerEnvoye.mutate(m.id);
+                return;
+              }
+              const row = m.message_destinataires?.find((d: any) => d.destinataire_id === profile?.id);
+              if (row) supprimer.mutate(row.id);
+            });
+            router.replace(basePath as never);
+          }}
+          className="rounded-md border border-slate-300 px-4 py-2"
+        >
+          <Text className="text-sm text-slate-600">Supprimer</Text>
+        </Pressable>
       </View>
     </ScrollView>
   );
