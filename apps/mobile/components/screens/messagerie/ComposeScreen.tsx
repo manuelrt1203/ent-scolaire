@@ -3,7 +3,7 @@ import { View, Text, TextInput, Pressable, ScrollView } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, getUtilisateurs, useEnvoyerMessage } from "@ent/shared";
+import { useAuth, getAnnuaireMessagerie, useEnvoyerMessage } from "@ent/shared";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -13,11 +13,11 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function ComposeScreen({ basePath }: { basePath: string }) {
-  const { client, profile } = useAuth();
+  const { client } = useAuth();
   const router = useRouter();
   const params = useLocalSearchParams<{ destinataireId?: string; sujet?: string }>();
 
-  const usersQuery = useQuery({ queryKey: ["utilisateurs"], queryFn: () => getUtilisateurs(client) });
+  const usersQuery = useQuery({ queryKey: ["annuaire-messagerie"], queryFn: () => getAnnuaireMessagerie(client) });
   const envoyer = useEnvoyerMessage(client);
 
   const [destinataires, setDestinataires] = useState<string[]>(params.destinataireId ? [params.destinataireId] : []);
@@ -25,7 +25,7 @@ export function ComposeScreen({ basePath }: { basePath: string }) {
   const [corps, setCorps] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const autresUtilisateurs = usersQuery.data?.filter((u) => u.id !== profile?.id) ?? [];
+  const autresUtilisateurs = usersQuery.data ?? [];
 
   function toggleDestinataire(id: string) {
     setDestinataires((prev) => (prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]));
@@ -46,13 +46,13 @@ export function ComposeScreen({ basePath }: { basePath: string }) {
   }
 
   return (
-    <ScrollView className="flex-1 bg-slate-50 px-4 py-4">
+    <ScrollView className="flex-1 bg-slate-50 px-4 py-4" keyboardShouldPersistTaps="handled">
       <SafeAreaView edges={["top"]} />
       <Text className="mb-4 text-lg font-semibold text-slate-900">Nouveau message</Text>
 
       <Text className="mb-1 text-xs font-medium text-slate-600">Destinataires</Text>
       <View className="mb-4 max-h-48 rounded-md border border-slate-300 bg-white p-2">
-        <ScrollView>
+        <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
           {autresUtilisateurs.map((u) => {
             const selected = destinataires.includes(u.id);
             return (

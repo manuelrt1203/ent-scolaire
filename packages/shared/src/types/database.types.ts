@@ -662,6 +662,15 @@ export type Database = {
       }
     }
     Functions: {
+      annuaire_etablissement: {
+        Args: never
+        Returns: {
+          id: string
+          nom: string
+          prenom: string
+          role: Database["public"]["Enums"]["role_utilisateur"]
+        }[]
+      }
       calculer_moyenne_generale: {
         Args: { p_eleve_id: string; p_periode_id: string }
         Returns: number

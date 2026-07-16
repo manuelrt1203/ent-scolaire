@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, getUtilisateurs, useEnvoyerMessage } from "@ent/shared";
+import { useAuth, getAnnuaireMessagerie, useEnvoyerMessage } from "@ent/shared";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -11,12 +11,12 @@ const ROLE_LABELS: Record<string, string> = {
 };
 
 export function ComposeScreen() {
-  const { client, profile } = useAuth();
+  const { client } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const prefill = (location.state as { destinataireId?: string; sujet?: string } | null) ?? null;
 
-  const usersQuery = useQuery({ queryKey: ["utilisateurs"], queryFn: () => getUtilisateurs(client) });
+  const usersQuery = useQuery({ queryKey: ["annuaire-messagerie"], queryFn: () => getAnnuaireMessagerie(client) });
   const envoyer = useEnvoyerMessage(client);
 
   const [destinataires, setDestinataires] = useState<string[]>(prefill?.destinataireId ? [prefill.destinataireId] : []);
@@ -24,7 +24,7 @@ export function ComposeScreen() {
   const [corps, setCorps] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const autresUtilisateurs = usersQuery.data?.filter((u) => u.id !== profile?.id) ?? [];
+  const autresUtilisateurs = usersQuery.data ?? [];
 
   function toggleDestinataire(id: string) {
     setDestinataires((prev) => (prev.includes(id) ? prev.filter((d) => d !== id) : [...prev, id]));
