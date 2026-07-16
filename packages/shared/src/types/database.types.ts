@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      actualites: {
+        Row: {
+          auteur_id: string | null
+          cible: Database["public"]["Enums"]["role_utilisateur"] | null
+          contenu: string
+          created_at: string
+          etablissement_id: string
+          id: string
+          titre: string
+        }
+        Insert: {
+          auteur_id?: string | null
+          cible?: Database["public"]["Enums"]["role_utilisateur"] | null
+          contenu: string
+          created_at?: string
+          etablissement_id: string
+          id?: string
+          titre: string
+        }
+        Update: {
+          auteur_id?: string | null
+          cible?: Database["public"]["Enums"]["role_utilisateur"] | null
+          contenu?: string
+          created_at?: string
+          etablissement_id?: string
+          id?: string
+          titre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "actualites_auteur_id_fkey"
+            columns: ["auteur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "actualites_etablissement_id_fkey"
+            columns: ["etablissement_id"]
+            isOneToOne: false
+            referencedRelation: "etablissements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affectations: {
         Row: {
           id: string
@@ -89,6 +134,64 @@ export type Database = {
           },
         ]
       }
+      cahier_texte: {
+        Row: {
+          contenu_seance: string | null
+          created_at: string
+          date_echeance: string | null
+          date_seance: string
+          id: string
+          matiere_classe_id: string
+          professeur_id: string | null
+          travail_a_faire: string | null
+          updated_at: string
+        }
+        Insert: {
+          contenu_seance?: string | null
+          created_at?: string
+          date_echeance?: string | null
+          date_seance: string
+          id?: string
+          matiere_classe_id: string
+          professeur_id?: string | null
+          travail_a_faire?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contenu_seance?: string | null
+          created_at?: string
+          date_echeance?: string | null
+          date_seance?: string
+          id?: string
+          matiere_classe_id?: string
+          professeur_id?: string | null
+          travail_a_faire?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cahier_texte_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "matiere_classe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cahier_texte_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "v_bulletin"
+            referencedColumns: ["matiere_classe_id"]
+          },
+          {
+            foreignKeyName: "cahier_texte_professeur_id_fkey"
+            columns: ["professeur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       classes: {
         Row: {
           annee_scolaire_id: string
@@ -128,6 +231,61 @@ export type Database = {
           },
         ]
       }
+      creneaux: {
+        Row: {
+          created_at: string
+          heure_debut: string
+          heure_fin: string
+          id: string
+          jour_semaine: number
+          matiere_classe_id: string
+          professeur_id: string
+          salle: string | null
+        }
+        Insert: {
+          created_at?: string
+          heure_debut: string
+          heure_fin: string
+          id?: string
+          jour_semaine: number
+          matiere_classe_id: string
+          professeur_id: string
+          salle?: string | null
+        }
+        Update: {
+          created_at?: string
+          heure_debut?: string
+          heure_fin?: string
+          id?: string
+          jour_semaine?: number
+          matiere_classe_id?: string
+          professeur_id?: string
+          salle?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "creneaux_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "matiere_classe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "creneaux_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "v_bulletin"
+            referencedColumns: ["matiere_classe_id"]
+          },
+          {
+            foreignKeyName: "creneaux_professeur_id_fkey"
+            columns: ["professeur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       etablissements: {
         Row: {
           adresse: string | null
@@ -148,6 +306,60 @@ export type Database = {
           nom?: string
         }
         Relationships: []
+      }
+      evenements_calendrier: {
+        Row: {
+          auteur_id: string | null
+          cible: Database["public"]["Enums"]["role_utilisateur"] | null
+          created_at: string
+          date_debut: string
+          date_fin: string
+          description: string | null
+          etablissement_id: string
+          id: string
+          lieu: string | null
+          titre: string
+        }
+        Insert: {
+          auteur_id?: string | null
+          cible?: Database["public"]["Enums"]["role_utilisateur"] | null
+          created_at?: string
+          date_debut: string
+          date_fin: string
+          description?: string | null
+          etablissement_id: string
+          id?: string
+          lieu?: string | null
+          titre: string
+        }
+        Update: {
+          auteur_id?: string | null
+          cible?: Database["public"]["Enums"]["role_utilisateur"] | null
+          created_at?: string
+          date_debut?: string
+          date_fin?: string
+          description?: string | null
+          etablissement_id?: string
+          id?: string
+          lieu?: string | null
+          titre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evenements_calendrier_auteur_id_fkey"
+            columns: ["auteur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evenements_calendrier_etablissement_id_fkey"
+            columns: ["etablissement_id"]
+            isOneToOne: false
+            referencedRelation: "etablissements"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       historique_releves: {
         Row: {
@@ -643,6 +855,80 @@ export type Database = {
           },
         ]
       }
+      vie_scolaire_evenements: {
+        Row: {
+          classe_id: string
+          created_at: string
+          creneau_id: string | null
+          date: string
+          description: string | null
+          duree_minutes: number | null
+          eleve_id: string
+          id: string
+          justifie: boolean
+          motif: string | null
+          signale_par: string | null
+          type: string
+        }
+        Insert: {
+          classe_id: string
+          created_at?: string
+          creneau_id?: string | null
+          date: string
+          description?: string | null
+          duree_minutes?: number | null
+          eleve_id: string
+          id?: string
+          justifie?: boolean
+          motif?: string | null
+          signale_par?: string | null
+          type: string
+        }
+        Update: {
+          classe_id?: string
+          created_at?: string
+          creneau_id?: string | null
+          date?: string
+          description?: string | null
+          duree_minutes?: number | null
+          eleve_id?: string
+          id?: string
+          justifie?: boolean
+          motif?: string | null
+          signale_par?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vie_scolaire_evenements_classe_id_fkey"
+            columns: ["classe_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vie_scolaire_evenements_creneau_id_fkey"
+            columns: ["creneau_id"]
+            isOneToOne: false
+            referencedRelation: "creneaux"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vie_scolaire_evenements_eleve_id_fkey"
+            columns: ["eleve_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vie_scolaire_evenements_signale_par_fkey"
+            columns: ["signale_par"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       v_bulletin: {
@@ -678,6 +964,7 @@ export type Database = {
       annuaire_etablissement: {
         Args: never
         Returns: {
+          email: string
           id: string
           nom: string
           prenom: string
@@ -723,6 +1010,10 @@ export type Database = {
         Args: { p_message_id: string }
         Returns: boolean
       }
+      matiere_classe_classe_id: {
+        Args: { p_matiere_classe_id: string }
+        Returns: string
+      }
       parent_a_acces_classe: { Args: { p_classe_id: string }; Returns: boolean }
       parent_a_enfant_note_sur_releve: {
         Args: { p_releve_id: string }
@@ -740,7 +1031,10 @@ export type Database = {
       }
       releve_est_publie: { Args: { p_releve_id: string }; Returns: boolean }
       soumettre_releve: { Args: { p_releve_id: string }; Returns: undefined }
-      supprimer_message_envoye: { Args: { p_message_id: string }; Returns: undefined }
+      supprimer_message_envoye: {
+        Args: { p_message_id: string }
+        Returns: undefined
+      }
       valider_releve: {
         Args: { p_commentaire?: string; p_releve_id: string }
         Returns: undefined
