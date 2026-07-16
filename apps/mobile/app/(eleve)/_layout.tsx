@@ -1,6 +1,7 @@
 import { Stack, Redirect } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
 import { useAuth } from "@ent/shared";
+import { TopNav } from "../../components/TopNav";
 import { ViewedEleveProvider } from "../../lib/ViewedEleveContext";
 
 export default function EleveLayout() {
@@ -18,7 +19,10 @@ export default function EleveLayout() {
 
   return (
     <ViewedEleveProvider eleveId={profile?.id ?? null}>
-      <Stack screenOptions={{ headerShown: false }} />
+      <View className="flex-1">
+        <TopNav basePath="/(eleve)" />
+        <Stack screenOptions={{ headerShown: false }} />
+      </View>
     </ViewedEleveProvider>
   );
 }

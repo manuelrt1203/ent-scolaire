@@ -15,7 +15,7 @@ export function EmploiDuTempsScreen() {
 
   const mcQuery = useQuery({ queryKey: ["matiere-classes"], queryFn: () => getMatiereClasses(client) });
   const affectationsQuery = useQuery({ queryKey: ["affectations"], queryFn: () => getAffectations(client) });
-  const creneauxQuery = useCreneaux(client, matiereClasseId || undefined);
+  const creneauxQuery = useCreneaux(client, matiereClasseId ? { matiereClasseId } : undefined);
   const createCreneau = useCreateCreneau(client);
   const deleteCreneau = useDeleteCreneau(client);
 

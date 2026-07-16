@@ -122,6 +122,20 @@ export async function getLiensParentsEleves(client: EntSupabaseClient) {
   return data;
 }
 
+/** Classe actuelle d'un élève (RLS inscriptions_select : l'élève lui-même, son
+ * parent, un professeur de la classe, ou la direction). Utilisé côté mobile
+ * pour résoudre la classe d'un élève/enfant avant de filtrer emploi du temps
+ * et cahier de textes. */
+export async function getClasseEleve(client: EntSupabaseClient, eleveId: string) {
+  const { data, error } = await client
+    .from("inscriptions")
+    .select("classe_id, classes(id, nom, niveau)")
+    .eq("eleve_id", eleveId)
+    .maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 /** Enfants du parent connecté (RLS liens_select : parent_id = auth.uid()). */
 export async function getMesEnfants(client: EntSupabaseClient) {
   const {

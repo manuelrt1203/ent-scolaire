@@ -5,15 +5,21 @@ export type Creneau = Tables<"creneaux">;
 
 /** Créneaux visibles par l'appelant (RLS scope déjà : direction = tout
  * l'établissement, professeur = ses propres créneaux, élève/parent = ceux
- * de leur classe). matiereClasseId filtre en plus côté direction pour
- * l'écran de gestion. */
-export async function getCreneaux(client: EntSupabaseClient, matiereClasseId?: string) {
+ * de leur classe). matiereClasseId filtre une matière précise (écran de
+ * gestion direction), classeId filtre toutes les matières d'une classe
+ * (emploi du temps complet élève/parent — un parent avec plusieurs enfants
+ * voit sinon le mélange des classes de tous ses enfants). */
+export async function getCreneaux(
+  client: EntSupabaseClient,
+  filter?: { matiereClasseId?: string; classeId?: string },
+) {
   let query = client
     .from("creneaux")
-    .select("*, matiere_classe(*, matieres(nom), classes(nom)), professeur:professeur_id(nom, prenom)")
+    .select("*, matiere_classe!inner(*, matieres(nom), classes(nom)), professeur:professeur_id(nom, prenom)")
     .order("jour_semaine")
     .order("heure_debut");
-  if (matiereClasseId) query = query.eq("matiere_classe_id", matiereClasseId);
+  if (filter?.matiereClasseId) query = query.eq("matiere_classe_id", filter.matiereClasseId);
+  if (filter?.classeId) query = query.eq("matiere_classe.classe_id", filter.classeId);
   const { data, error } = await query;
   if (error) throw error;
   return data;

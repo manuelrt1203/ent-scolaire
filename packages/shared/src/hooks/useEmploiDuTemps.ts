@@ -3,10 +3,10 @@ import type { EntSupabaseClient } from "../supabase/createClient";
 import type { TablesInsert } from "../types/database.types";
 import { getCreneaux, createCreneau, deleteCreneau } from "../api/emploiDuTemps";
 
-export function useCreneaux(client: EntSupabaseClient, matiereClasseId?: string) {
+export function useCreneaux(client: EntSupabaseClient, filter?: { matiereClasseId?: string; classeId?: string }) {
   return useQuery({
-    queryKey: ["creneaux", matiereClasseId ?? null],
-    queryFn: () => getCreneaux(client, matiereClasseId),
+    queryKey: ["creneaux", filter?.matiereClasseId ?? null, filter?.classeId ?? null],
+    queryFn: () => getCreneaux(client, filter),
   });
 }
 
