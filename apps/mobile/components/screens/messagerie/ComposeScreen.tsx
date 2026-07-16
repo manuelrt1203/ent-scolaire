@@ -15,7 +15,7 @@ const ROLE_LABELS: Record<string, string> = {
 export function ComposeScreen({ basePath }: { basePath: string }) {
   const { client } = useAuth();
   const router = useRouter();
-  const params = useLocalSearchParams<{ destinataireId?: string; sujet?: string }>();
+  const params = useLocalSearchParams<{ destinataireId?: string; sujet?: string; parentMessageId?: string }>();
 
   const usersQuery = useQuery({ queryKey: ["annuaire-messagerie"], queryFn: () => getAnnuaireMessagerie(client) });
   const envoyer = useEnvoyerMessage(client);
@@ -38,7 +38,7 @@ export function ComposeScreen({ basePath }: { basePath: string }) {
       return;
     }
     try {
-      await envoyer.mutateAsync({ sujet, corps, destinataireIds: destinataires });
+      await envoyer.mutateAsync({ sujet, corps, destinataireIds: destinataires, parentMessageId: params.parentMessageId });
       router.replace(`${basePath}/envoyes` as never);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Échec de l'envoi");
@@ -51,23 +51,21 @@ export function ComposeScreen({ basePath }: { basePath: string }) {
       <Text className="mb-4 text-lg font-semibold text-slate-900">Nouveau message</Text>
 
       <Text className="mb-1 text-xs font-medium text-slate-600">Destinataires</Text>
-      <View className="mb-4 max-h-48 rounded-md border border-slate-300 bg-white p-2">
-        <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">
-          {autresUtilisateurs.map((u) => {
-            const selected = destinataires.includes(u.id);
-            return (
-              <Pressable
-                key={u.id}
-                onPress={() => toggleDestinataire(u.id)}
-                className={`mb-1 rounded px-2 py-2 ${selected ? "bg-slate-900" : "bg-slate-50"}`}
-              >
-                <Text className={`text-sm ${selected ? "text-white" : "text-slate-700"}`}>
-                  {u.prenom} {u.nom} ({ROLE_LABELS[u.role]})
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+      <View className="mb-4 rounded-md border border-slate-300 bg-white p-2">
+        {autresUtilisateurs.map((u) => {
+          const selected = destinataires.includes(u.id);
+          return (
+            <Pressable
+              key={u.id}
+              onPress={() => toggleDestinataire(u.id)}
+              className={`mb-1 rounded px-2 py-2 ${selected ? "bg-slate-900" : "bg-slate-50"}`}
+            >
+              <Text className={`text-sm ${selected ? "text-white" : "text-slate-700"}`}>
+                {u.prenom} {u.nom} ({ROLE_LABELS[u.role]})
+              </Text>
+            </Pressable>
+          );
+        })}
       </View>
 
       <Text className="mb-1 text-xs font-medium text-slate-600">Sujet</Text>

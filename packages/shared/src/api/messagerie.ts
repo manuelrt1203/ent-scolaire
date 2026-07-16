@@ -15,11 +15,13 @@ export async function envoyerMessage(
   sujet: string,
   corps: string,
   destinataireIds: string[],
+  parentMessageId?: string,
 ) {
   const { data, error } = await client.rpc("envoyer_message", {
     p_sujet: sujet,
     p_corps: corps,
     p_destinataires: destinataireIds,
+    p_parent_message_id: parentMessageId,
   });
   if (error) throw error;
   return data;
@@ -56,14 +58,28 @@ export async function getMessagesEnvoyes(client: EntSupabaseClient) {
   return data;
 }
 
-export async function getMessageDetail(client: EntSupabaseClient, messageId: string) {
-  const { data, error } = await client
+const THREAD_MESSAGE_SELECT =
+  "*, expediteur:expediteur_id(nom, prenom, role), message_destinataires(id, destinataire_id, lu, lu_le, profiles:destinataire_id(nom, prenom, role))";
+
+/** Fil de discussion complet (message d'origine + toutes les réponses),
+ * dans l'ordre chronologique — une réponse pointe toujours vers la racine
+ * du fil (jamais vers un message intermédiaire), donc une seule requête
+ * "id = racine OU parent_message_id = racine" suffit à tout récupérer. */
+export async function getMessageThread(client: EntSupabaseClient, messageId: string) {
+  const { data: message, error: msgErr } = await client
     .from("messages")
-    .select(
-      "*, expediteur:expediteur_id(nom, prenom, role), message_destinataires(id, destinataire_id, lu, lu_le, profiles:destinataire_id(nom, prenom, role))",
-    )
+    .select("id, parent_message_id")
     .eq("id", messageId)
     .single();
+  if (msgErr) throw msgErr;
+
+  const rootId = message.parent_message_id ?? message.id;
+
+  const { data, error } = await client
+    .from("messages")
+    .select(THREAD_MESSAGE_SELECT)
+    .or(`id.eq.${rootId},parent_message_id.eq.${rootId}`)
+    .order("created_at", { ascending: true });
   if (error) throw error;
   return data;
 }

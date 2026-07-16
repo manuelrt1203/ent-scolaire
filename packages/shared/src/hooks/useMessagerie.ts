@@ -4,7 +4,7 @@ import {
   envoyerMessage,
   getBoiteReception,
   getMessagesEnvoyes,
-  getMessageDetail,
+  getMessageThread,
   marquerCommeLu,
   supprimerDeReception,
   getNombreNonLus,
@@ -18,10 +18,10 @@ export function useMessagesEnvoyes(client: EntSupabaseClient) {
   return useQuery({ queryKey: ["messagerie", "sent"], queryFn: () => getMessagesEnvoyes(client) });
 }
 
-export function useMessageDetail(client: EntSupabaseClient, messageId: string | null) {
+export function useMessageThread(client: EntSupabaseClient, messageId: string | null) {
   return useQuery({
-    queryKey: ["messagerie", "detail", messageId],
-    queryFn: () => getMessageDetail(client, messageId as string),
+    queryKey: ["messagerie", "thread", messageId],
+    queryFn: () => getMessageThread(client, messageId as string),
     enabled: Boolean(messageId),
   });
 }
@@ -33,10 +33,22 @@ export function useNombreNonLus(client: EntSupabaseClient) {
 export function useEnvoyerMessage(client: EntSupabaseClient) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ sujet, corps, destinataireIds }: { sujet: string; corps: string; destinataireIds: string[] }) =>
-      envoyerMessage(client, sujet, corps, destinataireIds),
-    onSuccess: () => {
+    mutationFn: ({
+      sujet,
+      corps,
+      destinataireIds,
+      parentMessageId,
+    }: {
+      sujet: string;
+      corps: string;
+      destinataireIds: string[];
+      parentMessageId?: string;
+    }) => envoyerMessage(client, sujet, corps, destinataireIds, parentMessageId),
+    onSuccess: (_data, { parentMessageId }) => {
       queryClient.invalidateQueries({ queryKey: ["messagerie", "sent"] });
+      if (parentMessageId) {
+        queryClient.invalidateQueries({ queryKey: ["messagerie", "thread", parentMessageId] });
+      }
     },
   });
 }

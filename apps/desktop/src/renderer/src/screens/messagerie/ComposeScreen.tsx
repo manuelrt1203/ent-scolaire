@@ -14,7 +14,8 @@ export function ComposeScreen() {
   const { client } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const prefill = (location.state as { destinataireId?: string; sujet?: string } | null) ?? null;
+  const prefill =
+    (location.state as { destinataireId?: string; sujet?: string; parentMessageId?: string } | null) ?? null;
 
   const usersQuery = useQuery({ queryKey: ["annuaire-messagerie"], queryFn: () => getAnnuaireMessagerie(client) });
   const envoyer = useEnvoyerMessage(client);
@@ -38,7 +39,7 @@ export function ComposeScreen() {
       return;
     }
     try {
-      await envoyer.mutateAsync({ sujet, corps, destinataireIds: destinataires });
+      await envoyer.mutateAsync({ sujet, corps, destinataireIds: destinataires, parentMessageId: prefill?.parentMessageId });
       navigate("../messagerie/envoyes");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Échec de l'envoi");

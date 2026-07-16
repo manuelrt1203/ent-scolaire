@@ -396,6 +396,7 @@ export type Database = {
           created_at: string
           expediteur_id: string
           id: string
+          parent_message_id: string | null
           sujet: string
         }
         Insert: {
@@ -403,6 +404,7 @@ export type Database = {
           created_at?: string
           expediteur_id: string
           id?: string
+          parent_message_id?: string | null
           sujet: string
         }
         Update: {
@@ -410,6 +412,7 @@ export type Database = {
           created_at?: string
           expediteur_id?: string
           id?: string
+          parent_message_id?: string | null
           sujet?: string
         }
         Relationships: [
@@ -418,6 +421,13 @@ export type Database = {
             columns: ["expediteur_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]
@@ -698,7 +708,12 @@ export type Database = {
         Returns: boolean
       }
       envoyer_message: {
-        Args: { p_corps: string; p_destinataires: string[]; p_sujet: string }
+        Args: {
+          p_corps: string
+          p_destinataires: string[]
+          p_parent_message_id?: string
+          p_sujet: string
+        }
         Returns: string
       }
       est_destinataire_message: {

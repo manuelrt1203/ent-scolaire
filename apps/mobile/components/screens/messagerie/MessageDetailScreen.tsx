@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth, useMessageDetail, useMarquerCommeLu, useSupprimerDeReception } from "@ent/shared";
+import { useAuth, useMessageThread, useMarquerCommeLu, useSupprimerDeReception } from "@ent/shared";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -16,21 +16,22 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
   const router = useRouter();
   const { client, profile } = useAuth();
 
-  const messageQuery = useMessageDetail(client, id ?? null);
+  const threadQuery = useMessageThread(client, id ?? null);
   const marquerLu = useMarquerCommeLu(client);
   const supprimer = useSupprimerDeReception(client);
 
-  const message = messageQuery.data;
-  const monDestinataireRow = message?.message_destinataires?.find((d: any) => d.destinataire_id === profile?.id);
+  const thread = threadQuery.data ?? [];
+  const mesLignesNonLues = thread
+    .map((m: any) => m.message_destinataires?.find((d: any) => d.destinataire_id === profile?.id))
+    .filter((row: any) => row && !row.lu);
+  const cleNonLues = mesLignesNonLues.map((r: any) => r.id).join(",");
 
   useEffect(() => {
-    if (monDestinataireRow && !monDestinataireRow.lu) {
-      marquerLu.mutate(monDestinataireRow.id);
-    }
+    mesLignesNonLues.forEach((row: any) => marquerLu.mutate(row.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [monDestinataireRow?.id]);
+  }, [cleNonLues]);
 
-  if (!message) {
+  if (thread.length === 0) {
     return (
       <View className="flex-1 items-center justify-center bg-slate-50">
         <Text className="text-sm text-slate-500">Chargement…</Text>
@@ -38,7 +39,9 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
     );
   }
 
-  const estExpediteur = message.expediteur_id === profile?.id;
+  const root = thread[0];
+  const dernierAutre = [...thread].reverse().find((m: any) => m.expediteur_id !== profile?.id);
+  const destinataireReponse = dernierAutre?.expediteur_id ?? root.message_destinataires?.[0]?.destinataire_id;
 
   return (
     <ScrollView className="flex-1 bg-slate-50 px-4 py-4" contentInsetAdjustmentBehavior="automatic">
@@ -47,18 +50,32 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
         <Text className="text-xs text-slate-500">← Retour</Text>
       </Pressable>
 
-      <Text className="mb-1 text-lg font-semibold text-slate-900">{message.sujet}</Text>
-      <Text className="mb-1 text-sm text-slate-600">
-        De : {message.expediteur?.prenom} {message.expediteur?.nom} ({ROLE_LABELS[message.expediteur?.role]})
-      </Text>
-      <Text className="mb-4 text-xs text-slate-400">
-        À : {message.message_destinataires.map((d: any) => `${d.profiles?.prenom} ${d.profiles?.nom}`).join(", ")}
-        {"\n"}
-        {new Date(message.created_at).toLocaleString("fr-FR")}
-      </Text>
+      <Text className="mb-4 text-lg font-semibold text-slate-900">{root.sujet}</Text>
 
-      <View className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-        <Text className="text-sm text-slate-800">{message.corps}</Text>
+      <View className="mb-6" style={{ gap: 12 }}>
+        {thread.map((m: any) => {
+          const estMoi = m.expediteur_id === profile?.id;
+          const mesDestinataires = m.message_destinataires ?? [];
+          return (
+            <View
+              key={m.id}
+              className={`rounded-lg border border-slate-200 p-4 ${estMoi ? "bg-slate-50" : "bg-white"}`}
+            >
+              <View className="mb-2 flex-row items-baseline justify-between">
+                <Text className="text-sm font-medium text-slate-900">
+                  {estMoi ? "Vous" : `${m.expediteur?.prenom} ${m.expediteur?.nom}`}{" "}
+                  <Text className="text-xs font-normal text-slate-400">({ROLE_LABELS[m.expediteur?.role]})</Text>
+                </Text>
+              </View>
+              <Text className="mb-2 text-xs text-slate-400">
+                {new Date(m.created_at).toLocaleString("fr-FR")}
+                {"\n"}
+                À : {mesDestinataires.map((d: any) => `${d.profiles?.prenom} ${d.profiles?.nom}`).join(", ")}
+              </Text>
+              <Text className="text-sm text-slate-800">{m.corps}</Text>
+            </View>
+          );
+        })}
       </View>
 
       <View className="flex-row gap-3">
@@ -67,8 +84,9 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
             router.push({
               pathname: `${basePath}/nouveau` as never,
               params: {
-                destinataireId: estExpediteur ? undefined : message.expediteur_id,
-                sujet: message.sujet.startsWith("Re: ") ? message.sujet : `Re: ${message.sujet}`,
+                destinataireId: destinataireReponse,
+                sujet: root.sujet.startsWith("Re: ") ? root.sujet : `Re: ${root.sujet}`,
+                parentMessageId: root.id,
               },
             })
           }
@@ -76,10 +94,13 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
         >
           <Text className="text-sm font-medium text-white">Répondre</Text>
         </Pressable>
-        {!estExpediteur && monDestinataireRow && (
+        {thread.some((m: any) => m.expediteur_id !== profile?.id) && (
           <Pressable
             onPress={() => {
-              supprimer.mutate(monDestinataireRow.id);
+              thread.forEach((m: any) => {
+                const row = m.message_destinataires?.find((d: any) => d.destinataire_id === profile?.id);
+                if (row) supprimer.mutate(row.id);
+              });
               router.replace(basePath as never);
             }}
             className="rounded-md border border-slate-300 px-4 py-2"
