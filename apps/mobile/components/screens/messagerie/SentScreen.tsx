@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, FlatList, Pressable } from "react-native";
 import { useRouter } from "expo-router";
 import { useAuth, useMessagesEnvoyes, useSupprimerMessageEnvoye } from "@ent/shared";
 import { MessagerieTabs } from "../../MessagerieTabs";
@@ -16,11 +16,14 @@ export function SentScreen({ basePath }: { basePath: string }) {
   return (
     <View className="flex-1 bg-slate-50">
       <MessagerieTabs basePath={basePath} />
-      <ScrollView className="flex-1 px-4 py-4">
-        <Text className="mb-4 text-lg font-semibold text-slate-900">Messages envoyés</Text>
-
-        {sentQuery.data?.map((m: any) => (
-          <View key={m.id} className="mb-2 rounded-lg border border-slate-200 bg-white px-4 py-3">
+      <FlatList
+        className="flex-1 px-4 py-4"
+        data={sentQuery.data ?? []}
+        keyExtractor={(m) => m.id}
+        ListHeaderComponent={<Text className="mb-4 text-lg font-semibold text-slate-900">Messages envoyés</Text>}
+        ListEmptyComponent={<Text className="mt-8 text-center text-sm text-slate-400">Aucun message envoyé.</Text>}
+        renderItem={({ item: m }: { item: any }) => (
+          <View className="mb-2 rounded-lg border border-slate-200 bg-white px-4 py-3">
             <Pressable onPress={() => router.push(`${basePath}/${m.id}` as never)}>
               <Text className="mb-1 text-xs text-slate-500">
                 À : {m.message_destinataires.map((d: any) => `${d.profiles?.prenom} ${d.profiles?.nom}`).join(", ")}
@@ -32,12 +35,8 @@ export function SentScreen({ basePath }: { basePath: string }) {
               <Text className="text-xs text-slate-400">Supprimer</Text>
             </Pressable>
           </View>
-        ))}
-
-        {sentQuery.data?.length === 0 && (
-          <Text className="mt-8 text-center text-sm text-slate-400">Aucun message envoyé.</Text>
         )}
-      </ScrollView>
+      />
     </View>
   );
 }
