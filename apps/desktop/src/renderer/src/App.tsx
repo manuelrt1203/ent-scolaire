@@ -5,6 +5,7 @@ import { Layout } from "./components/Layout";
 import { LoginScreen } from "./screens/auth/LoginScreen";
 import { ActivationScreen } from "./screens/auth/ActivationScreen";
 import { InscriptionEtablissementScreen } from "./screens/auth/InscriptionEtablissementScreen";
+import { InvitationScreen } from "./screens/auth/InvitationScreen";
 import { DashboardScreen } from "./screens/direction/DashboardScreen";
 import { ClassesScreen } from "./screens/direction/ClassesScreen";
 import { MatieresScreen } from "./screens/direction/MatieresScreen";
@@ -28,6 +29,7 @@ import { CahierTexteScreen as CahierTexteProfesseurScreen } from "./screens/prof
 import { ActualitesScreen as ActualitesProfesseurScreen } from "./screens/professeur/ActualitesScreen";
 import { CalendrierScreen as CalendrierProfesseurScreen } from "./screens/professeur/CalendrierScreen";
 import { AnnuaireScreen } from "./screens/AnnuaireScreen";
+import { InvitationsScreen } from "./screens/direction/InvitationsScreen";
 import { InboxScreen } from "./screens/messagerie/InboxScreen";
 import { SentScreen } from "./screens/messagerie/SentScreen";
 import { ComposeScreen } from "./screens/messagerie/ComposeScreen";
@@ -41,6 +43,7 @@ const DIRECTION_NAV = [
   { to: "/direction/affectations", label: "Affectations profs" },
   { to: "/direction/inscriptions", label: "Inscriptions élèves" },
   { to: "/direction/utilisateurs", label: "Utilisateurs" },
+  { to: "/direction/invitations", label: "Invitations" },
   { to: "/direction/liens", label: "Liens parents-élèves" },
   { to: "/direction/releves", label: "Relevés à examiner" },
   { to: "/direction/emploi-du-temps", label: "Emploi du temps" },
@@ -80,6 +83,7 @@ export function App() {
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/activation" element={<ActivationScreen />} />
         <Route path="/inscription" element={<InscriptionEtablissementScreen />} />
+        <Route path="/invitation" element={<InvitationScreen />} />
         <Route path="/" element={<RootRedirect />} />
 
         <Route
@@ -97,6 +101,7 @@ export function App() {
           <Route path="affectations" element={<AffectationsScreen />} />
           <Route path="inscriptions" element={<InscriptionsScreen />} />
           <Route path="utilisateurs" element={<UtilisateursScreen />} />
+          <Route path="invitations" element={<InvitationsScreen />} />
           <Route path="liens" element={<LiensParentsElevesScreen />} />
           <Route path="releves" element={<RelevesAValiderScreen />} />
           <Route path="releves/:id" element={<ReleveReviewScreen />} />

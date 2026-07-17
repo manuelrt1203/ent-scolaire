@@ -72,6 +72,14 @@ export function LoginScreen() {
         >
           Nouvelle école ? Inscrire mon établissement
         </button>
+
+        <button
+          type="button"
+          onClick={() => navigate("/invitation")}
+          className="mt-2 w-full text-center text-xs text-slate-500 hover:underline"
+        >
+          J'ai un code d'invitation
+        </button>
       </form>
     </div>
   );

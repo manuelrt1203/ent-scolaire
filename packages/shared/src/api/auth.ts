@@ -58,3 +58,28 @@ export async function registerEtablissement(client: EntSupabaseClient, input: Re
   if (error) throw error;
   return data as { etablissementId: string; directionEmail: string };
 }
+
+/** Lookup public d'un code d'invitation (RPC invitation_par_code, contourne
+ * RLS volontairement) — utilisé pour afficher "vous rejoignez [École] en
+ * tant que [rôle]" avant que la personne ne valide son inscription. */
+export async function getInvitationByCode(client: EntSupabaseClient, code: string) {
+  const { data, error } = await client.rpc("invitation_par_code", { p_code: code });
+  if (error) throw error;
+  return data[0] ?? null;
+}
+
+export interface RedeemInvitationInput {
+  code: string;
+  nom: string;
+  prenom: string;
+  email: string;
+}
+
+/** Crée un compte à partir d'un code d'invitation (edge function
+ * redeem-invitation) : rôle et rattachement (classe/parent) viennent du
+ * code, jamais du visiteur. Appelable sans authentification. */
+export async function redeemInvitation(client: EntSupabaseClient, input: RedeemInvitationInput) {
+  const { data, error } = await client.functions.invoke("redeem-invitation", { body: input });
+  if (error) throw error;
+  return data as { email: string };
+}

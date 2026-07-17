@@ -61,6 +61,10 @@ export default function LoginScreen() {
         <Pressable onPress={() => router.push("/(auth)/activation")} className="mt-3">
           <Text className="text-center text-xs text-slate-500">Première connexion ? Activer mon compte</Text>
         </Pressable>
+
+        <Pressable onPress={() => router.push("/(auth)/invitation")} className="mt-2">
+          <Text className="text-center text-xs text-slate-500">J'ai un code d'invitation</Text>
+        </Pressable>
       </View>
     </View>
   );

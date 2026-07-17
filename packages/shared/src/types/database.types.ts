@@ -455,6 +455,71 @@ export type Database = {
           },
         ]
       }
+      invitations: {
+        Row: {
+          actif: boolean
+          classe_id: string | null
+          code: string
+          created_at: string
+          created_by: string | null
+          eleve_id: string | null
+          etablissement_id: string
+          id: string
+          role: Database["public"]["Enums"]["role_utilisateur"]
+        }
+        Insert: {
+          actif?: boolean
+          classe_id?: string | null
+          code: string
+          created_at?: string
+          created_by?: string | null
+          eleve_id?: string | null
+          etablissement_id: string
+          id?: string
+          role: Database["public"]["Enums"]["role_utilisateur"]
+        }
+        Update: {
+          actif?: boolean
+          classe_id?: string | null
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          eleve_id?: string | null
+          etablissement_id?: string
+          id?: string
+          role?: Database["public"]["Enums"]["role_utilisateur"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invitations_classe_id_fkey"
+            columns: ["classe_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_eleve_id_fkey"
+            columns: ["eleve_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invitations_etablissement_id_fkey"
+            columns: ["etablissement_id"]
+            isOneToOne: false
+            referencedRelation: "etablissements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       liens_parents_eleves: {
         Row: {
           eleve_id: string
@@ -1012,6 +1077,17 @@ export type Database = {
       est_destinataire_message: {
         Args: { p_message_id: string }
         Returns: boolean
+      }
+      invitation_par_code: {
+        Args: { p_code: string }
+        Returns: {
+          classe_nom: string
+          eleve_nom: string
+          eleve_prenom: string
+          etablissement_nom: string
+          id: string
+          role: Database["public"]["Enums"]["role_utilisateur"]
+        }[]
       }
       matiere_classe_classe_id: {
         Args: { p_matiere_classe_id: string }
