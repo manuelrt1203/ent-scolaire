@@ -1,7 +1,7 @@
 import { View, Text, Pressable, ScrollView } from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useAuth } from "@ent/shared";
+import { useAuth, useNombreNonLus } from "@ent/shared";
 
 const LIENS: { label: string; segment: string }[] = [
   { label: "Notes", segment: "" },
@@ -16,8 +16,9 @@ const LIENS: { label: string; segment: string }[] = [
 ];
 
 export function TopNav({ basePath }: { basePath: string }) {
-  const { profile, signOut } = useAuth();
+  const { client, profile, signOut } = useAuth();
   const router = useRouter();
+  const nonLusQuery = useNombreNonLus(client);
 
   async function handleSignOut() {
     await signOut();
@@ -29,8 +30,17 @@ export function TopNav({ basePath }: { basePath: string }) {
       <View className="flex-row items-center justify-between px-4 py-2">
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="flex-row items-center gap-4">
           {LIENS.map((lien) => (
-            <Pressable key={lien.segment} onPress={() => router.push(`${basePath}${lien.segment}` as never)}>
+            <Pressable
+              key={lien.segment}
+              onPress={() => router.push(`${basePath}${lien.segment}` as never)}
+              className="flex-row items-center gap-1"
+            >
               <Text className="text-sm font-medium text-slate-700">{lien.label}</Text>
+              {lien.segment === "/messagerie" && Boolean(nonLusQuery.data) && (
+                <View className="rounded-full bg-red-500 px-1.5 py-0.5">
+                  <Text className="text-xs font-semibold text-white">{nonLusQuery.data}</Text>
+                </View>
+              )}
             </Pressable>
           ))}
         </ScrollView>

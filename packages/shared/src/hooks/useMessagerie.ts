@@ -27,8 +27,15 @@ export function useMessageThread(client: EntSupabaseClient, messageId: string | 
   });
 }
 
+/** Utilisé pour le badge non-lu de la nav (desktop et mobile) : rafraîchi
+ * périodiquement plutôt qu'en temps réel (pas de souscription Realtime,
+ * volontairement simple). */
 export function useNombreNonLus(client: EntSupabaseClient) {
-  return useQuery({ queryKey: ["messagerie", "unread-count"], queryFn: () => getNombreNonLus(client) });
+  return useQuery({
+    queryKey: ["messagerie", "unread-count"],
+    queryFn: () => getNombreNonLus(client),
+    refetchInterval: 30000,
+  });
 }
 
 export function useEnvoyerMessage(client: EntSupabaseClient) {

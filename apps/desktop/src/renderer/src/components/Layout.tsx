@@ -1,24 +1,28 @@
 import { NavLink, Outlet } from "react-router-dom";
-import { useAuth } from "@ent/shared";
+import { useAuth, useNombreNonLus } from "@ent/shared";
 import type { ReactNode } from "react";
 
-function NavItem({ to, children }: { to: string; children: ReactNode }) {
+function NavItem({ to, children, badge }: { to: string; children: ReactNode; badge?: number }) {
   return (
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `block rounded-md px-3 py-2 text-sm font-medium ${
+        `flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium ${
           isActive ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
         }`
       }
     >
-      {children}
+      <span>{children}</span>
+      {Boolean(badge) && (
+        <span className="ml-2 rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold text-white">{badge}</span>
+      )}
     </NavLink>
   );
 }
 
 export function Layout({ nav }: { nav: { to: string; label: string }[] }) {
-  const { profile, signOut } = useAuth();
+  const { client, profile, signOut } = useAuth();
+  const nonLusQuery = useNombreNonLus(client);
 
   return (
     <div className="flex h-screen bg-slate-50">
@@ -31,7 +35,7 @@ export function Layout({ nav }: { nav: { to: string; label: string }[] }) {
         </div>
         <nav className="flex flex-1 flex-col gap-1">
           {nav.map((item) => (
-            <NavItem key={item.to} to={item.to}>
+            <NavItem key={item.to} to={item.to} badge={item.to.endsWith("/messagerie") ? nonLusQuery.data : undefined}>
               {item.label}
             </NavItem>
           ))}
