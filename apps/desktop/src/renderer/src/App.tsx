@@ -2,11 +2,12 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { RequireRole } from "./components/RequireRole";
 import { RootRedirect } from "./components/RootRedirect";
 import { Layout } from "./components/Layout";
+import { DIRECTION_NAV, PROFESSEUR_NAV } from "./nav";
 import { LoginScreen } from "./screens/auth/LoginScreen";
 import { ActivationScreen } from "./screens/auth/ActivationScreen";
 import { InscriptionEtablissementScreen } from "./screens/auth/InscriptionEtablissementScreen";
 import { InvitationScreen } from "./screens/auth/InvitationScreen";
-import { DashboardScreen } from "./screens/direction/DashboardScreen";
+import { AccueilScreen } from "./screens/AccueilScreen";
 import { ClassesScreen } from "./screens/direction/ClassesScreen";
 import { MatieresScreen } from "./screens/direction/MatieresScreen";
 import { MatiereClasseScreen } from "./screens/direction/MatiereClasseScreen";
@@ -37,40 +38,6 @@ import { SentScreen } from "./screens/messagerie/SentScreen";
 import { ComposeScreen } from "./screens/messagerie/ComposeScreen";
 import { MessageDetailScreen } from "./screens/messagerie/MessageDetailScreen";
 
-const DIRECTION_NAV = [
-  { to: "/direction", label: "Tableau de bord" },
-  { to: "/direction/classes", label: "Classes" },
-  { to: "/direction/matieres", label: "Matières" },
-  { to: "/direction/matieres-classes", label: "Matières / classes" },
-  { to: "/direction/affectations", label: "Affectations profs" },
-  { to: "/direction/inscriptions", label: "Inscriptions élèves" },
-  { to: "/direction/utilisateurs", label: "Utilisateurs" },
-  { to: "/direction/invitations", label: "Invitations" },
-  { to: "/direction/liens", label: "Liens parents-élèves" },
-  { to: "/direction/releves", label: "Relevés à examiner" },
-  { to: "/direction/emploi-du-temps", label: "Emploi du temps" },
-  { to: "/direction/vie-scolaire", label: "Vie scolaire" },
-  { to: "/direction/cahier-textes", label: "Cahier de textes" },
-  { to: "/direction/ressources", label: "Ressources pédagogiques" },
-  { to: "/direction/actualites", label: "Actualités" },
-  { to: "/direction/calendrier", label: "Calendrier" },
-  { to: "/direction/annuaire", label: "Annuaire" },
-  { to: "/direction/messagerie", label: "Messagerie" },
-];
-
-const PROFESSEUR_NAV = [
-  { to: "/professeur", label: "Mes classes" },
-  { to: "/professeur/saisie", label: "Saisie des notes" },
-  { to: "/professeur/emploi-du-temps", label: "Emploi du temps" },
-  { to: "/professeur/vie-scolaire", label: "Vie scolaire" },
-  { to: "/professeur/cahier-textes", label: "Cahier de textes" },
-  { to: "/professeur/ressources", label: "Ressources pédagogiques" },
-  { to: "/professeur/actualites", label: "Actualités" },
-  { to: "/professeur/calendrier", label: "Calendrier" },
-  { to: "/professeur/annuaire", label: "Annuaire" },
-  { to: "/professeur/messagerie", label: "Messagerie" },
-];
-
 const messagerieRoutes = (
   <>
     <Route path="messagerie" element={<InboxScreen />} />
@@ -94,11 +61,11 @@ export function App() {
           path="/direction"
           element={
             <RequireRole role="direction">
-              <Layout nav={DIRECTION_NAV} />
+              <Layout nav={DIRECTION_NAV} homePath="/direction" />
             </RequireRole>
           }
         >
-          <Route index element={<DashboardScreen />} />
+          <Route index element={<AccueilScreen nav={DIRECTION_NAV} />} />
           <Route path="classes" element={<ClassesScreen />} />
           <Route path="matieres" element={<MatieresScreen />} />
           <Route path="matieres-classes" element={<MatiereClasseScreen />} />
@@ -123,11 +90,12 @@ export function App() {
           path="/professeur"
           element={
             <RequireRole role="professeur">
-              <Layout nav={PROFESSEUR_NAV} />
+              <Layout nav={PROFESSEUR_NAV} homePath="/professeur" />
             </RequireRole>
           }
         >
-          <Route index element={<MesClassesScreen />} />
+          <Route index element={<AccueilScreen nav={PROFESSEUR_NAV} />} />
+          <Route path="mes-classes" element={<MesClassesScreen />} />
           <Route path="saisie" element={<SaisieNotesScreen />} />
           <Route path="emploi-du-temps" element={<MonEmploiDuTempsScreen />} />
           <Route path="vie-scolaire" element={<VieScolaireProfesseurScreen />} />

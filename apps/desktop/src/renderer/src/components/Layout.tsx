@@ -1,49 +1,75 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth, useNombreNonLus } from "@ent/shared";
-import type { ReactNode } from "react";
+import { CATEGORIES, type NavItem } from "../nav";
 
-function NavItem({ to, children, badge }: { to: string; children: ReactNode; badge?: number }) {
-  return (
-    <NavLink
-      to={to}
-      className={({ isActive }) =>
-        `flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium ${
-          isActive ? "bg-slate-900 text-white" : "text-slate-600 hover:bg-slate-100"
-        }`
-      }
-    >
-      <span>{children}</span>
-      {Boolean(badge) && (
-        <span className="ml-2 rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold text-white">{badge}</span>
-      )}
-    </NavLink>
-  );
-}
-
-export function Layout({ nav }: { nav: { to: string; label: string }[] }) {
+export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) {
   const { client, profile, signOut } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const nonLusQuery = useNombreNonLus(client);
 
+  const categoriesPresentes = Array.from(new Set(nav.map((item) => item.category)));
+
+  const estSurAccueil = location.pathname === homePath;
+  const categorieActive = estSurAccueil
+    ? (searchParams.get("categorie") ?? "tous")
+    : (nav.find((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`))?.category ?? "tous");
+
+  function allerVersCategorie(categorie: string) {
+    navigate(categorie === "tous" ? homePath : `${homePath}?categorie=${categorie}`);
+  }
+
   return (
-    <div className="flex h-screen bg-slate-50">
-      <aside className="flex w-56 flex-col border-r border-slate-200 bg-white p-4">
-        <div className="mb-6">
-          <p className="text-sm font-semibold text-slate-900">ENT Scolaire</p>
-          <p className="text-xs text-slate-500">
-            {profile?.prenom} {profile?.nom}
-          </p>
-        </div>
-        <nav className="flex flex-1 flex-col gap-1">
-          {nav.map((item) => (
-            <NavItem key={item.to} to={item.to} badge={item.to.endsWith("/messagerie") ? nonLusQuery.data : undefined}>
-              {item.label}
-            </NavItem>
-          ))}
-        </nav>
-        <button onClick={() => signOut()} className="mt-4 rounded-md px-3 py-2 text-left text-sm text-slate-500 hover:bg-slate-100">
-          Se déconnecter
+    <div className="flex min-h-screen flex-col bg-slate-50">
+      <header className="flex items-center justify-between bg-slate-900 px-6 py-3">
+        <button onClick={() => navigate(homePath)} className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-white text-sm font-bold text-slate-900">E</div>
+          <span className="text-sm font-semibold text-white">ENT Scolaire</span>
         </button>
-      </aside>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-slate-300">
+            {profile?.prenom} {profile?.nom}
+          </span>
+          <button onClick={() => signOut()} className="text-sm text-slate-400 hover:text-white">
+            Déconnexion
+          </button>
+        </div>
+      </header>
+
+      <nav className="border-b border-slate-200 bg-white px-6">
+        <div className="flex gap-6 overflow-x-auto">
+          <button
+            onClick={() => allerVersCategorie("tous")}
+            className={`border-b-2 px-1 py-3 text-sm font-medium uppercase tracking-wide transition-colors ${
+              categorieActive === "tous"
+                ? "border-slate-900 text-slate-900"
+                : "border-transparent text-slate-500 hover:text-slate-700"
+            }`}
+          >
+            Tous
+          </button>
+          {categoriesPresentes.map((categorie) => (
+            <button
+              key={categorie}
+              onClick={() => allerVersCategorie(categorie)}
+              className={`flex items-center gap-1.5 border-b-2 px-1 py-3 text-sm font-medium uppercase tracking-wide transition-colors ${
+                categorieActive === categorie
+                  ? "border-slate-900 text-slate-900"
+                  : "border-transparent text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              {CATEGORIES[categorie]}
+              {categorie === "communication" && Boolean(nonLusQuery.data) && (
+                <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-xs font-semibold normal-case text-white">
+                  {nonLusQuery.data}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      </nav>
+
       <main className="flex-1 overflow-y-auto p-8">
         <Outlet />
       </main>
