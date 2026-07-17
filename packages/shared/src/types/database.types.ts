@@ -842,6 +842,61 @@ export type Database = {
           },
         ]
       }
+      ressources_pedagogiques: {
+        Row: {
+          chemin_fichier: string
+          created_at: string
+          id: string
+          matiere_classe_id: string
+          professeur_id: string | null
+          taille_octets: number | null
+          titre: string
+          type_mime: string | null
+        }
+        Insert: {
+          chemin_fichier: string
+          created_at?: string
+          id?: string
+          matiere_classe_id: string
+          professeur_id?: string | null
+          taille_octets?: number | null
+          titre: string
+          type_mime?: string | null
+        }
+        Update: {
+          chemin_fichier?: string
+          created_at?: string
+          id?: string
+          matiere_classe_id?: string
+          professeur_id?: string | null
+          taille_octets?: number | null
+          titre?: string
+          type_mime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ressources_pedagogiques_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "matiere_classe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ressources_pedagogiques_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "v_bulletin"
+            referencedColumns: ["matiere_classe_id"]
+          },
+          {
+            foreignKeyName: "ressources_pedagogiques_professeur_id_fkey"
+            columns: ["professeur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       releves_notes: {
         Row: {
           commentaire_direction: string | null

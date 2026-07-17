@@ -8,6 +8,7 @@ const LIENS: { label: string; segment: string }[] = [
   { label: "Emploi du temps", segment: "/emploi-du-temps" },
   { label: "Vie scolaire", segment: "/vie-scolaire" },
   { label: "Cahier de textes", segment: "/cahier-textes" },
+  { label: "Ressources", segment: "/ressources" },
   { label: "Actualités", segment: "/actualites" },
   { label: "Calendrier", segment: "/calendrier" },
   { label: "Annuaire", segment: "/annuaire" },

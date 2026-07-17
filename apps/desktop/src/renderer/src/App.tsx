@@ -21,6 +21,7 @@ import { VieScolaireScreen as VieScolaireDirectionScreen } from "./screens/direc
 import { CahierTexteScreen as CahierTexteDirectionScreen } from "./screens/direction/CahierTexteScreen";
 import { ActualitesScreen } from "./screens/direction/ActualitesScreen";
 import { CalendrierScreen as CalendrierDirectionScreen } from "./screens/direction/CalendrierScreen";
+import { RessourcesScreen as RessourcesDirectionScreen } from "./screens/direction/RessourcesScreen";
 import { MesClassesScreen } from "./screens/professeur/MesClassesScreen";
 import { SaisieNotesScreen } from "./screens/professeur/SaisieNotesScreen";
 import { MonEmploiDuTempsScreen } from "./screens/professeur/MonEmploiDuTempsScreen";
@@ -28,6 +29,7 @@ import { VieScolaireScreen as VieScolaireProfesseurScreen } from "./screens/prof
 import { CahierTexteScreen as CahierTexteProfesseurScreen } from "./screens/professeur/CahierTexteScreen";
 import { ActualitesScreen as ActualitesProfesseurScreen } from "./screens/professeur/ActualitesScreen";
 import { CalendrierScreen as CalendrierProfesseurScreen } from "./screens/professeur/CalendrierScreen";
+import { RessourcesScreen as RessourcesProfesseurScreen } from "./screens/professeur/RessourcesScreen";
 import { AnnuaireScreen } from "./screens/AnnuaireScreen";
 import { InvitationsScreen } from "./screens/direction/InvitationsScreen";
 import { InboxScreen } from "./screens/messagerie/InboxScreen";
@@ -49,6 +51,7 @@ const DIRECTION_NAV = [
   { to: "/direction/emploi-du-temps", label: "Emploi du temps" },
   { to: "/direction/vie-scolaire", label: "Vie scolaire" },
   { to: "/direction/cahier-textes", label: "Cahier de textes" },
+  { to: "/direction/ressources", label: "Ressources pédagogiques" },
   { to: "/direction/actualites", label: "Actualités" },
   { to: "/direction/calendrier", label: "Calendrier" },
   { to: "/direction/annuaire", label: "Annuaire" },
@@ -61,6 +64,7 @@ const PROFESSEUR_NAV = [
   { to: "/professeur/emploi-du-temps", label: "Emploi du temps" },
   { to: "/professeur/vie-scolaire", label: "Vie scolaire" },
   { to: "/professeur/cahier-textes", label: "Cahier de textes" },
+  { to: "/professeur/ressources", label: "Ressources pédagogiques" },
   { to: "/professeur/actualites", label: "Actualités" },
   { to: "/professeur/calendrier", label: "Calendrier" },
   { to: "/professeur/annuaire", label: "Annuaire" },
@@ -108,6 +112,7 @@ export function App() {
           <Route path="emploi-du-temps" element={<EmploiDuTempsScreen />} />
           <Route path="vie-scolaire" element={<VieScolaireDirectionScreen />} />
           <Route path="cahier-textes" element={<CahierTexteDirectionScreen />} />
+          <Route path="ressources" element={<RessourcesDirectionScreen />} />
           <Route path="actualites" element={<ActualitesScreen />} />
           <Route path="calendrier" element={<CalendrierDirectionScreen />} />
           <Route path="annuaire" element={<AnnuaireScreen />} />
@@ -127,6 +132,7 @@ export function App() {
           <Route path="emploi-du-temps" element={<MonEmploiDuTempsScreen />} />
           <Route path="vie-scolaire" element={<VieScolaireProfesseurScreen />} />
           <Route path="cahier-textes" element={<CahierTexteProfesseurScreen />} />
+          <Route path="ressources" element={<RessourcesProfesseurScreen />} />
           <Route path="actualites" element={<ActualitesProfesseurScreen />} />
           <Route path="calendrier" element={<CalendrierProfesseurScreen />} />
           <Route path="annuaire" element={<AnnuaireScreen />} />
