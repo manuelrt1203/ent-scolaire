@@ -1,5 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { FlatList, Linking, Pressable, Text, View } from "react-native";
+import { FlatList, Pressable, Text, View } from "react-native";
+import { File, Paths } from "expo-file-system";
+import * as Sharing from "expo-sharing";
 import { useAuth, getClasseEleve, useRessourcesClasse, getRessourceSignedUrl } from "@ent/shared";
 import { useViewedEleveId } from "../../../lib/ViewedEleveContext";
 
@@ -27,9 +29,15 @@ export function RessourcesScreen() {
 
   const ressourcesQuery = useRessourcesClasse(client, classeId);
 
-  async function handleOuvrir(cheminFichier: string) {
+  async function handleTelecharger(titre: string, cheminFichier: string) {
     const url = await getRessourceSignedUrl(client, cheminFichier);
-    await Linking.openURL(url);
+    const extension = cheminFichier.includes(".") ? cheminFichier.slice(cheminFichier.lastIndexOf(".")) : "";
+    const nomFichier = `${titre.replace(/[^\w.-]+/g, "_")}${extension}`;
+    const destination = new File(Paths.cache, nomFichier);
+    const fichier = await File.downloadFileAsync(url, destination, { idempotent: true });
+    if (await Sharing.isAvailableAsync()) {
+      await Sharing.shareAsync(fichier.uri);
+    }
   }
 
   return (
@@ -50,8 +58,8 @@ export function RessourcesScreen() {
               {ressource.taille_octets ? ` · ${formatTaille(ressource.taille_octets)}` : ""}
             </Text>
           </View>
-          <Pressable onPress={() => handleOuvrir(ressource.chemin_fichier)}>
-            <Text className="text-sm font-medium text-slate-700">Ouvrir</Text>
+          <Pressable onPress={() => handleTelecharger(ressource.titre, ressource.chemin_fichier)}>
+            <Text className="text-sm font-medium text-slate-700">Télécharger</Text>
           </Pressable>
         </View>
       )}

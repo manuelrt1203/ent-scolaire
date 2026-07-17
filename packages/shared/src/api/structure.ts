@@ -9,6 +9,12 @@ export type Inscription = Tables<"inscriptions">;
 export type LienParentEleve = Tables<"liens_parents_eleves">;
 export type Role = Enums<"role_utilisateur">;
 
+export async function getEtablissement(client: EntSupabaseClient, etablissementId: string) {
+  const { data, error } = await client.from("etablissements").select("*").eq("id", etablissementId).single();
+  if (error) throw error;
+  return data;
+}
+
 export async function getAnneeScolaireActive(client: EntSupabaseClient, etablissementId: string) {
   const { data, error } = await client
     .from("annees_scolaires")

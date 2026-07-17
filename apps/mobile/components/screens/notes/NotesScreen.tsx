@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { useAuth, usePeriodes, useBulletin, useMoyenneGenerale, formatMoyenne } from "@ent/shared";
+import { useQuery } from "@tanstack/react-query";
+import * as Print from "expo-print";
+import * as Sharing from "expo-sharing";
+import {
+  useAuth,
+  usePeriodes,
+  useBulletin,
+  useMoyenneGenerale,
+  formatMoyenne,
+  getClasseEleve,
+  getProfile,
+  getEtablissement,
+  buildBulletinHtml,
+} from "@ent/shared";
 import { useViewedEleveId } from "../../../lib/ViewedEleveContext";
 
 export function NotesScreen() {
-  const { client } = useAuth();
+  const { client, profile } = useAuth();
   const router = useRouter();
   const eleveId = useViewedEleveId();
 
@@ -21,6 +34,41 @@ export function NotesScreen() {
 
   const bulletinQuery = useBulletin(client, eleveId, periodeId);
   const moyenneGeneraleQuery = useMoyenneGenerale(client, eleveId, periodeId);
+
+  const classeQuery = useQuery({
+    queryKey: ["classe-eleve", eleveId],
+    queryFn: () => getClasseEleve(client, eleveId as string),
+    enabled: Boolean(eleveId),
+  });
+
+  const [telechargementEnCours, setTelechargementEnCours] = useState(false);
+
+  async function handleTelechargerBulletin() {
+    if (!eleveId || !periodeId || !profile || !bulletinQuery.data) return;
+    setTelechargementEnCours(true);
+    try {
+      const [eleveProfile, etablissement] = await Promise.all([
+        eleveId === profile.id ? Promise.resolve(profile) : getProfile(client, eleveId),
+        getEtablissement(client, profile.etablissement_id),
+      ]);
+      const periode = periodesQuery.data?.find((p) => p.id === periodeId);
+      const html = buildBulletinHtml({
+        etablissementNom: etablissement?.nom ?? "",
+        eleveNom: eleveProfile?.nom ?? "",
+        elevePrenom: eleveProfile?.prenom ?? "",
+        classeNom: classeQuery.data?.classes?.nom ?? null,
+        periodeNom: periode?.nom ?? "",
+        lignes: bulletinQuery.data,
+        moyenneGenerale: moyenneGeneraleQuery.data ?? null,
+      });
+      const { uri } = await Print.printToFileAsync({ html });
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri);
+      }
+    } finally {
+      setTelechargementEnCours(false);
+    }
+  }
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -46,6 +94,18 @@ export function NotesScreen() {
           <Text className="text-sm text-slate-300">Moyenne générale</Text>
           <Text className="text-3xl font-semibold text-white">{formatMoyenne(moyenneGeneraleQuery.data ?? null)}</Text>
         </View>
+
+        {bulletinQuery.data && bulletinQuery.data.length > 0 && (
+          <Pressable
+            onPress={handleTelechargerBulletin}
+            disabled={telechargementEnCours}
+            className="mb-4 rounded-lg border border-slate-300 bg-white px-4 py-3 disabled:opacity-50"
+          >
+            <Text className="text-center text-sm font-medium text-slate-700">
+              {telechargementEnCours ? "Génération…" : "Télécharger le bulletin (PDF)"}
+            </Text>
+          </Pressable>
+        )}
 
         {bulletinQuery.data?.map((ligne) => (
           <Pressable

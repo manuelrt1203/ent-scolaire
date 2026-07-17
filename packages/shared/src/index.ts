@@ -3,6 +3,7 @@ export * from "./supabase/createClient";
 export * from "./domain/noteStatus";
 export * from "./domain/moyenne";
 export * from "./domain/classe";
+export * from "./domain/bulletinHtml";
 export * from "./api/auth";
 export * from "./api/structure";
 export * from "./api/notes";
