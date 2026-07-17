@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth, getMatieres, createMatiere } from "@ent/shared";
+import { useAuth, getMatieres, createMatiere, updateMatiere, deleteMatiere } from "@ent/shared";
 
 export function MatieresScreen() {
   const { client, profile } = useAuth();
   const queryClient = useQueryClient();
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [nom, setNom] = useState("");
   const [code, setCode] = useState("");
 
@@ -13,16 +14,43 @@ export function MatieresScreen() {
   const createMutation = useMutation({
     mutationFn: () => createMatiere(client, { nom, code: code || null, etablissement_id: profile!.etablissement_id }),
     onSuccess: () => {
-      setNom("");
-      setCode("");
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ["matieres"] });
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: () => updateMatiere(client, editingId as string, { nom, code: code || null }),
+    onSuccess: () => {
+      resetForm();
+      queryClient.invalidateQueries({ queryKey: ["matieres"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteMatiere(client, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["matieres"] }),
+  });
+
+  function resetForm() {
+    setEditingId(null);
+    setNom("");
+    setCode("");
+  }
+
+  function handleEdit(m: { id: string; nom: string; code: string | null }) {
+    setEditingId(m.id);
+    setNom(m.nom);
+    setCode(m.code ?? "");
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    createMutation.mutate();
+    if (editingId) updateMutation.mutate();
+    else createMutation.mutate();
   }
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div className="max-w-2xl">
@@ -50,11 +78,16 @@ export function MatieresScreen() {
         </div>
         <button
           type="submit"
-          disabled={createMutation.isPending}
+          disabled={isPending}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          Ajouter
+          {editingId ? "Enregistrer" : "Ajouter"}
         </button>
+        {editingId && (
+          <button type="button" onClick={resetForm} className="px-2 py-2 text-xs text-slate-500 hover:underline">
+            Annuler
+          </button>
+        )}
       </form>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -63,6 +96,7 @@ export function MatieresScreen() {
             <tr>
               <th className="px-4 py-2">Nom</th>
               <th className="px-4 py-2">Code</th>
+              <th className="px-4 py-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -70,6 +104,14 @@ export function MatieresScreen() {
               <tr key={m.id}>
                 <td className="px-4 py-2 text-slate-900">{m.nom}</td>
                 <td className="px-4 py-2 text-slate-500">{m.code ?? "—"}</td>
+                <td className="px-4 py-2 text-right">
+                  <button onClick={() => handleEdit(m)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
+                    Modifier
+                  </button>
+                  <button onClick={() => deleteMutation.mutate(m.id)} className="text-xs text-slate-400 hover:text-red-600">
+                    Supprimer
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

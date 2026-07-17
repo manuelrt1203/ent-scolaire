@@ -4,6 +4,8 @@ import {
   useAuth,
   getClasses,
   createClasse,
+  updateClasse,
+  deleteClasse,
   getAnneeScolaireActive,
   CYCLE_LABELS,
   CYCLES_ORDRE,
@@ -14,6 +16,7 @@ import {
 export function ClassesScreen() {
   const { client, profile } = useAuth();
   const queryClient = useQueryClient();
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [nom, setNom] = useState("");
   const [cycle, setCycle] = useState<CycleScolaire>("college");
   const [niveau, setNiveau] = useState(NIVEAUX_PAR_CYCLE.college[0]);
@@ -35,21 +38,54 @@ export function ClassesScreen() {
         annee_scolaire_id: anneeQuery.data!.id,
       }),
     onSuccess: () => {
-      setNom("");
+      resetForm();
       queryClient.invalidateQueries({ queryKey: ["classes"] });
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: () => updateClasse(client, editingId as string, { nom, cycle, niveau }),
+    onSuccess: () => {
+      resetForm();
+      queryClient.invalidateQueries({ queryKey: ["classes"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteClasse(client, id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["classes"] }),
+  });
+
+  function resetForm() {
+    setEditingId(null);
+    setNom("");
+    setCycle("college");
+    setNiveau(NIVEAUX_PAR_CYCLE.college[0]);
+  }
 
   function handleCycleChange(nouveauCycle: CycleScolaire) {
     setCycle(nouveauCycle);
     setNiveau(NIVEAUX_PAR_CYCLE[nouveauCycle][0]);
   }
 
+  function handleEdit(c: { id: string; nom: string; cycle: CycleScolaire; niveau: string }) {
+    setEditingId(c.id);
+    setNom(c.nom);
+    setCycle(c.cycle);
+    setNiveau(c.niveau);
+  }
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!anneeQuery.data) return;
-    createMutation.mutate();
+    if (editingId) {
+      updateMutation.mutate();
+    } else {
+      if (!anneeQuery.data) return;
+      createMutation.mutate();
+    }
   }
+
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <div className="max-w-2xl">
@@ -92,11 +128,16 @@ export function ClassesScreen() {
         </div>
         <button
           type="submit"
-          disabled={createMutation.isPending || !anneeQuery.data}
+          disabled={isPending || (!editingId && !anneeQuery.data)}
           className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          Ajouter
+          {editingId ? "Enregistrer" : "Ajouter"}
         </button>
+        {editingId && (
+          <button type="button" onClick={resetForm} className="px-2 py-2 text-xs text-slate-500 hover:underline">
+            Annuler
+          </button>
+        )}
       </form>
 
       <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
@@ -106,6 +147,7 @@ export function ClassesScreen() {
               <th className="px-4 py-2">Nom</th>
               <th className="px-4 py-2">Cycle</th>
               <th className="px-4 py-2">Niveau</th>
+              <th className="px-4 py-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -114,6 +156,14 @@ export function ClassesScreen() {
                 <td className="px-4 py-2 text-slate-900">{c.nom}</td>
                 <td className="px-4 py-2 text-slate-500">{CYCLE_LABELS[c.cycle]}</td>
                 <td className="px-4 py-2 text-slate-500">{c.niveau}</td>
+                <td className="px-4 py-2 text-right">
+                  <button onClick={() => handleEdit(c)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
+                    Modifier
+                  </button>
+                  <button onClick={() => deleteMutation.mutate(c.id)} className="text-xs text-slate-400 hover:text-red-600">
+                    Supprimer
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

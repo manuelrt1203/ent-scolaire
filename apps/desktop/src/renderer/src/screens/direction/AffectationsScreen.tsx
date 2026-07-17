@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth, getUtilisateurs, getMatiereClasses, getAffectations, createAffectation } from "@ent/shared";
+import { useAuth, getUtilisateurs, getMatiereClasses, getAffectations, createAffectation, deleteAffectation } from "@ent/shared";
 
 export function AffectationsScreen() {
   const { client } = useAuth();
@@ -14,6 +14,11 @@ export function AffectationsScreen() {
 
   const createMutation = useMutation({
     mutationFn: () => createAffectation(client, professeurId, matiereClasseId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["affectations"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAffectation(client, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["affectations"] }),
   });
 
@@ -58,6 +63,7 @@ export function AffectationsScreen() {
               <th className="px-4 py-2">Professeur</th>
               <th className="px-4 py-2">Matière</th>
               <th className="px-4 py-2">Classe</th>
+              <th className="px-4 py-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -66,6 +72,11 @@ export function AffectationsScreen() {
                 <td className="px-4 py-2 text-slate-900">{a.profiles?.prenom} {a.profiles?.nom}</td>
                 <td className="px-4 py-2 text-slate-500">{a.matiere_classe?.matieres?.nom}</td>
                 <td className="px-4 py-2 text-slate-500">{a.matiere_classe?.classes?.nom}</td>
+                <td className="px-4 py-2 text-right">
+                  <button onClick={() => deleteMutation.mutate(a.id)} className="text-xs text-slate-400 hover:text-red-600">
+                    Supprimer
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

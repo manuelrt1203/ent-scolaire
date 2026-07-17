@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth, getUtilisateurs, getLiensParentsEleves, createLienParentEleve } from "@ent/shared";
+import { useAuth, getUtilisateurs, getLiensParentsEleves, createLienParentEleve, deleteLienParentEleve } from "@ent/shared";
 
 export function LiensParentsElevesScreen() {
   const { client } = useAuth();
@@ -14,6 +14,11 @@ export function LiensParentsElevesScreen() {
 
   const createMutation = useMutation({
     mutationFn: () => createLienParentEleve(client, parentId, eleveId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["liens"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteLienParentEleve(client, id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["liens"] }),
   });
 
@@ -57,6 +62,7 @@ export function LiensParentsElevesScreen() {
             <tr>
               <th className="px-4 py-2">Parent</th>
               <th className="px-4 py-2">Élève</th>
+              <th className="px-4 py-2" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -64,6 +70,11 @@ export function LiensParentsElevesScreen() {
               <tr key={l.id}>
                 <td className="px-4 py-2 text-slate-900">{l.parent?.prenom} {l.parent?.nom}</td>
                 <td className="px-4 py-2 text-slate-500">{l.eleve?.prenom} {l.eleve?.nom}</td>
+                <td className="px-4 py-2 text-right">
+                  <button onClick={() => deleteMutation.mutate(l.id)} className="text-xs text-slate-400 hover:text-red-600">
+                    Supprimer
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>

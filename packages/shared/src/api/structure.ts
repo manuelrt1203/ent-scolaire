@@ -1,5 +1,5 @@
 import type { EntSupabaseClient } from "../supabase/createClient";
-import type { Enums, Tables, TablesInsert } from "../types/database.types";
+import type { Enums, Tables, TablesInsert, TablesUpdate } from "../types/database.types";
 
 export type Classe = Tables<"classes">;
 export type Matiere = Tables<"matieres">;
@@ -32,6 +32,17 @@ export async function createClasse(client: EntSupabaseClient, classe: TablesInse
   return data;
 }
 
+export async function updateClasse(client: EntSupabaseClient, id: string, classe: TablesUpdate<"classes">) {
+  const { data, error } = await client.from("classes").update(classe).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteClasse(client: EntSupabaseClient, id: string) {
+  const { error } = await client.from("classes").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function getMatieres(client: EntSupabaseClient) {
   const { data, error } = await client.from("matieres").select("*").order("nom");
   if (error) throw error;
@@ -42,6 +53,17 @@ export async function createMatiere(client: EntSupabaseClient, matiere: TablesIn
   const { data, error } = await client.from("matieres").insert(matiere).select().single();
   if (error) throw error;
   return data;
+}
+
+export async function updateMatiere(client: EntSupabaseClient, id: string, matiere: TablesUpdate<"matieres">) {
+  const { data, error } = await client.from("matieres").update(matiere).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteMatiere(client: EntSupabaseClient, id: string) {
+  const { error } = await client.from("matieres").delete().eq("id", id);
+  if (error) throw error;
 }
 
 export async function getMatiereClasses(client: EntSupabaseClient, classeId?: string) {
@@ -64,6 +86,21 @@ export async function createMatiereClasse(
   return data;
 }
 
+export async function updateMatiereClasse(
+  client: EntSupabaseClient,
+  id: string,
+  matiereClasse: TablesUpdate<"matiere_classe">,
+) {
+  const { data, error } = await client.from("matiere_classe").update(matiereClasse).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteMatiereClasse(client: EntSupabaseClient, id: string) {
+  const { error } = await client.from("matiere_classe").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function getAffectations(client: EntSupabaseClient) {
   const { data, error } = await client
     .from("affectations")
@@ -82,6 +119,11 @@ export async function createAffectation(client: EntSupabaseClient, professeurId:
   return data;
 }
 
+export async function deleteAffectation(client: EntSupabaseClient, id: string) {
+  const { error } = await client.from("affectations").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function getInscriptions(client: EntSupabaseClient, classeId?: string) {
   let query = client.from("inscriptions").select("*, profiles(nom, prenom, email)");
   if (classeId) query = query.eq("classe_id", classeId);
@@ -96,10 +138,34 @@ export async function createInscription(client: EntSupabaseClient, inscription: 
   return data;
 }
 
+export async function updateInscription(client: EntSupabaseClient, id: string, inscription: TablesUpdate<"inscriptions">) {
+  const { data, error } = await client.from("inscriptions").update(inscription).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteInscription(client: EntSupabaseClient, id: string) {
+  const { error } = await client.from("inscriptions").delete().eq("id", id);
+  if (error) throw error;
+}
+
 export async function getUtilisateurs(client: EntSupabaseClient, role?: Role) {
   let query = client.from("profiles").select("*").order("nom");
   if (role) query = query.eq("role", role);
   const { data, error } = await query;
+  if (error) throw error;
+  return data;
+}
+
+/** Édition limitée à nom/prénom/actif — jamais email ou role, qui touchent
+ * à auth.users et à des invariants d'accès trop risqués pour un simple
+ * formulaire d'édition. */
+export async function updateProfile(
+  client: EntSupabaseClient,
+  id: string,
+  profile: Pick<TablesUpdate<"profiles">, "nom" | "prenom" | "actif">,
+) {
+  const { data, error } = await client.from("profiles").update(profile).eq("id", id).select().single();
   if (error) throw error;
   return data;
 }
@@ -120,6 +186,11 @@ export async function getLiensParentsEleves(client: EntSupabaseClient) {
     .select("*, parent:parent_id(nom, prenom), eleve:eleve_id(nom, prenom)");
   if (error) throw error;
   return data;
+}
+
+export async function deleteLienParentEleve(client: EntSupabaseClient, id: string) {
+  const { error } = await client.from("liens_parents_eleves").delete().eq("id", id);
+  if (error) throw error;
 }
 
 /** Classe actuelle d'un élève (RLS inscriptions_select : l'élève lui-même, son
