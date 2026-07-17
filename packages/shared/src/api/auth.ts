@@ -40,3 +40,21 @@ export async function setPassword(client: EntSupabaseClient, password: string) {
   const { error } = await client.auth.updateUser({ password });
   if (error) throw error;
 }
+
+export interface RegisterEtablissementInput {
+  etablissementNom: string;
+  etablissementAdresse?: string;
+  directionNom: string;
+  directionPrenom: string;
+  directionEmail: string;
+}
+
+/** Inscription self-service d'un nouvel établissement (voir edge function
+ * register-etablissement) : crée l'établissement, l'année scolaire active
+ * et le premier compte direction, appelable par un visiteur non connecté.
+ * Le compte créé s'active ensuite via le flux normal (requestActivationCode). */
+export async function registerEtablissement(client: EntSupabaseClient, input: RegisterEtablissementInput) {
+  const { data, error } = await client.functions.invoke("register-etablissement", { body: input });
+  if (error) throw error;
+  return data as { etablissementId: string; directionEmail: string };
+}
