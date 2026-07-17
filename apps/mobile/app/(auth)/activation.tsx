@@ -27,7 +27,7 @@ export default function ActivationScreen() {
       // Message volontairement générique : ne pas révéler si l'email existe.
     } finally {
       setLoading(false);
-      setInfo("Si un compte existe avec cet email, un code à 6 chiffres vient d'être envoyé.");
+      setInfo("Si un compte existe avec cet email, un code vient d'être envoyé.");
       setStep("code");
     }
   }
@@ -98,12 +98,11 @@ export default function ActivationScreen() {
 
         {step === "code" && (
           <>
-            <Text className="mb-1 text-sm font-medium text-slate-700">Code à 6 chiffres</Text>
+            <Text className="mb-1 text-sm font-medium text-slate-700">Code reçu par email</Text>
             <TextInput
               value={code}
               onChangeText={setCode}
               keyboardType="number-pad"
-              maxLength={6}
               className="mb-4 rounded-md border border-slate-300 px-3 py-2 text-sm tracking-widest"
             />
             <Pressable onPress={handleVerifyCode} disabled={loading} className="mb-2 rounded-md bg-slate-900 px-3 py-3 disabled:opacity-50">

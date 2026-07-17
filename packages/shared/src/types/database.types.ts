@@ -195,23 +195,26 @@ export type Database = {
       classes: {
         Row: {
           annee_scolaire_id: string
+          cycle: Database["public"]["Enums"]["cycle_scolaire"]
           etablissement_id: string
           id: string
-          niveau: string | null
+          niveau: string
           nom: string
         }
         Insert: {
           annee_scolaire_id: string
+          cycle: Database["public"]["Enums"]["cycle_scolaire"]
           etablissement_id: string
           id?: string
-          niveau?: string | null
+          niveau: string
           nom: string
         }
         Update: {
           annee_scolaire_id?: string
+          cycle?: Database["public"]["Enums"]["cycle_scolaire"]
           etablissement_id?: string
           id?: string
-          niveau?: string | null
+          niveau?: string
           nom?: string
         }
         Relationships: [
@@ -1041,6 +1044,7 @@ export type Database = {
       }
     }
     Enums: {
+      cycle_scolaire: "primaire" | "college" | "lycee"
       role_utilisateur: "direction" | "professeur" | "eleve" | "parent"
       statut_note: "brouillon" | "soumise" | "validee" | "publiee"
     }

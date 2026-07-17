@@ -18,6 +18,22 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Appelée depuis un navigateur/Electron (contrairement aux scripts Node de
+// test qui ne sont pas soumis à CORS) : sans ces headers, le preflight
+// OPTIONS échoue et le client voit "Failed to send a request to the Edge
+// Function" sans jamais atteindre le code ci-dessous.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+function json(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 function anneeScolaireActive() {
   const now = new Date();
   const moisCourant = now.getMonth() + 1; // 1-12
@@ -30,8 +46,11 @@ function anneeScolaireActive() {
 }
 
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Méthode non autorisée" }), { status: 405 });
+    return json({ error: "Méthode non autorisée" }, 405);
   }
 
   const body = await req.json();
@@ -44,13 +63,10 @@ Deno.serve(async (req: Request) => {
   };
 
   if (!etablissementNom || !directionNom || !directionPrenom || !directionEmail) {
-    return new Response(
-      JSON.stringify({ error: "etablissementNom, directionNom, directionPrenom et directionEmail sont requis" }),
-      { status: 400 },
-    );
+    return json({ error: "etablissementNom, directionNom, directionPrenom et directionEmail sont requis" }, 400);
   }
   if (!EMAIL_RE.test(directionEmail)) {
-    return new Response(JSON.stringify({ error: "Adresse email invalide" }), { status: 400 });
+    return json({ error: "Adresse email invalide" }, 400);
   }
 
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -61,7 +77,7 @@ Deno.serve(async (req: Request) => {
     .select()
     .single();
   if (etablissementError) {
-    return new Response(JSON.stringify({ error: etablissementError.message }), { status: 400 });
+    return json({ error: etablissementError.message }, 400);
   }
 
   const { libelle, date_debut, date_fin } = anneeScolaireActive();
@@ -72,7 +88,7 @@ Deno.serve(async (req: Request) => {
     .single();
   if (anneeError) {
     await adminClient.from("etablissements").delete().eq("id", etablissement.id);
-    return new Response(JSON.stringify({ error: anneeError.message }), { status: 400 });
+    return json({ error: anneeError.message }, 400);
   }
 
   const tempPassword = crypto.randomUUID();
@@ -84,9 +100,7 @@ Deno.serve(async (req: Request) => {
   if (createError || !created.user) {
     await adminClient.from("annees_scolaires").delete().eq("id", anneeScolaire.id);
     await adminClient.from("etablissements").delete().eq("id", etablissement.id);
-    return new Response(JSON.stringify({ error: createError?.message ?? "Échec de création du compte" }), {
-      status: 400,
-    });
+    return json({ error: createError?.message ?? "Échec de création du compte" }, 400);
   }
 
   const { error: profileError } = await adminClient.from("profiles").insert({
@@ -101,11 +115,8 @@ Deno.serve(async (req: Request) => {
     await adminClient.auth.admin.deleteUser(created.user.id);
     await adminClient.from("annees_scolaires").delete().eq("id", anneeScolaire.id);
     await adminClient.from("etablissements").delete().eq("id", etablissement.id);
-    return new Response(JSON.stringify({ error: profileError.message }), { status: 400 });
+    return json({ error: profileError.message }, 400);
   }
 
-  return new Response(JSON.stringify({ etablissementId: etablissement.id, directionEmail }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return json({ etablissementId: etablissement.id, directionEmail }, 200);
 });

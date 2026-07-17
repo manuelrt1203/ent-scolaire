@@ -9,14 +9,33 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// Appelée depuis un navigateur/Electron : sans ces headers, le preflight
+// OPTIONS échoue et le client voit "Failed to send a request to the Edge
+// Function" sans jamais atteindre le code ci-dessous (voir même correctif
+// sur register-etablissement, découvert via un test réel dans l'app).
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+function json(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Méthode non autorisée" }), { status: 405 });
+    return json({ error: "Méthode non autorisée" }, 405);
   }
 
   const authHeader = req.headers.get("Authorization");
   if (!authHeader) {
-    return new Response(JSON.stringify({ error: "Non authentifié" }), { status: 401 });
+    return json({ error: "Non authentifié" }, 401);
   }
 
   const callerClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
@@ -27,7 +46,7 @@ Deno.serve(async (req: Request) => {
     data: { user: caller },
   } = await callerClient.auth.getUser();
   if (!caller) {
-    return new Response(JSON.stringify({ error: "Non authentifié" }), { status: 401 });
+    return json({ error: "Non authentifié" }, 401);
   }
 
   const { data: callerProfile } = await callerClient
@@ -37,7 +56,7 @@ Deno.serve(async (req: Request) => {
     .single();
 
   if (!callerProfile || callerProfile.role !== "direction") {
-    return new Response(JSON.stringify({ error: "Seule la direction peut créer un compte" }), { status: 403 });
+    return json({ error: "Seule la direction peut créer un compte" }, 403);
   }
 
   const body = await req.json();
@@ -49,10 +68,10 @@ Deno.serve(async (req: Request) => {
   };
 
   if (!email || !role || !nom || !prenom) {
-    return new Response(JSON.stringify({ error: "email, role, nom et prenom sont requis" }), { status: 400 });
+    return json({ error: "email, role, nom et prenom sont requis" }, 400);
   }
   if (!["direction", "professeur", "eleve", "parent"].includes(role)) {
-    return new Response(JSON.stringify({ error: "Rôle invalide" }), { status: 400 });
+    return json({ error: "Rôle invalide" }, 400);
   }
 
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -65,9 +84,7 @@ Deno.serve(async (req: Request) => {
     email_confirm: true,
   });
   if (createError || !created.user) {
-    return new Response(JSON.stringify({ error: createError?.message ?? "Échec de création du compte" }), {
-      status: 400,
-    });
+    return json({ error: createError?.message ?? "Échec de création du compte" }, 400);
   }
 
   const { error: profileError } = await adminClient.from("profiles").insert({
@@ -80,14 +97,11 @@ Deno.serve(async (req: Request) => {
   });
   if (profileError) {
     await adminClient.auth.admin.deleteUser(created.user.id);
-    return new Response(JSON.stringify({ error: profileError.message }), { status: 400 });
+    return json({ error: profileError.message }, 400);
   }
 
   // Pas de lien à transmettre : la personne active elle-même son compte via
   // "Première connexion" (code à 6 chiffres envoyé par email, voir
   // requestActivationCode/verifyActivationCode dans packages/shared).
-  return new Response(JSON.stringify({ userId: created.user.id }), {
-    status: 200,
-    headers: { "Content-Type": "application/json" },
-  });
+  return json({ userId: created.user.id }, 200);
 });
