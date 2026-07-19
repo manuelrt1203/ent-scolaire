@@ -2,16 +2,24 @@
 
 *Dernière mise à jour : 19 juillet 2026*
 
-> **Avertissement** : ce document est un premier brouillon rédigé pour poser une base sérieuse avant tout déploiement réel auprès d'un établissement scolaire. Il traite de données concernant des mineurs, ce qui est un sujet sensible. **Avant toute mise en production auprès d'une vraie école, faites relire ce document par un professionnel du droit** (avocat, ou service juridique de l'établissement partenaire). Ce brouillon s'appuie sur le RGPD et les recommandations générales de la CNIL pour les logiciels de vie scolaire, mais ne constitue pas un conseil juridique.
+> **Avertissement** : ce document est un premier brouillon rédigé pour poser une base sérieuse avant tout déploiement réel auprès d'un établissement scolaire, en priorité en **République du Congo**. Il traite de données concernant des mineurs, ce qui est un sujet particulièrement sensible. **Avant toute mise en production auprès d'une vraie école, faites relire ce document par un professionnel du droit congolais** (avocat, ou service juridique de l'établissement partenaire) — le cadre légal ci-dessous s'appuie sur une recherche documentaire et non sur un conseil juridique local vérifié, et l'autorité de contrôle congolaise est encore en cours de mise en place (voir section 1bis), ce qui rend certains points d'application pratique incertains à ce stade.
 
-## 1. Qui fait quoi (responsable de traitement / sous-traitant)
+## 1. Cadre légal applicable
 
-C'est le point le plus important à comprendre avant tout le reste :
+La République du Congo dispose d'une loi de protection des données personnelles : la **Loi n° 29-2019 du 10 octobre 2019 portant protection des données à caractère personnel**, entrée en vigueur le 25 novembre 2020. Elle pose des principes proches de ceux du RGPD européen : minimisation des données (article 5 — les données collectées doivent être adéquates, pertinentes et limitées à ce qui est nécessaire), et une obligation de notification des violations de données sous **72 heures** auprès de l'autorité de contrôle (article 74). La République du Congo est également membre de la CEMAC, dont les directives régionales sur la protection des données s'appliquent en complément.
 
-- **ENT Scolaire** (l'éditeur du logiciel) est **sous-traitant** au sens du RGPD (article 28) : il fournit l'outil technique, héberge les données, mais n'est pas celui qui décide pourquoi et comment les données des élèves, parents et professeurs sont utilisées.
-- **Chaque établissement scolaire** utilisant le logiciel est **responsable de traitement** : c'est l'école qui décide de faire figurer tel élève dans telle classe, qui saisit les notes, qui signale une absence, etc. C'est donc l'établissement qui doit informer ses élèves/familles/personnels et qui répond de la conformité RGPD vis-à-vis d'eux.
+**Point de vigilance** : la loi prévoit la création d'une **Commission Nationale de Protection des Données Personnelles**, mais celle-ci n'était pas encore pleinement opérationnelle à la dernière vérification (un projet de loi pour l'officialiser a été adopté en Conseil des ministres en juillet 2024). Les modalités pratiques d'application (formulaires de déclaration, contacts officiels, jurisprudence) sont donc encore incertaines — à vérifier auprès d'un juriste local avant tout déploiement réel.
 
-En pratique, cela veut dire que **chaque établissement devrait publier sa propre notice d'information** (qui peut reprendre le contenu ci-dessous en l'adaptant), et qu'un **contrat de sous-traitance** (article 28 RGPD) devrait être signé entre l'établissement et l'éditeur du logiciel avant toute utilisation réelle. Ce document sert de base à ces deux usages.
+**Transfert international des données** : les données de ce logiciel sont actuellement hébergées hors de République du Congo (voir section 7 — Irlande, Union européenne, via Supabase). Un transfert de données personnelles hors du pays peut être soumis à des conditions particulières selon la loi congolaise — **point à faire vérifier explicitement par un juriste local**, car ce document ne tranche pas cette question.
+
+## 1bis. Qui fait quoi (responsable de traitement / sous-traitant)
+
+C'est le point le plus important à comprendre après le cadre légal :
+
+- **ENT Scolaire** (l'éditeur du logiciel) est **sous-traitant** : il fournit l'outil technique, héberge les données, mais n'est pas celui qui décide pourquoi et comment les données des élèves, parents et professeurs sont utilisées.
+- **Chaque établissement scolaire** utilisant le logiciel est **responsable de traitement** : c'est l'école qui décide de faire figurer tel élève dans telle classe, qui saisit les notes, qui signale une absence, etc. C'est donc l'établissement qui doit informer ses élèves/familles/personnels et qui répond de la conformité vis-à-vis d'eux.
+
+En pratique, cela veut dire que **chaque établissement devrait publier sa propre notice d'information** (qui peut reprendre le contenu ci-dessous en l'adaptant), et qu'un **contrat de sous-traitance** devrait être signé entre l'établissement et l'éditeur du logiciel avant toute utilisation réelle. Ce document sert de base à ces deux usages.
 
 ## 2. Éditeur du logiciel
 
@@ -22,7 +30,7 @@ Contact : **manuelrt1203@gmail.com**
 
 ## 3. Données collectées
 
-Le logiciel a été conçu pour ne collecter que ce qui est strictement nécessaire au suivi de la scolarité (principe de minimisation des données). Concrètement :
+Le logiciel a été conçu pour ne collecter que ce qui est strictement nécessaire au suivi de la scolarité (principe de minimisation des données, conforme à l'article 5 de la loi congolaise). Concrètement :
 
 | Catégorie | Champs | Personnes concernées |
 |---|---|---|
@@ -39,15 +47,14 @@ Le logiciel a été conçu pour ne collecter que ce qui est strictement nécessa
 
 ## 4. Pourquoi ces données sont traitées (base légale)
 
-- Pour les établissements publics : **mission d'intérêt public** (article 6.1.e du RGPD) — le suivi de la scolarité fait partie des missions du service public de l'éducation.
-- Pour les établissements privés : le traitement repose généralement sur l'**exécution du contrat** liant l'établissement aux familles (inscription scolaire) et sur l'**intérêt légitime** de suivi pédagogique.
-- Dans les deux cas, **aucun consentement des mineurs ou de leurs parents n'est requis** pour l'usage pédagogique de base (c'est l'établissement qui a la base légale), mais la **transparence** envers les familles reste obligatoire — d'où cette notice.
+- Le suivi de la scolarité (notes, vie scolaire, communication école-famille) constitue la finalité principale du traitement, dans l'intérêt de la mission éducative de l'établissement.
+- **Aucun consentement des mineurs ou de leurs parents n'est requis** pour cet usage pédagogique de base (c'est l'établissement qui porte la responsabilité du traitement), mais la **transparence** envers les familles reste une obligation — d'où cette notice.
 
 ## 5. Durée de conservation
 
 - Les données de l'année scolaire en cours restent accessibles pendant toute l'année.
-- Au-delà, la durée de conservation recommandée est alignée sur les préconisations habituelles du secteur éducatif : **conservation des données de scolarité pendant la durée de scolarisation dans l'établissement + une durée courte after la sortie de l'élève** (typiquement quelques années, à fixer précisément par chaque établissement selon ses obligations d'archivage).
-- Les messages internes et les événements de vie scolaire devraient faire l'objet d'une purge régulière au-delà de cette période — **non encore implémenté techniquement**, à prévoir avant un vrai déploiement.
+- Au-delà, la durée de conservation recommandée est alignée sur les préconisations habituelles du secteur éducatif : **conservation des données de scolarité pendant la durée de scolarisation dans l'établissement + une durée courte après la sortie de l'élève** (typiquement quelques années, à fixer précisément par chaque établissement selon ses obligations d'archivage).
+- Les messages internes et les événements de vie scolaire font l'objet d'une **purge automatique** au-delà d'une durée configurable par établissement (36 mois par défaut) — voir l'écran "Paramètres" côté direction.
 
 ## 6. Qui a accès aux données
 
@@ -60,17 +67,18 @@ L'accès est strictement cloisonné par rôle et par établissement (un professe
 
 ## 7. Hébergement et sécurité
 
-- Les données sont hébergées chez **Supabase**, dans la région **eu-west-1 (Irlande, Union européenne)** — les données ne quittent donc pas l'UE.
+- Les données sont hébergées chez **Supabase**, dans la région **eu-west-1 (Irlande, Union européenne)** — voir la section 1 sur le transfert international des données, à faire vérifier par un juriste local.
 - L'accès aux données est protégé par un système d'authentification (mot de passe) et par des règles de sécurité appliquées au niveau de la base de données (Row Level Security), qui empêchent techniquement un utilisateur de lire ou modifier des données auxquelles il n'a pas droit, indépendamment de l'application utilisée pour s'y connecter.
+- En cas de violation de données, l'éditeur s'engage à en informer les établissements concernés dans les meilleurs délais, pour leur permettre de respecter leur propre obligation de notification sous 72 heures (article 74 de la loi congolaise) une fois l'autorité de contrôle pleinement opérationnelle.
 
 ## 8. Droits des personnes concernées
 
-Toute personne dont les données sont traitées (ou son représentant légal pour un mineur) dispose des droits suivants :
+Toute personne dont les données sont traitées (ou son représentant légal pour un mineur) dispose de droits similaires à ceux prévus par les cadres de protection des données modernes :
 
 - **Droit d'accès** : obtenir une copie des données la concernant.
 - **Droit de rectification** : corriger des données inexactes.
 - **Droit à l'effacement** : demander la suppression des données (dans la limite des obligations légales de conservation d'un établissement scolaire).
-- **Droit d'opposition et de limitation**, dans les conditions prévues par le RGPD.
+- **Droit d'opposition et de limitation**.
 
 Ces demandes doivent être adressées **en priorité à l'établissement scolaire** (responsable de traitement), qui pourra solliciter l'éditeur du logiciel si une action technique est nécessaire.
 
