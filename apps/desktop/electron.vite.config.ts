@@ -16,11 +16,15 @@ export default defineConfig({
     },
   },
   renderer: {
-    root: path.resolve(__dirname, "src/renderer"),
+    // Le renderer réutilise directement le code source de apps/web (React +
+    // Tailwind, sans rien de spécifique à Electron : le preload est vide,
+    // le renderer parle à Supabase en HTTPS). Une seule base de code pour
+    // la version web (déployée) et la version desktop (packagée Electron).
+    root: path.resolve(__dirname, "../web"),
     plugins: [react()],
     build: {
-      outDir: "dist-electron/renderer",
-      rollupOptions: { input: path.resolve(__dirname, "src/renderer/index.html") },
+      outDir: path.resolve(__dirname, "dist-electron/renderer"),
+      rollupOptions: { input: path.resolve(__dirname, "../web/index.html") },
     },
   },
 });

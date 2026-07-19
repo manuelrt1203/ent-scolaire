@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+/* Détection automatique du contenu par Tailwind v4 : ancrée sur le
+   répertoire courant du process qui lance le build, pas sur l'emplacement
+   de ce fichier. Ça casse quand electron-vite (apps/desktop) charge ce
+   renderer partagé (root Vite = apps/web, mais CWD = apps/desktop) : plus
+   aucune classe utilitaire générée. @source force explicitement le
+   répertoire à scanner, relatif à ce fichier CSS — indépendant du CWD. */
+@source "./";
+
+@theme {
+  --color-indigo-ink: #533afd;
+  --color-periwinkle-wash: #e8e9ff;
+  --color-deep-violet: #182659;
+  --color-midnight-ink: #061b31;
+}
