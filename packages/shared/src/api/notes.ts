@@ -1,8 +1,9 @@
 import type { EntSupabaseClient } from "../supabase/createClient";
-import type { Tables } from "../types/database.types";
+import type { Tables, TablesInsert, TablesUpdate } from "../types/database.types";
 
 export type ReleveNotes = Tables<"releves_notes">;
 export type Note = Tables<"notes">;
+export type Periode = Tables<"periodes">;
 
 /** Matières/classes affectées au professeur connecté (RLS restreint déjà aux
  * lignes du prof appelant). */
@@ -195,4 +196,21 @@ export async function getPeriodes(client: EntSupabaseClient) {
   const { data, error } = await client.from("periodes").select("*").order("ordre");
   if (error) throw error;
   return data;
+}
+
+export async function createPeriode(client: EntSupabaseClient, periode: TablesInsert<"periodes">) {
+  const { data, error } = await client.from("periodes").insert(periode).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updatePeriode(client: EntSupabaseClient, id: string, periode: TablesUpdate<"periodes">) {
+  const { data, error } = await client.from("periodes").update(periode).eq("id", id).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deletePeriode(client: EntSupabaseClient, id: string) {
+  const { error } = await client.from("periodes").delete().eq("id", id);
+  if (error) throw error;
 }

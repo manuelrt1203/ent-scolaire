@@ -295,18 +295,24 @@ export type Database = {
           created_at: string
           id: string
           nom: string
+          retention_messagerie_mois: number
+          retention_vie_scolaire_mois: number
         }
         Insert: {
           adresse?: string | null
           created_at?: string
           id?: string
           nom: string
+          retention_messagerie_mois?: number
+          retention_vie_scolaire_mois?: number
         }
         Update: {
           adresse?: string | null
           created_at?: string
           id?: string
           nom?: string
+          retention_messagerie_mois?: number
+          retention_vie_scolaire_mois?: number
         }
         Relationships: []
       }
@@ -842,61 +848,6 @@ export type Database = {
           },
         ]
       }
-      ressources_pedagogiques: {
-        Row: {
-          chemin_fichier: string
-          created_at: string
-          id: string
-          matiere_classe_id: string
-          professeur_id: string | null
-          taille_octets: number | null
-          titre: string
-          type_mime: string | null
-        }
-        Insert: {
-          chemin_fichier: string
-          created_at?: string
-          id?: string
-          matiere_classe_id: string
-          professeur_id?: string | null
-          taille_octets?: number | null
-          titre: string
-          type_mime?: string | null
-        }
-        Update: {
-          chemin_fichier?: string
-          created_at?: string
-          id?: string
-          matiere_classe_id?: string
-          professeur_id?: string | null
-          taille_octets?: number | null
-          titre?: string
-          type_mime?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ressources_pedagogiques_matiere_classe_id_fkey"
-            columns: ["matiere_classe_id"]
-            isOneToOne: false
-            referencedRelation: "matiere_classe"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "ressources_pedagogiques_matiere_classe_id_fkey"
-            columns: ["matiere_classe_id"]
-            isOneToOne: false
-            referencedRelation: "v_bulletin"
-            referencedColumns: ["matiere_classe_id"]
-          },
-          {
-            foreignKeyName: "ressources_pedagogiques_professeur_id_fkey"
-            columns: ["professeur_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       releves_notes: {
         Row: {
           commentaire_direction: string | null
@@ -972,6 +923,61 @@ export type Database = {
           {
             foreignKeyName: "releves_notes_valide_par_fkey"
             columns: ["valide_par"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ressources_pedagogiques: {
+        Row: {
+          chemin_fichier: string
+          created_at: string
+          id: string
+          matiere_classe_id: string
+          professeur_id: string | null
+          taille_octets: number | null
+          titre: string
+          type_mime: string | null
+        }
+        Insert: {
+          chemin_fichier: string
+          created_at?: string
+          id?: string
+          matiere_classe_id: string
+          professeur_id?: string | null
+          taille_octets?: number | null
+          titre: string
+          type_mime?: string | null
+        }
+        Update: {
+          chemin_fichier?: string
+          created_at?: string
+          id?: string
+          matiere_classe_id?: string
+          professeur_id?: string | null
+          taille_octets?: number | null
+          titre?: string
+          type_mime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ressources_pedagogiques_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "matiere_classe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ressources_pedagogiques_matiere_classe_id_fkey"
+            columns: ["matiere_classe_id"]
+            isOneToOne: false
+            referencedRelation: "v_bulletin"
+            referencedColumns: ["matiere_classe_id"]
+          },
+          {
+            foreignKeyName: "ressources_pedagogiques_professeur_id_fkey"
+            columns: ["professeur_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
@@ -1159,6 +1165,7 @@ export type Database = {
       }
       profile_etablissement_id: { Args: { p_user_id: string }; Returns: string }
       publier_releve: { Args: { p_releve_id: string }; Returns: undefined }
+      purger_donnees_expirees: { Args: never; Returns: undefined }
       rejeter_releve: {
         Args: { p_commentaire: string; p_releve_id: string }
         Returns: undefined
@@ -1305,6 +1312,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      cycle_scolaire: ["primaire", "college", "lycee"],
       role_utilisateur: ["direction", "professeur", "eleve", "parent"],
       statut_note: ["brouillon", "soumise", "validee", "publiee"],
     },
