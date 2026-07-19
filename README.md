@@ -104,3 +104,16 @@ sur des sous-requêtes internes pour éviter les récursions de policies —
 c'est un piège classique sur ce genre de modèle relationnel imbriqué,
 rencontré et corrigé pendant le développement (voir migrations `0005` et
 `0008`).
+
+## Mentions légales et confidentialité
+
+Voir [`legal/mentions-legales.md`](legal/mentions-legales.md) et
+[`legal/politique-confidentialite.md`](legal/politique-confidentialite.md).
+Ce sont des brouillons à faire relire par un professionnel du droit avant
+tout déploiement auprès d'un établissement réel (données de mineurs).
+
+## Sauvegardes
+
+Le plan Supabase actuel (gratuit) n'a **aucune sauvegarde automatique**.
+Voir [`legal/continuite-activite.md`](legal/continuite-activite.md) et
+`npm run db:backup`.
