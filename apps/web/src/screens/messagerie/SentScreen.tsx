@@ -17,7 +17,7 @@ export function SentScreen() {
 
       <MessagerieTabs receptionHref=".." envoyesHref="." />
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <tbody className="divide-y divide-slate-100">
             {sentQuery.data?.map((m: any) => (

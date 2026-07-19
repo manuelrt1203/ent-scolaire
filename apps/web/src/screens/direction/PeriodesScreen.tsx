@@ -86,7 +86,7 @@ export function PeriodesScreen() {
         périodes plus fines si besoin (un examen de janvier, un contrôle de février...).
       </p>
 
-      <form onSubmit={handleSubmit} className="mb-8 grid grid-cols-2 gap-3 rounded-lg border border-slate-200 bg-white p-4">
+      <form onSubmit={handleSubmit} className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2">
         <div className="col-span-2">
           <label className="mb-1 block text-xs font-medium text-slate-600">Nom</label>
           <input
@@ -147,7 +147,7 @@ export function PeriodesScreen() {
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>

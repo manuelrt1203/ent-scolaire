@@ -26,7 +26,7 @@ export function AnnuaireScreen() {
       {ROLE_ORDER.filter((role) => (parRole[role]?.length ?? 0) > 0).map((role) => (
         <div key={role} className="mb-6">
           <h2 className="mb-2 text-xs font-medium uppercase text-slate-500">{ROLE_LABELS[role]}</h2>
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <tbody className="divide-y divide-slate-100">
                 {parRole[role]!.map((p: any) => (

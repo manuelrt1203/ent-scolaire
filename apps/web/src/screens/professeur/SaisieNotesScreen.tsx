@@ -44,7 +44,7 @@ export function SaisieNotesScreen() {
     <div className="max-w-3xl">
       <h1 className="mb-6 text-lg font-semibold text-slate-900">Saisie des notes</h1>
 
-      <div className="mb-6 flex gap-3 rounded-lg border border-slate-200 bg-white p-4">
+      <div className="mb-6 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row">
         <div className="flex-1">
           <label className="mb-1 block text-xs font-medium text-slate-600">Matière / Classe</label>
           <select
@@ -86,7 +86,7 @@ export function SaisieNotesScreen() {
             )}
           </div>
 
-          <div className="mb-4 overflow-hidden rounded-lg border border-slate-200 bg-white">
+          <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 bg-white">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                 <tr>

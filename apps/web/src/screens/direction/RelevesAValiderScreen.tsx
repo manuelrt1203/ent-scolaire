@@ -9,7 +9,7 @@ export function RelevesAValiderScreen() {
     <div className="max-w-3xl">
       <h1 className="mb-6 text-lg font-semibold text-slate-900">Relevés à examiner</h1>
 
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>

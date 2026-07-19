@@ -63,7 +63,7 @@ export function ReleveReviewScreen() {
         </p>
       )}
 
-      <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>
