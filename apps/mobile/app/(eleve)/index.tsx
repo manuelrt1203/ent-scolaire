@@ -1,5 +1,5 @@
-import { NotesScreen } from "../../components/screens/notes/NotesScreen";
+import { MobileAccueilScreen } from "../../components/MobileAccueilScreen";
 
 export default function EleveIndex() {
-  return <NotesScreen />;
+  return <MobileAccueilScreen basePath="/(eleve)" />;
 }

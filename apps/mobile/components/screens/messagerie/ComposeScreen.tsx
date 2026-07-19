@@ -64,7 +64,7 @@ export function ComposeScreen({ basePath }: { basePath: string }) {
             return (
               <Pressable
                 onPress={() => toggleDestinataire(u.id)}
-                className={`mb-1 rounded px-2 py-2 ${selected ? "bg-slate-900" : "bg-slate-50"}`}
+                className={`mb-1 rounded px-2 py-2 ${selected ? "bg-indigo-ink" : "bg-slate-50"}`}
               >
                 <Text className={`text-sm ${selected ? "text-white" : "text-slate-700"}`}>
                   {u.prenom} {u.nom} ({ROLE_LABELS[u.role]})
@@ -97,7 +97,7 @@ export function ComposeScreen({ basePath }: { basePath: string }) {
       <Pressable
         onPress={handleSubmit}
         disabled={envoyer.isPending}
-        className="rounded-md bg-slate-900 px-4 py-3 disabled:opacity-50"
+        className="rounded-md bg-indigo-ink px-4 py-3 disabled:opacity-50"
       >
         <Text className="text-center text-sm font-medium text-white">{envoyer.isPending ? "Envoi…" : "Envoyer"}</Text>
       </Pressable>

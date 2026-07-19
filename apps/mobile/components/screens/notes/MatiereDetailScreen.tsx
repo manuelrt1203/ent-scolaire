@@ -26,7 +26,7 @@ export function MatiereDetailScreen() {
         {notesQuery.data?.map((n: any) => (
           <View key={n.id} className="mb-2 flex-row items-center justify-between rounded-lg border border-slate-200 bg-white px-4 py-3">
             <Text className="text-sm text-slate-700">{n.libelle ?? "Note"}</Text>
-            <Text className="text-base font-semibold text-slate-900">
+            <Text className="text-base font-semibold tabular-nums text-slate-900">
               {n.valeur !== null ? `${Number(n.valeur).toFixed(2)}/20` : "—"}
             </Text>
           </View>

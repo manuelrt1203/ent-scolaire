@@ -92,7 +92,7 @@ export function NotesScreen() {
       <ScrollView className="flex-1 px-4 py-4">
         <View className="mb-4 rounded-xl bg-slate-900 p-5">
           <Text className="text-sm text-slate-300">Moyenne générale</Text>
-          <Text className="text-3xl font-semibold text-white">{formatMoyenne(moyenneGeneraleQuery.data ?? null)}</Text>
+          <Text className="text-3xl font-semibold tabular-nums text-white">{formatMoyenne(moyenneGeneraleQuery.data ?? null)}</Text>
         </View>
 
         {bulletinQuery.data && bulletinQuery.data.length > 0 && (
@@ -117,7 +117,7 @@ export function NotesScreen() {
               <Text className="text-sm font-medium text-slate-900">{ligne.matiere}</Text>
               <Text className="text-xs text-slate-400">Coefficient {ligne.coefficient}</Text>
             </View>
-            <Text className="text-base font-semibold text-slate-900">{formatMoyenne(ligne.moyenne)}</Text>
+            <Text className="text-base font-semibold tabular-nums text-slate-900">{formatMoyenne(ligne.moyenne)}</Text>
           </Pressable>
         ))}
 

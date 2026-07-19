@@ -1,7 +1,7 @@
 import { Stack, Redirect } from "expo-router";
 import { View, ActivityIndicator } from "react-native";
 import { useAuth } from "@ent/shared";
-import { TopNav } from "../../components/TopNav";
+import { Header } from "../../components/Header";
 import { ParentChildProvider, useParentChild } from "../../lib/ParentChildContext";
 import { ViewedEleveProvider } from "../../lib/ViewedEleveContext";
 
@@ -10,7 +10,7 @@ function ParentLayoutInner() {
   return (
     <ViewedEleveProvider eleveId={selectedId}>
       <View className="flex-1">
-        <TopNav basePath="/(parent)" />
+        <Header basePath="/(parent)" />
         <Stack screenOptions={{ headerShown: false }} />
       </View>
     </ViewedEleveProvider>

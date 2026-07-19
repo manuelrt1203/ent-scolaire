@@ -25,7 +25,7 @@ export function InboxScreen({ basePath }: { basePath: string }) {
             <Text className="text-lg font-semibold text-slate-900">Boîte de réception</Text>
             <Pressable
               onPress={() => router.push(`${basePath}/nouveau` as never)}
-              className="rounded-md bg-slate-900 px-3 py-2"
+              className="rounded-md bg-indigo-ink px-3 py-2"
             >
               <Text className="text-xs font-medium text-white">Nouveau</Text>
             </Pressable>
@@ -35,13 +35,13 @@ export function InboxScreen({ basePath }: { basePath: string }) {
         renderItem={({ item: row }: { item: any }) => (
           <Pressable
             onPress={() => router.push(`${basePath}/${row.messages.id}` as never)}
-            className={`mb-2 flex-row items-center justify-between rounded-lg border border-slate-200 px-4 py-3 ${row.lu ? "bg-white" : "bg-blue-50"}`}
+            className={`mb-2 flex-row items-center justify-between rounded-lg border px-4 py-3 ${row.lu ? "border-slate-200 bg-white" : "border-deep-violet/20 bg-periwinkle-wash"}`}
           >
             <View className="flex-1">
-              <Text className={`text-sm ${row.lu ? "text-slate-600" : "font-semibold text-slate-900"}`}>
+              <Text className={`text-sm ${row.lu ? "text-slate-600" : "font-semibold text-midnight-ink"}`}>
                 {row.messages.expediteur?.prenom} {row.messages.expediteur?.nom}
               </Text>
-              <Text className={`text-sm ${row.lu ? "text-slate-500" : "text-slate-800"}`}>{row.messages.sujet}</Text>
+              <Text className={`text-sm ${row.lu ? "text-slate-500" : "text-deep-violet"}`}>{row.messages.sujet}</Text>
             </View>
             <View className="items-end">
               <Text className="mb-1 text-xs text-slate-400">{formatDate(row.messages.created_at)}</Text>

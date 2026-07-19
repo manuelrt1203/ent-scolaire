@@ -97,7 +97,7 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
               },
             })
           }
-          className="rounded-md bg-slate-900 px-4 py-2"
+          className="rounded-md bg-indigo-ink px-4 py-2"
         >
           <Text className="text-sm font-medium text-white">Répondre</Text>
         </Pressable>
