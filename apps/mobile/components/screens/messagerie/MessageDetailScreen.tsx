@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { View, Text, ScrollView, Pressable } from "react-native";
+import { View, Text, ScrollView, Pressable, Linking } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -8,7 +8,15 @@ import {
   useMarquerCommeLu,
   useSupprimerDeReception,
   useSupprimerMessageEnvoye,
+  getPieceJointeSignedUrl,
 } from "@ent/shared";
+
+function formatTaille(octets: number | null) {
+  if (!octets) return "";
+  if (octets < 1024) return `${octets} o`;
+  if (octets < 1024 * 1024) return `${Math.round(octets / 1024)} Ko`;
+  return `${(octets / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -50,6 +58,11 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
   const dernierAutre = [...thread].reverse().find((m: any) => m.expediteur_id !== profile?.id);
   const destinataireReponse = dernierAutre?.expediteur_id ?? root.message_destinataires?.[0]?.destinataire_id;
 
+  async function handleOuvrirPieceJointe(cheminFichier: string) {
+    const url = await getPieceJointeSignedUrl(client, cheminFichier);
+    await Linking.openURL(url);
+  }
+
   return (
     <ScrollView className="flex-1 bg-slate-50 px-4 py-4" contentInsetAdjustmentBehavior="automatic">
       <SafeAreaView edges={["top"]} />
@@ -80,6 +93,18 @@ export function MessageDetailScreen({ basePath }: { basePath: string }) {
                 À : {mesDestinataires.map((d: any) => `${d.profiles?.prenom} ${d.profiles?.nom}`).join(", ")}
               </Text>
               <Text className="text-sm text-slate-800">{m.corps}</Text>
+              {m.message_pieces_jointes?.length > 0 && (
+                <View className="mt-3 border-t border-slate-200 pt-3" style={{ gap: 4 }}>
+                  {m.message_pieces_jointes.map((pj: any) => (
+                    <Pressable key={pj.id} onPress={() => handleOuvrirPieceJointe(pj.chemin_fichier)}>
+                      <Text className="text-xs text-indigo-ink">
+                        {pj.nom_fichier}
+                        {pj.taille_octets ? <Text className="text-slate-400"> ({formatTaille(pj.taille_octets)})</Text> : null}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
           );
         })}

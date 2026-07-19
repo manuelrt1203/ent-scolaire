@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, getAnnuaireMessagerie, useEnvoyerMessage } from "@ent/shared";
+import { useAuth, getAnnuaireMessagerie, useEnvoyerMessage, useUploadPieceJointe } from "@ent/shared";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -19,11 +19,14 @@ export function ComposeScreen() {
 
   const usersQuery = useQuery({ queryKey: ["annuaire-messagerie"], queryFn: () => getAnnuaireMessagerie(client) });
   const envoyer = useEnvoyerMessage(client);
+  const uploadPieceJointe = useUploadPieceJointe(client);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [destinataires, setDestinataires] = useState<string[]>(prefill?.destinataireId ? [prefill.destinataireId] : []);
   const [sujet, setSujet] = useState(prefill?.sujet ?? "");
   const [corps, setCorps] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
   const autresUtilisateurs = usersQuery.data ?? [];
 
@@ -38,11 +41,23 @@ export function ComposeScreen() {
       setError("Sélectionnez au moins un destinataire");
       return;
     }
+    setEnvoiEnCours(true);
     try {
-      await envoyer.mutateAsync({ sujet, corps, destinataireIds: destinataires, parentMessageId: prefill?.parentMessageId });
+      const messageId = await envoyer.mutateAsync({
+        sujet,
+        corps,
+        destinataireIds: destinataires,
+        parentMessageId: prefill?.parentMessageId,
+      });
+      const fichiers = Array.from(fileInputRef.current?.files ?? []);
+      for (const file of fichiers) {
+        await uploadPieceJointe.mutateAsync({ messageId, file });
+      }
       navigate("../messagerie/envoyes");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Échec de l'envoi");
+    } finally {
+      setEnvoiEnCours(false);
     }
   }
 
@@ -87,14 +102,19 @@ export function ComposeScreen() {
           />
         </div>
 
+        <div>
+          <label className="mb-1 block text-xs font-medium text-slate-600">Pièces jointes (optionnel)</label>
+          <input ref={fileInputRef} type="file" multiple className="w-full text-sm" />
+        </div>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
-          disabled={envoyer.isPending}
+          disabled={envoiEnCours}
           className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
         >
-          {envoyer.isPending ? "Envoi…" : "Envoyer"}
+          {envoiEnCours ? "Envoi…" : "Envoyer"}
         </button>
       </form>
     </div>

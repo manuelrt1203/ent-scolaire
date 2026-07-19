@@ -9,6 +9,8 @@ import {
   supprimerDeReception,
   supprimerMessageEnvoye,
   getNombreNonLus,
+  uploadPieceJointe,
+  type UploadPieceJointeInput,
 } from "../api/messagerie";
 
 export function useBoiteReception(client: EntSupabaseClient) {
@@ -57,6 +59,17 @@ export function useEnvoyerMessage(client: EntSupabaseClient) {
       if (parentMessageId) {
         queryClient.invalidateQueries({ queryKey: ["messagerie", "thread", parentMessageId] });
       }
+    },
+  });
+}
+
+export function useUploadPieceJointe(client: EntSupabaseClient) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: UploadPieceJointeInput) => uploadPieceJointe(client, input),
+    onSuccess: (_data, { messageId }) => {
+      queryClient.invalidateQueries({ queryKey: ["messagerie", "sent"] });
+      queryClient.invalidateQueries({ queryKey: ["messagerie", "thread", messageId] });
     },
   });
 }

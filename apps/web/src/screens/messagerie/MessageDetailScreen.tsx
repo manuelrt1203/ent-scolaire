@@ -6,7 +6,15 @@ import {
   useMarquerCommeLu,
   useSupprimerDeReception,
   useSupprimerMessageEnvoye,
+  getPieceJointeSignedUrl,
 } from "@ent/shared";
+
+function formatTaille(octets: number | null) {
+  if (!octets) return "";
+  if (octets < 1024) return `${octets} o`;
+  if (octets < 1024 * 1024) return `${Math.round(octets / 1024)} Ko`;
+  return `${(octets / (1024 * 1024)).toFixed(1)} Mo`;
+}
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -42,6 +50,11 @@ export function MessageDetailScreen() {
   const dernierAutre = [...thread].reverse().find((m: any) => m.expediteur_id !== profile?.id);
   const destinataireReponse = dernierAutre?.expediteur_id ?? root.message_destinataires?.[0]?.destinataire_id;
 
+  async function handleTelechargerPieceJointe(cheminFichier: string) {
+    const url = await getPieceJointeSignedUrl(client, cheminFichier);
+    window.open(url, "_blank");
+  }
+
   return (
     <div className="max-w-2xl">
       <button onClick={() => navigate(-1)} className="mb-4 text-xs text-slate-500 underline">
@@ -70,6 +83,20 @@ export function MessageDetailScreen() {
                 À : {mesDestinataires.map((d: any) => `${d.profiles?.prenom} ${d.profiles?.nom}`).join(", ")}
               </p>
               <p className="whitespace-pre-wrap text-sm text-slate-800">{m.corps}</p>
+              {m.message_pieces_jointes?.length > 0 && (
+                <div className="mt-3 space-y-1 border-t border-slate-200 pt-3">
+                  {m.message_pieces_jointes.map((pj: any) => (
+                    <button
+                      key={pj.id}
+                      onClick={() => handleTelechargerPieceJointe(pj.chemin_fichier)}
+                      className="flex items-center gap-2 text-xs text-indigo-ink hover:underline"
+                    >
+                      {pj.nom_fichier}
+                      {pj.taille_octets ? <span className="text-slate-400">({formatTaille(pj.taille_octets)})</span> : null}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

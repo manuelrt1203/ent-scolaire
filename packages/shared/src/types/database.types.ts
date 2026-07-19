@@ -676,6 +676,44 @@ export type Database = {
           },
         ]
       }
+      message_pieces_jointes: {
+        Row: {
+          chemin_fichier: string
+          created_at: string
+          id: string
+          message_id: string
+          nom_fichier: string
+          taille_octets: number | null
+          type_mime: string | null
+        }
+        Insert: {
+          chemin_fichier: string
+          created_at?: string
+          id?: string
+          message_id: string
+          nom_fichier: string
+          taille_octets?: number | null
+          type_mime?: string | null
+        }
+        Update: {
+          chemin_fichier?: string
+          created_at?: string
+          id?: string
+          message_id?: string
+          nom_fichier?: string
+          taille_octets?: number | null
+          type_mime?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "message_pieces_jointes_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       messages: {
         Row: {
           corps: string

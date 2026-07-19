@@ -1,5 +1,8 @@
 import type { EntSupabaseClient } from "../supabase/createClient";
 
+const PIECES_JOINTES_BUCKET = "messagerie-pieces-jointes";
+const PIECE_JOINTE_SELECT = "id, nom_fichier, chemin_fichier, type_mime, taille_octets";
+
 /** Annuaire de tout l'établissement (nom/prénom/rôle/email), utilisé par le
  * sélecteur de destinataires et par l'écran Annuaire — la table profiles
  * reste restreinte par relation pour les écrans d'administration, cette
@@ -35,7 +38,9 @@ export async function getBoiteReception(client: EntSupabaseClient) {
 
   const { data, error } = await client
     .from("message_destinataires")
-    .select("*, messages(id, sujet, corps, created_at, expediteur:expediteur_id(nom, prenom, role))")
+    .select(
+      `*, messages(id, sujet, corps, created_at, expediteur:expediteur_id(nom, prenom, role), message_pieces_jointes(${PIECE_JOINTE_SELECT}))`,
+    )
     .eq("destinataire_id", user.id)
     .eq("supprime", false)
     .order("created_at", { referencedTable: "messages", ascending: false });
@@ -51,7 +56,9 @@ export async function getMessagesEnvoyes(client: EntSupabaseClient) {
 
   const { data, error } = await client
     .from("messages")
-    .select("*, message_destinataires(destinataire_id, lu, profiles:destinataire_id(nom, prenom, role))")
+    .select(
+      `*, message_destinataires(destinataire_id, lu, profiles:destinataire_id(nom, prenom, role)), message_pieces_jointes(${PIECE_JOINTE_SELECT})`,
+    )
     .eq("expediteur_id", user.id)
     .eq("supprime_expediteur", false)
     .order("created_at", { ascending: false });
@@ -64,8 +71,7 @@ export async function supprimerMessageEnvoye(client: EntSupabaseClient, messageI
   if (error) throw error;
 }
 
-const THREAD_MESSAGE_SELECT =
-  "*, expediteur:expediteur_id(nom, prenom, role), message_destinataires(id, destinataire_id, lu, lu_le, profiles:destinataire_id(nom, prenom, role))";
+const THREAD_MESSAGE_SELECT = `*, expediteur:expediteur_id(nom, prenom, role), message_destinataires(id, destinataire_id, lu, lu_le, profiles:destinataire_id(nom, prenom, role)), message_pieces_jointes(${PIECE_JOINTE_SELECT})`;
 
 /** Fil de discussion complet (message d'origine + toutes les réponses),
  * dans l'ordre chronologique — une réponse pointe toujours vers la racine
@@ -101,6 +107,53 @@ export async function marquerCommeLu(client: EntSupabaseClient, destinataireRowI
 export async function supprimerDeReception(client: EntSupabaseClient, destinataireRowId: string) {
   const { error } = await client.from("message_destinataires").update({ supprime: true }).eq("id", destinataireRowId);
   if (error) throw error;
+}
+
+export interface UploadPieceJointeInput {
+  messageId: string;
+  file: File | Blob;
+  /** Requis côté mobile : un Blob issu de `fetch(uri)` (expo-document-picker)
+   * ne porte pas de nom de fichier, contrairement à un File web. */
+  nomFichier?: string;
+}
+
+/** Le message doit déjà exister (créé via envoyerMessage) avant d'y attacher
+ * un fichier : le chemin de stockage encode l'id du message en premier
+ * segment, et la policy RLS de storage.objects vérifie que l'appelant en
+ * est bien l'expéditeur. */
+export async function uploadPieceJointe(client: EntSupabaseClient, input: UploadPieceJointeInput) {
+  const nomFichier = input.nomFichier ?? (input.file instanceof File ? input.file.name : "fichier");
+  const chemin = `${input.messageId}/${crypto.randomUUID()}-${nomFichier}`;
+
+  const { error: uploadError } = await client.storage.from(PIECES_JOINTES_BUCKET).upload(chemin, input.file, {
+    contentType: input.file.type || undefined,
+  });
+  if (uploadError) throw uploadError;
+
+  const { data, error } = await client
+    .from("message_pieces_jointes")
+    .insert({
+      message_id: input.messageId,
+      nom_fichier: nomFichier,
+      chemin_fichier: chemin,
+      type_mime: input.file.type || null,
+      taille_octets: input.file.size,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    await client.storage.from(PIECES_JOINTES_BUCKET).remove([chemin]);
+    throw error;
+  }
+
+  return data;
+}
+
+export async function getPieceJointeSignedUrl(client: EntSupabaseClient, cheminFichier: string) {
+  const { data, error } = await client.storage.from(PIECES_JOINTES_BUCKET).createSignedUrl(cheminFichier, 3600);
+  if (error) throw error;
+  return data.signedUrl;
 }
 
 export async function getNombreNonLus(client: EntSupabaseClient) {
