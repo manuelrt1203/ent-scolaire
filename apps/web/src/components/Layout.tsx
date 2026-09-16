@@ -3,6 +3,7 @@ import { useAuth, useNombreNonLus } from "@ent/shared";
 import { CATEGORIES, CATEGORY_META, type NavItem } from "../nav";
 import { IconGraduationCap, IconLogOut } from "./icons";
 import { NotificationBell } from "./NotificationBell";
+import { RechercheGlobale } from "./RechercheGlobale";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -39,6 +40,7 @@ export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) 
           <span className="hidden truncate text-sm font-semibold tracking-tight text-white sm:inline">ENT Scolaire</span>
         </button>
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <RechercheGlobale homePath={homePath} />
           <NotificationBell />
           {profile?.role && (
             <span className="hidden shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-xs font-medium text-slate-300 sm:inline">
