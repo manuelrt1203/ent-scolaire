@@ -29,7 +29,7 @@ export function InvitationScreen() {
 
   if (succes) {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
+      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
         <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
           <h1 className="mb-4 text-xl font-semibold text-slate-900">Compte créé</h1>
           <p className="mb-4 text-sm text-slate-600">
@@ -49,7 +49,7 @@ export function InvitationScreen() {
   }
 
   return (
-    <div className="flex h-screen items-center justify-center bg-slate-50">
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
       <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
         <h1 className="mb-1 text-xl font-semibold text-slate-900">J'ai un code d'invitation</h1>
         <p className="mb-6 text-xs text-slate-500">Le code vous a été transmis par votre établissement.</p>
