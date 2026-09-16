@@ -12,6 +12,9 @@ import {
   NIVEAUX_PAR_CYCLE,
   type CycleScolaire,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Input, Select } from "../../components/ui/Field";
 
 export function ClassesScreen() {
   const { client, profile } = useAuth();
@@ -89,86 +92,77 @@ export function ClassesScreen() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Classes</h1>
+      <PageHeader title="Classes" description="Créer et organiser les classes de l'établissement." />
 
-      <form onSubmit={handleSubmit} className="mb-8 flex items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Cycle</label>
-          <select
-            value={cycle}
-            onChange={(e) => handleCycleChange(e.target.value as CycleScolaire)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          >
-            {CYCLES_ORDRE.map((c) => (
-              <option key={c} value={c}>{CYCLE_LABELS[c]}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Niveau</label>
-          <select
-            value={niveau}
-            onChange={(e) => setNiveau(e.target.value)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm"
-          >
-            {NIVEAUX_PAR_CYCLE[cycle].map((n) => (
-              <option key={n} value={n}>{n}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Nom de la classe</label>
-          <input
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-            required
-            placeholder="A, Bilingue, Terminale A…"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={isPending || (!editingId && !anneeQuery.data)}
-          className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {editingId ? "Enregistrer" : "Ajouter"}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm} className="px-2 py-2 text-xs text-slate-500 hover:underline">
-            Annuler
-          </button>
-        )}
-      </form>
+      <Card className="mb-8 p-4">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+          <div className="w-40">
+            <Field label="Cycle">
+              <Select value={cycle} onChange={(e) => handleCycleChange(e.target.value as CycleScolaire)}>
+                {CYCLES_ORDRE.map((c) => (
+                  <option key={c} value={c}>{CYCLE_LABELS[c]}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="w-32">
+            <Field label="Niveau">
+              <Select value={niveau} onChange={(e) => setNiveau(e.target.value)}>
+                {NIVEAUX_PAR_CYCLE[cycle].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="min-w-[10rem] flex-1">
+            <Field label="Nom de la classe">
+              <Input value={nom} onChange={(e) => setNom(e.target.value)} required placeholder="A, Bilingue, Terminale A…" />
+            </Field>
+          </div>
+          <Button type="submit" disabled={isPending || (!editingId && !anneeQuery.data)}>
+            {editingId ? "Enregistrer" : "Ajouter"}
+          </Button>
+          {editingId && (
+            <Button type="button" variant="ghost" onClick={resetForm}>
+              Annuler
+            </Button>
+          )}
+        </form>
+      </Card>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Nom</th>
-              <th className="px-4 py-2">Cycle</th>
-              <th className="px-4 py-2">Niveau</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {classesQuery.data?.map((c) => (
-              <tr key={c.id}>
-                <td className="px-4 py-2 text-slate-900">{c.nom}</td>
-                <td className="px-4 py-2 text-slate-500">{CYCLE_LABELS[c.cycle]}</td>
-                <td className="px-4 py-2 text-slate-500">{c.niveau}</td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => handleEdit(c)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
-                    Modifier
-                  </button>
-                  <button onClick={() => deleteMutation.mutate(c.id)} className="text-xs text-slate-400 hover:text-red-600">
-                    Supprimer
-                  </button>
-                </td>
+      <Card className="overflow-x-auto">
+        {classesQuery.data?.length ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2">Nom</th>
+                <th className="px-4 py-2">Cycle</th>
+                <th className="px-4 py-2">Niveau</th>
+                <th className="px-4 py-2" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {classesQuery.data.map((c) => (
+                <tr key={c.id}>
+                  <td className="px-4 py-2 text-slate-900">{c.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{CYCLE_LABELS[c.cycle]}</td>
+                  <td className="px-4 py-2 text-slate-500">{c.niveau}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" className="mr-3" onClick={() => handleEdit(c)}>
+                      Modifier
+                    </Button>
+                    <Button variant="danger" onClick={() => deleteMutation.mutate(c.id)}>
+                      Supprimer
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="Aucune classe pour le moment — ajoutez-en une ci-dessus." />
+        )}
+      </Card>
     </div>
   );
 }

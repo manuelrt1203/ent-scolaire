@@ -1,3 +1,12 @@
+import {
+  IconBookOpen,
+  IconClipboard,
+  IconMegaphone,
+  IconShield,
+  IconSettings,
+  type IconComponent,
+} from "./components/icons";
+
 export interface NavItem {
   to: string;
   label: string;
@@ -12,6 +21,47 @@ export const CATEGORIES: Record<string, string> = {
   "vie-scolaire": "Vie scolaire",
   communication: "Communication",
   administration: "Administration",
+};
+
+/** Couleur + icône par catégorie — donne aux différents espaces de l'ENT un
+ * repère visuel constant (portail d'accueil, onglets, en-têtes d'écran),
+ * à la manière des ENT académiques où chaque espace a sa propre teinte. */
+export const CATEGORY_META: Record<string, { icon: IconComponent; badge: string; dot: string; text: string; border: string }> = {
+  scolarite: {
+    icon: IconBookOpen,
+    badge: "bg-sky-50 text-sky-700",
+    dot: "bg-sky-600",
+    text: "text-sky-700",
+    border: "border-sky-600",
+  },
+  enseignements: {
+    icon: IconClipboard,
+    badge: "bg-violet-50 text-violet-700",
+    dot: "bg-indigo-ink",
+    text: "text-indigo-ink",
+    border: "border-indigo-ink",
+  },
+  "vie-scolaire": {
+    icon: IconShield,
+    badge: "bg-amber-50 text-amber-700",
+    dot: "bg-amber-600",
+    text: "text-amber-700",
+    border: "border-amber-600",
+  },
+  communication: {
+    icon: IconMegaphone,
+    badge: "bg-teal-50 text-teal-700",
+    dot: "bg-teal-600",
+    text: "text-teal-700",
+    border: "border-teal-600",
+  },
+  administration: {
+    icon: IconSettings,
+    badge: "bg-slate-100 text-slate-700",
+    dot: "bg-slate-500",
+    text: "text-slate-700",
+    border: "border-slate-500",
+  },
 };
 
 export const DIRECTION_NAV: NavItem[] = [
