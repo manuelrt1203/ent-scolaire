@@ -7,6 +7,7 @@ import {
   useVieScolaireClasse,
   useCreateEvenementVieScolaire,
   useJustifierEvenement,
+  getJustificatifSignedUrl,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
@@ -32,6 +33,11 @@ export function VieScolaireScreen() {
   const vieScolaireQuery = useVieScolaireClasse(client, classeId || null);
   const creerSanction = useCreateEvenementVieScolaire(client);
   const justifier = useJustifierEvenement(client);
+
+  async function handleVoirJustificatif(chemin: string) {
+    const url = await getJustificatifSignedUrl(client, chemin);
+    window.open(url, "_blank");
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -109,6 +115,11 @@ export function VieScolaireScreen() {
                       <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
                       <td className="px-4 py-2 text-slate-500">{v.justifie ? "Oui" : "Non"}</td>
                       <td className="px-4 py-2 text-right">
+                        {v.justificatif_chemin && (
+                          <Button variant="ghost" className="mr-3" onClick={() => handleVoirJustificatif(v.justificatif_chemin)}>
+                            Justificatif
+                          </Button>
+                        )}
                         {v.type !== "sanction" && !v.justifie && (
                           <Button
                             variant="ghost"

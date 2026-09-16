@@ -44,3 +44,38 @@ export async function deleteEvenementVieScolaire(client: EntSupabaseClient, id: 
   const { error } = await client.from("vie_scolaire_evenements").delete().eq("id", id);
   if (error) throw error;
 }
+
+const BUCKET_JUSTIFICATIFS = "vie-scolaire-justificatifs";
+
+/** Élève concerné ou l'un de ses parents uniquement (policies storage +
+ * vérification côté RPC). L'écriture de la colonne passe par la RPC
+ * ajouter_justificatif_absence plutôt qu'un update direct de la table, qui
+ * n'autorise que la direction (voir migration 0012). */
+export async function uploaderJustificatifAbsence(
+  client: EntSupabaseClient,
+  vieScolaireId: string,
+  file: File | Blob,
+) {
+  const nomFichier = file instanceof File ? file.name : "justificatif";
+  const chemin = `${vieScolaireId}/${crypto.randomUUID()}-${nomFichier}`;
+
+  const { error: uploadError } = await client.storage.from(BUCKET_JUSTIFICATIFS).upload(chemin, file, {
+    contentType: file.type || undefined,
+  });
+  if (uploadError) throw uploadError;
+
+  const { error } = await client.rpc("ajouter_justificatif_absence", {
+    p_vie_scolaire_id: vieScolaireId,
+    p_chemin: chemin,
+  });
+  if (error) {
+    await client.storage.from(BUCKET_JUSTIFICATIFS).remove([chemin]);
+    throw error;
+  }
+}
+
+export async function getJustificatifSignedUrl(client: EntSupabaseClient, cheminFichier: string) {
+  const { data, error } = await client.storage.from(BUCKET_JUSTIFICATIFS).createSignedUrl(cheminFichier, 3600);
+  if (error) throw error;
+  return data.signedUrl;
+}

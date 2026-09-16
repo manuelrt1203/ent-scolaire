@@ -1083,6 +1083,7 @@ export type Database = {
           duree_minutes: number | null
           eleve_id: string
           id: string
+          justificatif_chemin: string | null
           justifie: boolean
           motif: string | null
           signale_par: string | null
@@ -1097,6 +1098,7 @@ export type Database = {
           duree_minutes?: number | null
           eleve_id: string
           id?: string
+          justificatif_chemin?: string | null
           justifie?: boolean
           motif?: string | null
           signale_par?: string | null
@@ -1111,6 +1113,7 @@ export type Database = {
           duree_minutes?: number | null
           eleve_id?: string
           id?: string
+          justificatif_chemin?: string | null
           justifie?: boolean
           motif?: string | null
           signale_par?: string | null
@@ -1179,6 +1182,10 @@ export type Database = {
       }
     }
     Functions: {
+      ajouter_justificatif_absence: {
+        Args: { p_chemin: string; p_vie_scolaire_id: string }
+        Returns: undefined
+      }
       annuaire_etablissement: {
         Args: never
         Returns: {

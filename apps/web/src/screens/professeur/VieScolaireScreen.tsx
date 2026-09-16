@@ -1,6 +1,13 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, useMesAffectations, getInscriptions, useVieScolaireClasse, useCreateEvenementVieScolaire } from "@ent/shared";
+import {
+  useAuth,
+  useMesAffectations,
+  getInscriptions,
+  useVieScolaireClasse,
+  useCreateEvenementVieScolaire,
+  getJustificatifSignedUrl,
+} from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Input, Select } from "../../components/ui/Field";
@@ -28,6 +35,11 @@ export function VieScolaireScreen() {
   });
   const vieScolaireQuery = useVieScolaireClasse(client, classeId || null);
   const creerEvenement = useCreateEvenementVieScolaire(client);
+
+  async function handleVoirJustificatif(chemin: string) {
+    const url = await getJustificatifSignedUrl(client, chemin);
+    window.open(url, "_blank");
+  }
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -109,6 +121,7 @@ export function VieScolaireScreen() {
                     <th className="px-4 py-2">Type</th>
                     <th className="px-4 py-2">Date</th>
                     <th className="px-4 py-2">Justifié</th>
+                    <th className="px-4 py-2" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -118,6 +131,13 @@ export function VieScolaireScreen() {
                       <td className="px-4 py-2 text-slate-500 capitalize">{v.type}{v.type === "retard" && v.duree_minutes ? ` (${v.duree_minutes} min)` : ""}</td>
                       <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
                       <td className="px-4 py-2 text-slate-500">{v.justifie ? "Oui" : "Non"}</td>
+                      <td className="px-4 py-2 text-right">
+                        {v.justificatif_chemin && (
+                          <Button variant="ghost" onClick={() => handleVoirJustificatif(v.justificatif_chemin)}>
+                            Justificatif
+                          </Button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
