@@ -1,0 +1,21 @@
+{
+  "name": "@ent/capacitor",
+  "version": "0.1.0",
+  "description": "ENT Scolaire — application mobile installable (Android/iOS), emballe apps/web via Capacitor",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "cd ../web && npm run build && cd ../capacitor && cap sync",
+    "android": "npm run sync && cap open android",
+    "android:build": "npm run sync && cd android && JAVA_HOME=$HOME/.local/jdks/jdk-21.0.12.1+1 ANDROID_HOME=$HOME/.local/android-sdk ./gradlew assembleDebug",
+    "ios": "npm run sync && cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.5.2",
+    "@capacitor/core": "^8.5.2",
+    "@capacitor/ios": "^8.5.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.5.2"
+  }
+}
