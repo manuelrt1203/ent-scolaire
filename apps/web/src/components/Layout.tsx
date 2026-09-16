@@ -2,10 +2,13 @@ import { Outlet, useLocation, useNavigate, useSearchParams } from "react-router-
 import { useAuth, useNombreNonLus } from "@ent/shared";
 import { CATEGORIES, CATEGORY_META, type NavItem } from "../nav";
 import { IconGraduationCap, IconLogOut } from "./icons";
+import { NotificationBell } from "./NotificationBell";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
   professeur: "Professeur",
+  eleve: "Élève",
+  parent: "Parent",
 };
 
 export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) {
@@ -36,6 +39,7 @@ export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) 
           <span className="hidden truncate text-sm font-semibold tracking-tight text-white sm:inline">ENT Scolaire</span>
         </button>
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <NotificationBell />
           {profile?.role && (
             <span className="hidden shrink-0 rounded-full border border-white/15 px-2.5 py-1 text-xs font-medium text-slate-300 sm:inline">
               {ROLE_LABELS[profile.role] ?? profile.role}
