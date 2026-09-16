@@ -11,10 +11,12 @@ export function RootRedirect() {
 
   if (profile.role === "direction") return <Navigate to="/direction" replace />;
   if (profile.role === "professeur") return <Navigate to="/professeur" replace />;
+  if (profile.role === "eleve") return <Navigate to="/eleve" replace />;
+  if (profile.role === "parent") return <Navigate to="/parent" replace />;
 
   return (
     <div className="flex h-screen items-center justify-center text-slate-500">
-      Ce rôle n'est pas encore pris en charge sur l'application de bureau.
+      Ce rôle n'est pas encore pris en charge.
     </div>
   );
 }

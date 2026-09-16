@@ -86,6 +86,27 @@ export const DIRECTION_NAV: NavItem[] = [
   { to: "/direction/parametres", label: "Paramètres", description: "Durée de conservation des données (RGPD)", category: "administration" },
 ];
 
+/** Élève et parent ont exactement le même espace (le parent consulte les
+ * données de l'enfant sélectionné via ChildSwitcher) — un seul gabarit,
+ * comme dans l'app mobile (components/nav.ts) où une seule NAV sert les
+ * deux rôles. */
+function buildEleveParentNav(base: "/eleve" | "/parent"): NavItem[] {
+  return [
+    { to: `${base}/notes`, label: "Notes", description: "Moyennes et relevés par matière", category: "scolarite", featured: true },
+    { to: `${base}/messagerie`, label: "Messagerie", description: "Échanger des messages avec l'équipe", category: "communication", featured: true },
+    { to: `${base}/emploi-du-temps`, label: "Emploi du temps", description: "Emploi du temps de la semaine", category: "enseignements" },
+    { to: `${base}/vie-scolaire`, label: "Vie scolaire", description: "Absences, retards et sanctions", category: "vie-scolaire" },
+    { to: `${base}/cahier-textes`, label: "Cahier de textes", description: "Contenu des séances par matière", category: "enseignements" },
+    { to: `${base}/ressources`, label: "Ressources", description: "Documents déposés par les professeurs", category: "enseignements" },
+    { to: `${base}/actualites`, label: "Actualités", description: "Informations publiées par l'établissement", category: "communication" },
+    { to: `${base}/calendrier`, label: "Calendrier", description: "Événements et dates clés de l'année", category: "communication" },
+    { to: `${base}/annuaire`, label: "Annuaire", description: "Coordonnées de l'équipe et des familles", category: "communication" },
+  ];
+}
+
+export const ELEVE_NAV: NavItem[] = buildEleveParentNav("/eleve");
+export const PARENT_NAV: NavItem[] = buildEleveParentNav("/parent");
+
 export const PROFESSEUR_NAV: NavItem[] = [
   { to: "/professeur/mes-classes", label: "Mes classes", description: "Vos matières et classes affectées", category: "enseignements" },
   { to: "/professeur/saisie", label: "Saisie des notes", description: "Saisir et soumettre les notes de vos élèves", category: "scolarite", featured: true },

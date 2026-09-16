@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { RequireRole } from "./components/RequireRole";
 import { RootRedirect } from "./components/RootRedirect";
 import { Layout } from "./components/Layout";
-import { DIRECTION_NAV, PROFESSEUR_NAV } from "./nav";
+import { EleveLayout, ParentLayout, AccueilAvecSwitcher } from "./components/EleveParentLayouts";
+import { DIRECTION_NAV, PROFESSEUR_NAV, ELEVE_NAV, PARENT_NAV } from "./nav";
 
 const LoginScreen = lazy(() => import("./screens/auth/LoginScreen").then((m) => ({ default: m.LoginScreen })));
 const ActivationScreen = lazy(() => import("./screens/auth/ActivationScreen").then((m) => ({ default: m.ActivationScreen })));
@@ -82,6 +83,32 @@ const MessageDetailScreen = lazy(() =>
   import("./screens/messagerie/MessageDetailScreen").then((m) => ({ default: m.MessageDetailScreen })),
 );
 
+// Élève et parent partagent les mêmes écrans (voir screens/eleve/) : le
+// parent consulte les données de l'enfant sélectionné (ChildSwitcher), au
+// lieu des siennes, via ViewedEleveContext — pas de duplication d'écrans.
+const EleveNotesScreen = lazy(() => import("./screens/eleve/NotesScreen").then((m) => ({ default: m.NotesScreen })));
+const MatiereDetailScreen = lazy(() =>
+  import("./screens/eleve/MatiereDetailScreen").then((m) => ({ default: m.MatiereDetailScreen })),
+);
+const EleveCahierTexteScreen = lazy(() =>
+  import("./screens/eleve/CahierTexteScreen").then((m) => ({ default: m.CahierTexteScreen })),
+);
+const EleveRessourcesScreen = lazy(() =>
+  import("./screens/eleve/RessourcesScreen").then((m) => ({ default: m.RessourcesScreen })),
+);
+const EleveVieScolaireScreen = lazy(() =>
+  import("./screens/eleve/VieScolaireScreen").then((m) => ({ default: m.VieScolaireScreen })),
+);
+const EleveActualitesScreen = lazy(() =>
+  import("./screens/eleve/ActualitesScreen").then((m) => ({ default: m.ActualitesScreen })),
+);
+const EleveCalendrierScreen = lazy(() =>
+  import("./screens/eleve/CalendrierScreen").then((m) => ({ default: m.CalendrierScreen })),
+);
+const EleveEmploiDuTempsScreen = lazy(() =>
+  import("./screens/eleve/EmploiDuTempsScreen").then((m) => ({ default: m.EmploiDuTempsScreen })),
+);
+
 // Chaque écran n'est chargé que lorsqu'on y navigue (React.lazy), plutôt que
 // tout empaqueté dans un seul bundle de 600+ Ko au premier chargement —
 // important pour un public avec une connexion internet coûteuse ou instable.
@@ -101,6 +128,26 @@ const messagerieRoutes = (
     <Route path="messagerie/:id" element={<MessageDetailScreen />} />
   </>
 );
+
+// Identiques pour élève et parent (même contrat que messagerieRoutes
+// ci-dessus, déjà partagé entre direction et professeur).
+function eleveParentRoutes(nav: typeof ELEVE_NAV) {
+  return (
+    <>
+      <Route index element={<AccueilAvecSwitcher nav={nav} AccueilScreen={AccueilScreen} />} />
+      <Route path="notes" element={<EleveNotesScreen />} />
+      <Route path="matiere/:matiereClasseId" element={<MatiereDetailScreen />} />
+      <Route path="cahier-textes" element={<EleveCahierTexteScreen />} />
+      <Route path="ressources" element={<EleveRessourcesScreen />} />
+      <Route path="vie-scolaire" element={<EleveVieScolaireScreen />} />
+      <Route path="actualites" element={<EleveActualitesScreen />} />
+      <Route path="calendrier" element={<EleveCalendrierScreen />} />
+      <Route path="emploi-du-temps" element={<EleveEmploiDuTempsScreen />} />
+      <Route path="annuaire" element={<AnnuaireScreen />} />
+      {messagerieRoutes}
+    </>
+  );
+}
 
 export function App() {
   return (
@@ -163,6 +210,28 @@ export function App() {
             <Route path="calendrier" element={<CalendrierProfesseurScreen />} />
             <Route path="annuaire" element={<AnnuaireScreen />} />
             {messagerieRoutes}
+          </Route>
+
+          <Route
+            path="/eleve"
+            element={
+              <RequireRole role="eleve">
+                <EleveLayout />
+              </RequireRole>
+            }
+          >
+            {eleveParentRoutes(ELEVE_NAV)}
+          </Route>
+
+          <Route
+            path="/parent"
+            element={
+              <RequireRole role="parent">
+                <ParentLayout />
+              </RequireRole>
+            }
+          >
+            {eleveParentRoutes(PARENT_NAV)}
           </Route>
         </Routes>
       </Suspense>
