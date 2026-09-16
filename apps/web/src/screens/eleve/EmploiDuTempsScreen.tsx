@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, getClasseEleve, useCreneaux } from "@ent/shared";
+import { useAuth, getClasseEleve, useCreneaux, getAnneeScolaireActive, buildEmploiDuTempsIcs } from "@ent/shared";
 import { useViewedEleveId } from "../../lib/ViewedEleveContext";
+import { Button } from "../../components/ui/Button";
 import { Card, PageHeader } from "../../components/ui/Card";
+import { telechargerFichierTexte } from "../../lib/telechargerFichier";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 export function EmploiDuTempsScreen() {
-  const { client } = useAuth();
+  const { client, profile } = useAuth();
   const eleveId = useViewedEleveId();
 
   const classeQuery = useQuery({
@@ -17,12 +19,43 @@ export function EmploiDuTempsScreen() {
   const classeId = classeQuery.data?.classe_id ?? null;
 
   const creneauxQuery = useCreneaux(client, classeId ? { classeId } : undefined);
+  const anneeQuery = useQuery({
+    queryKey: ["annee-active", profile?.etablissement_id],
+    queryFn: () => getAnneeScolaireActive(client, profile!.etablissement_id),
+    enabled: Boolean(profile),
+  });
 
   const parJour = JOURS.map((_, i) => (creneauxQuery.data ?? []).filter((c: any) => c.jour_semaine === i + 1));
 
+  function handleExporterIcs() {
+    if (!creneauxQuery.data || !anneeQuery.data) return;
+    const ics = buildEmploiDuTempsIcs(
+      creneauxQuery.data.map((c: any) => ({
+        id: c.id,
+        jour_semaine: c.jour_semaine,
+        heure_debut: c.heure_debut,
+        heure_fin: c.heure_fin,
+        salle: c.salle,
+        matiere: c.matiere_classe?.matieres?.nom ?? "Cours",
+        detail: c.professeur ? `${c.professeur.prenom} ${c.professeur.nom}` : null,
+      })),
+      anneeQuery.data,
+    );
+    telechargerFichierTexte(ics, "emploi-du-temps.ics", "text/calendar");
+  }
+
   return (
     <div className="max-w-2xl">
-      <PageHeader title="Emploi du temps" description="Votre emploi du temps de la semaine." />
+      <div className="flex items-start justify-between gap-4">
+        <PageHeader title="Emploi du temps" description="Votre emploi du temps de la semaine." />
+        <Button
+          variant="secondary"
+          onClick={handleExporterIcs}
+          disabled={!creneauxQuery.data?.length || !anneeQuery.data}
+        >
+          Exporter (.ics)
+        </Button>
+      </div>
       <div className="space-y-6">
         {JOURS.map((jour, i) => (
           <div key={jour}>
