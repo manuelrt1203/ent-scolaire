@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth, getEtablissement, updateRetentionEtablissement } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
@@ -41,10 +42,15 @@ export function ParametresScreen() {
 
   return (
     <div className="max-w-xl">
-      <PageHeader
-        title="Paramètres"
-        description="Durée de conservation des données avant suppression automatique (RGPD). Voir legal/politique-confidentialite.md pour le détail."
-      />
+      <PageHeader title="Paramètres" description="Durée de conservation des données avant suppression automatique (RGPD)." />
+
+      <p className="mb-4 text-sm text-slate-500">
+        Voir la{" "}
+        <Link to="/politique-confidentialite" target="_blank" className="text-indigo-ink hover:underline">
+          politique de confidentialité
+        </Link>{" "}
+        pour le détail des données collectées et des durées de conservation.
+      </p>
 
       <Card className="p-4">
         <form onSubmit={handleSubmit} className="space-y-4">

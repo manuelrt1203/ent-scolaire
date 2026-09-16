@@ -98,8 +98,11 @@ export function LandingScreen() {
       </section>
 
       <footer className="border-t border-slate-100">
-        <div className="mx-auto max-w-5xl px-4 py-8 text-center text-xs text-slate-400 sm:px-6">
-          ENT Scolaire — Espace numérique de travail pour établissements scolaires.
+        <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-8 text-center text-xs text-slate-400 sm:px-6">
+          <span>ENT Scolaire — Espace numérique de travail pour établissements scolaires.</span>
+          <Link to="/politique-confidentialite" className="hover:text-slate-600 hover:underline">
+            Politique de confidentialité
+          </Link>
         </div>
       </footer>
     </div>

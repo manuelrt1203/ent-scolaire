@@ -12,6 +12,9 @@ const InscriptionEtablissementScreen = lazy(() =>
   import("./screens/auth/InscriptionEtablissementScreen").then((m) => ({ default: m.InscriptionEtablissementScreen })),
 );
 const InvitationScreen = lazy(() => import("./screens/auth/InvitationScreen").then((m) => ({ default: m.InvitationScreen })));
+const PolitiqueConfidentialiteScreen = lazy(() =>
+  import("./screens/PolitiqueConfidentialiteScreen").then((m) => ({ default: m.PolitiqueConfidentialiteScreen })),
+);
 const AccueilScreen = lazy(() => import("./screens/AccueilScreen").then((m) => ({ default: m.AccueilScreen })));
 const ClassesScreen = lazy(() => import("./screens/direction/ClassesScreen").then((m) => ({ default: m.ClassesScreen })));
 const MatieresScreen = lazy(() => import("./screens/direction/MatieresScreen").then((m) => ({ default: m.MatieresScreen })));
@@ -158,6 +161,7 @@ export function App() {
           <Route path="/activation" element={<ActivationScreen />} />
           <Route path="/inscription" element={<InscriptionEtablissementScreen />} />
           <Route path="/invitation" element={<InvitationScreen />} />
+          <Route path="/politique-confidentialite" element={<PolitiqueConfidentialiteScreen />} />
           <Route path="/" element={<RootRedirect />} />
 
           <Route
