@@ -1,6 +1,7 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { registerEtablissement, useAuth } from "@ent/shared";
+import { BackButton } from "../../components/ui/BackButton";
 import { Button } from "../../components/ui/Button";
 import { Field, Input } from "../../components/ui/Field";
 import { IconGraduationCap } from "../../components/icons";
@@ -90,12 +91,6 @@ export function InscriptionEtablissementScreen() {
     );
   }
 
-  const backLink = (
-    <button type="button" onClick={back} className="mb-4 text-xs text-slate-400 hover:text-slate-600">
-      ← Précédent
-    </button>
-  );
-
   return (
     <Shell>
       <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
@@ -116,7 +111,7 @@ export function InscriptionEtablissementScreen() {
 
         {step === 1 && (
           <form onSubmit={next}>
-            {backLink}
+            <BackButton onClick={back} />
             <h1 className="mb-1 text-lg font-semibold text-slate-900">Quelle est son adresse ?</h1>
             <p className="mb-6 text-xs text-slate-500">Optionnel — vous pouvez passer cette étape.</p>
             <div className="mb-6">
@@ -130,7 +125,7 @@ export function InscriptionEtablissementScreen() {
 
         {step === 2 && (
           <form onSubmit={next}>
-            {backLink}
+            <BackButton onClick={back} />
             <h1 className="mb-1 text-lg font-semibold text-slate-900">Quel est votre prénom ?</h1>
             <p className="mb-6 text-xs text-slate-500">Vous serez le premier compte direction de l'établissement.</p>
             <div className="mb-6">
@@ -144,7 +139,7 @@ export function InscriptionEtablissementScreen() {
 
         {step === 3 && (
           <form onSubmit={next}>
-            {backLink}
+            <BackButton onClick={back} />
             <h1 className="mb-6 text-lg font-semibold text-slate-900">Et votre nom ?</h1>
             <div className="mb-6">
               <Field label="Nom">
@@ -157,7 +152,7 @@ export function InscriptionEtablissementScreen() {
 
         {step === 4 && (
           <form onSubmit={handleSubmit}>
-            {backLink}
+            <BackButton onClick={back} />
             <h1 className="mb-1 text-lg font-semibold text-slate-900">Quelle adresse email pour votre compte ?</h1>
             <p className="mb-6 text-xs text-slate-500">Elle servira à activer votre compte direction.</p>
             <div className="mb-6">

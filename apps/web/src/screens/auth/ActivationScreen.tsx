@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth, requestActivationCode, verifyActivationCode, setPassword } from "@ent/shared";
+import { BackButton } from "../../components/ui/BackButton";
 
 type Step = "email" | "code" | "password";
 
@@ -104,6 +105,7 @@ export function ActivationScreen() {
 
         {step === "code" && (
           <form onSubmit={handleVerifyCode}>
+            <BackButton onClick={() => setStep("email")} />
             <label className="mb-1 block text-sm font-medium text-slate-700">Code reçu par email</label>
             <input
               value={code}
@@ -115,22 +117,16 @@ export function ActivationScreen() {
             <button
               type="submit"
               disabled={loading}
-              className="mb-2 w-full rounded-md bg-indigo-ink px-3 py-2 text-sm font-medium text-white hover:bg-indigo-ink/90 disabled:opacity-50"
+              className="w-full rounded-md bg-indigo-ink px-3 py-2 text-sm font-medium text-white hover:bg-indigo-ink/90 disabled:opacity-50"
             >
               {loading ? "Vérification…" : "Valider le code"}
-            </button>
-            <button
-              type="button"
-              onClick={() => setStep("email")}
-              className="w-full rounded-md px-3 py-2 text-xs text-slate-500 hover:underline"
-            >
-              Renvoyer un code / changer d'email
             </button>
           </form>
         )}
 
         {step === "password" && (
           <form onSubmit={handleSetPassword}>
+            <BackButton onClick={() => setStep("code")} />
             <label className="mb-1 block text-sm font-medium text-slate-700">Nouveau mot de passe</label>
             <input
               type="password"
