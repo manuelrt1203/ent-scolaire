@@ -8,7 +8,7 @@ function Tab({ to, children }: { to: string; children: ReactNode }) {
       end
       className={({ isActive }) =>
         `border-b-2 px-1 pb-2 text-sm font-medium ${
-          isActive ? "border-slate-900 text-slate-900" : "border-transparent text-slate-500 hover:text-slate-700"
+          isActive ? "border-indigo-ink text-midnight-ink" : "border-transparent text-slate-500 hover:text-slate-700"
         }`
       }
     >

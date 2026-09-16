@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth, getUtilisateurs, getLiensParentsEleves, createLienParentEleve, deleteLienParentEleve } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Select } from "../../components/ui/Field";
 
 export function LiensParentsElevesScreen() {
   const { client } = useAuth();
@@ -30,56 +33,60 @@ export function LiensParentsElevesScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Liens parents ↔ élèves</h1>
+      <PageHeader title="Liens parents ↔ élèves" description="Rattacher les comptes parents à leurs enfants." />
 
-      <form onSubmit={handleSubmit} className="mb-8 flex items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Parent</label>
-          <select value={parentId} onChange={(e) => setParentId(e.target.value)} required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-            <option value="">—</option>
-            {parentsQuery.data?.map((p) => (
-              <option key={p.id} value={p.id}>{p.prenom} {p.nom}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Élève</label>
-          <select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-            <option value="">—</option>
-            {elevesQuery.data?.map((el) => (
-              <option key={el.id} value={el.id}>{el.prenom} {el.nom}</option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" disabled={createMutation.isPending} className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-          Lier
-        </button>
-      </form>
+      <Card className="mb-8 p-4">
+        <form onSubmit={handleSubmit} className="flex items-end gap-3">
+          <div className="flex-1">
+            <Field label="Parent">
+              <Select value={parentId} onChange={(e) => setParentId(e.target.value)} required>
+                <option value="">—</option>
+                {parentsQuery.data?.map((p) => (
+                  <option key={p.id} value={p.id}>{p.prenom} {p.nom}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="flex-1">
+            <Field label="Élève">
+              <Select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required>
+                <option value="">—</option>
+                {elevesQuery.data?.map((el) => (
+                  <option key={el.id} value={el.id}>{el.prenom} {el.nom}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <Button type="submit" disabled={createMutation.isPending}>Lier</Button>
+        </form>
+      </Card>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Parent</th>
-              <th className="px-4 py-2">Élève</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {liensQuery.data?.map((l: any) => (
-              <tr key={l.id}>
-                <td className="px-4 py-2 text-slate-900">{l.parent?.prenom} {l.parent?.nom}</td>
-                <td className="px-4 py-2 text-slate-500">{l.eleve?.prenom} {l.eleve?.nom}</td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => deleteMutation.mutate(l.id)} className="text-xs text-slate-400 hover:text-red-600">
-                    Supprimer
-                  </button>
-                </td>
+      <Card className="overflow-x-auto">
+        {liensQuery.data?.length ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2">Parent</th>
+                <th className="px-4 py-2">Élève</th>
+                <th className="px-4 py-2" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {liensQuery.data.map((l: any) => (
+                <tr key={l.id}>
+                  <td className="px-4 py-2 text-slate-900">{l.parent?.prenom} {l.parent?.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{l.eleve?.prenom} {l.eleve?.nom}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="danger" onClick={() => deleteMutation.mutate(l.id)}>Supprimer</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="Aucun lien parent-élève pour le moment." />
+        )}
+      </Card>
     </div>
   );
 }

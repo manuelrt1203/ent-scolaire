@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth, useMesAffectations, getInscriptions, useVieScolaireClasse, useCreateEvenementVieScolaire } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Input, Select } from "../../components/ui/Field";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR");
@@ -44,81 +47,85 @@ export function VieScolaireScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Vie scolaire</h1>
+      <PageHeader title="Vie scolaire" description="Signaler absences, retards et sanctions." />
 
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-        <label className="mb-1 block text-xs font-medium text-slate-600">Matière / Classe</label>
-        <select value={matiereClasseId} onChange={(e) => setMatiereClasseId(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">—</option>
-          {affectationsQuery.data?.map((a: any) => (
-            <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
-              {a.matiere_classe.matieres?.nom} — {a.matiere_classe.classes?.nom}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Card className="mb-6 p-4">
+        <Field label="Matière / Classe">
+          <Select value={matiereClasseId} onChange={(e) => setMatiereClasseId(e.target.value)}>
+            <option value="">—</option>
+            {affectationsQuery.data?.map((a: any) => (
+              <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
+                {a.matiere_classe.matieres?.nom} — {a.matiere_classe.classes?.nom}
+              </option>
+            ))}
+          </Select>
+        </Field>
+      </Card>
 
       {classeId && (
         <>
-          <form onSubmit={handleSubmit} className="mb-8 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Élève</label>
-              <select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-                <option value="">—</option>
-                {inscriptionsQuery.data?.map((i: any) => (
-                  <option key={i.eleve_id} value={i.eleve_id}>{i.profiles?.prenom} {i.profiles?.nom}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Type</label>
-              <select value={type} onChange={(e) => setType(e.target.value as "absence" | "retard")} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-                <option value="absence">Absence</option>
-                <option value="retard">Retard</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Date</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            {type === "retard" && (
+          <Card className="mb-8 p-4">
+            <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
               <div>
-                <label className="mb-1 block text-xs font-medium text-slate-600">Minutes</label>
-                <input type="number" min="1" value={dureeMinutes} onChange={(e) => setDureeMinutes(e.target.value)} className="w-20 rounded-md border border-slate-300 px-3 py-2 text-sm" />
+                <Field label="Élève">
+                  <Select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required>
+                    <option value="">—</option>
+                    {inscriptionsQuery.data?.map((i: any) => (
+                      <option key={i.eleve_id} value={i.eleve_id}>{i.profiles?.prenom} {i.profiles?.nom}</option>
+                    ))}
+                  </Select>
+                </Field>
               </div>
-            )}
-            <button type="submit" disabled={creerEvenement.isPending || !eleveId} className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-              Signaler
-            </button>
-          </form>
+              <div>
+                <Field label="Type">
+                  <Select value={type} onChange={(e) => setType(e.target.value as "absence" | "retard")}>
+                    <option value="absence">Absence</option>
+                    <option value="retard">Retard</option>
+                  </Select>
+                </Field>
+              </div>
+              <div>
+                <Field label="Date">
+                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+                </Field>
+              </div>
+              {type === "retard" && (
+                <div className="w-20">
+                  <Field label="Minutes">
+                    <Input type="number" min="1" value={dureeMinutes} onChange={(e) => setDureeMinutes(e.target.value)} />
+                  </Field>
+                </div>
+              )}
+              <Button type="submit" disabled={creerEvenement.isPending || !eleveId}>Signaler</Button>
+            </form>
+          </Card>
 
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-2">Élève</th>
-                  <th className="px-4 py-2">Type</th>
-                  <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Justifié</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {vieScolaireQuery.data?.map((v: any) => (
-                  <tr key={v.id}>
-                    <td className="px-4 py-2 text-slate-900">{v.profiles?.prenom} {v.profiles?.nom}</td>
-                    <td className="px-4 py-2 text-slate-500 capitalize">{v.type}{v.type === "retard" && v.duree_minutes ? ` (${v.duree_minutes} min)` : ""}</td>
-                    <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
-                    <td className="px-4 py-2 text-slate-500">{v.justifie ? "Oui" : "Non"}</td>
-                  </tr>
-                ))}
-                {vieScolaireQuery.data?.length === 0 && (
+          <Card className="overflow-x-auto">
+            {vieScolaireQuery.data?.length ? (
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <td colSpan={4} className="px-4 py-6 text-center text-slate-400">Aucun événement pour cette classe.</td>
+                    <th className="px-4 py-2">Élève</th>
+                    <th className="px-4 py-2">Type</th>
+                    <th className="px-4 py-2">Date</th>
+                    <th className="px-4 py-2">Justifié</th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {vieScolaireQuery.data.map((v: any) => (
+                    <tr key={v.id}>
+                      <td className="px-4 py-2 text-slate-900">{v.profiles?.prenom} {v.profiles?.nom}</td>
+                      <td className="px-4 py-2 text-slate-500 capitalize">{v.type}{v.type === "retard" && v.duree_minutes ? ` (${v.duree_minutes} min)` : ""}</td>
+                      <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
+                      <td className="px-4 py-2 text-slate-500">{v.justifie ? "Oui" : "Non"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <EmptyState message="Aucun événement pour cette classe." />
+            )}
+          </Card>
         </>
       )}
     </div>

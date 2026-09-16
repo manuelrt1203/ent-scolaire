@@ -8,6 +8,7 @@ import {
   useSupprimerMessageEnvoye,
   getPieceJointeSignedUrl,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
 
 function formatTaille(octets: number | null) {
   if (!octets) return "";
@@ -57,9 +58,7 @@ export function MessageDetailScreen() {
 
   return (
     <div className="max-w-2xl">
-      <button onClick={() => navigate(-1)} className="mb-4 text-xs text-slate-500 underline">
-        ← Retour
-      </button>
+      <Button variant="ghost" className="mb-4" onClick={() => navigate(-1)}>← Retour</Button>
 
       <h1 className="mb-6 text-lg font-semibold text-slate-900">{root.sujet}</h1>
 
@@ -70,7 +69,7 @@ export function MessageDetailScreen() {
           return (
             <div
               key={m.id}
-              className={`rounded-lg border p-4 ${estMoi ? "border-slate-200 bg-slate-50" : "border-slate-200 bg-white"}`}
+              className={`rounded-lg border border-slate-200 p-4 ${estMoi ? "bg-slate-50" : "bg-white"}`}
             >
               <div className="mb-2 flex items-baseline justify-between">
                 <p className="text-sm font-medium text-slate-900">
@@ -103,7 +102,7 @@ export function MessageDetailScreen() {
       </div>
 
       <div className="flex gap-3">
-        <button
+        <Button
           onClick={() =>
             navigate("../../messagerie/nouveau", {
               state: {
@@ -113,11 +112,11 @@ export function MessageDetailScreen() {
               },
             })
           }
-          className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white"
         >
           Répondre
-        </button>
-        <button
+        </Button>
+        <Button
+          variant="secondary"
           onClick={() => {
             thread.forEach((m: any) => {
               if (m.expediteur_id === profile?.id) {
@@ -129,10 +128,9 @@ export function MessageDetailScreen() {
             });
             navigate("../../messagerie");
           }}
-          className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-600"
         >
           Supprimer
-        </button>
+        </Button>
       </div>
     </div>
   );

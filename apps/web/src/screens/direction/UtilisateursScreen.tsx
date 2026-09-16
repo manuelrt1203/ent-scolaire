@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth, getUtilisateurs, inviteUser, updateProfile, type Role } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Input, Select } from "../../components/ui/Field";
 
 const ROLES: { value: Role; label: string }[] = [
   { value: "direction", label: "Direction" },
@@ -69,45 +72,40 @@ export function UtilisateursScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Utilisateurs</h1>
+      <PageHeader title="Utilisateurs" description="Gérer les comptes professeurs, élèves et parents." />
 
-      <form onSubmit={handleSubmit} className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Prénom</label>
-          <input value={prenom} onChange={(e) => setPrenom(e.target.value)} required className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Nom</label>
-          <input value={nom} onChange={(e) => setNom(e.target.value)} required className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={Boolean(editingId)}
-            className="rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Rôle</label>
-          <select value={role} onChange={(e) => setRole(e.target.value as Role)} disabled={Boolean(editingId)} className="rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50">
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" disabled={isPending} className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-          {editingId ? "Enregistrer" : "Créer le compte"}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm} className="px-2 py-2 text-xs text-slate-500 hover:underline">
-            Annuler
-          </button>
-        )}
-      </form>
+      <Card className="mb-4 p-4">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+          <div>
+            <Field label="Prénom">
+              <Input value={prenom} onChange={(e) => setPrenom(e.target.value)} required />
+            </Field>
+          </div>
+          <div>
+            <Field label="Nom">
+              <Input value={nom} onChange={(e) => setNom(e.target.value)} required />
+            </Field>
+          </div>
+          <div>
+            <Field label="Email">
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={Boolean(editingId)} />
+            </Field>
+          </div>
+          <div>
+            <Field label="Rôle">
+              <Select value={role} onChange={(e) => setRole(e.target.value as Role)} disabled={Boolean(editingId)}>
+                {ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <Button type="submit" disabled={isPending}>{editingId ? "Enregistrer" : "Créer le compte"}</Button>
+          {editingId && (
+            <Button type="button" variant="ghost" onClick={resetForm}>Annuler</Button>
+          )}
+        </form>
+      </Card>
       {editingId && (
         <p className="mb-4 text-xs text-slate-400">
           Modification limitée au prénom/nom — l'email et le rôle ne peuvent pas être changés depuis cet écran.
@@ -124,40 +122,39 @@ export function UtilisateursScreen() {
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Nom</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Rôle</th>
-              <th className="px-4 py-2">Statut</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {usersQuery.data?.map((u) => (
-              <tr key={u.id} className={u.actif ? "" : "opacity-50"}>
-                <td className="px-4 py-2 text-slate-900">{u.prenom} {u.nom}</td>
-                <td className="px-4 py-2 text-slate-500">{u.email}</td>
-                <td className="px-4 py-2 text-slate-500">{ROLES.find((r) => r.value === u.role)?.label}</td>
-                <td className="px-4 py-2 text-slate-500">{u.actif ? "Actif" : "Désactivé"}</td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => handleEdit(u)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
-                    Modifier
-                  </button>
-                  <button
-                    onClick={() => toggleActifMutation.mutate({ id: u.id, actif: !u.actif })}
-                    className="text-xs text-slate-400 hover:text-red-600"
-                  >
-                    {u.actif ? "Désactiver" : "Réactiver"}
-                  </button>
-                </td>
+      <Card className="overflow-x-auto">
+        {usersQuery.data?.length ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2">Nom</th>
+                <th className="px-4 py-2">Email</th>
+                <th className="px-4 py-2">Rôle</th>
+                <th className="px-4 py-2">Statut</th>
+                <th className="px-4 py-2" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {usersQuery.data.map((u) => (
+                <tr key={u.id} className={u.actif ? "" : "opacity-50"}>
+                  <td className="px-4 py-2 text-slate-900">{u.prenom} {u.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{u.email}</td>
+                  <td className="px-4 py-2 text-slate-500">{ROLES.find((r) => r.value === u.role)?.label}</td>
+                  <td className="px-4 py-2 text-slate-500">{u.actif ? "Actif" : "Désactivé"}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" className="mr-3" onClick={() => handleEdit(u)}>Modifier</Button>
+                    <Button variant="danger" onClick={() => toggleActifMutation.mutate({ id: u.id, actif: !u.actif })}>
+                      {u.actif ? "Désactiver" : "Réactiver"}
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="Aucun utilisateur créé pour le moment." />
+        )}
+      </Card>
     </div>
   );
 }

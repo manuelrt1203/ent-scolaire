@@ -2,6 +2,9 @@ import { useRef, useState, type FormEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth, getAnnuaireMessagerie, useEnvoyerMessage, useUploadPieceJointe } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { PageHeader } from "../../components/ui/Card";
+import { Field, Input, Textarea } from "../../components/ui/Field";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -63,11 +66,10 @@ export function ComposeScreen() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Nouveau message</h1>
+      <PageHeader title="Nouveau message" />
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Destinataires</label>
+        <Field label="Destinataires">
           <div className="max-h-48 overflow-y-auto rounded-md border border-slate-300 p-2">
             {autresUtilisateurs.map((u) => (
               <label key={u.id} className="flex items-center gap-2 rounded px-2 py-1 text-sm hover:bg-slate-50">
@@ -80,42 +82,23 @@ export function ComposeScreen() {
               </label>
             ))}
           </div>
-        </div>
+        </Field>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Sujet</label>
-          <input
-            value={sujet}
-            onChange={(e) => setSujet(e.target.value)}
-            required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
+        <Field label="Sujet">
+          <Input value={sujet} onChange={(e) => setSujet(e.target.value)} required />
+        </Field>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Message</label>
-          <textarea
-            value={corps}
-            onChange={(e) => setCorps(e.target.value)}
-            rows={8}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
+        <Field label="Message">
+          <Textarea value={corps} onChange={(e) => setCorps(e.target.value)} rows={8} />
+        </Field>
 
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Pièces jointes (optionnel)</label>
+        <Field label="Pièces jointes (optionnel)">
           <input ref={fileInputRef} type="file" multiple className="w-full text-sm" />
-        </div>
+        </Field>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={envoiEnCours}
-          className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {envoiEnCours ? "Envoi…" : "Envoyer"}
-        </button>
+        <Button type="submit" disabled={envoiEnCours}>{envoiEnCours ? "Envoi…" : "Envoyer"}</Button>
       </form>
     </div>
   );

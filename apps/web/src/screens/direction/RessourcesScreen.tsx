@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth, getClasses, useRessourcesClasse, getRessourceSignedUrl } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Select } from "../../components/ui/Field";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR");
@@ -26,22 +29,23 @@ export function RessourcesScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Ressources pédagogiques</h1>
+      <PageHeader title="Ressources pédagogiques" description="Documents déposés par les professeurs." />
 
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-        <label className="mb-1 block text-xs font-medium text-slate-600">Classe</label>
-        <select value={classeId} onChange={(e) => setClasseId(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">—</option>
-          {classesQuery.data?.map((c) => (
-            <option key={c.id} value={c.id}>{c.nom}</option>
-          ))}
-        </select>
-      </div>
+      <Card className="mb-6 p-4">
+        <Field label="Classe">
+          <Select value={classeId} onChange={(e) => setClasseId(e.target.value)}>
+            <option value="">—</option>
+            {classesQuery.data?.map((c) => (
+              <option key={c.id} value={c.id}>{c.nom}</option>
+            ))}
+          </Select>
+        </Field>
+      </Card>
 
       {classeId && (
         <div className="space-y-3">
           {ressourcesQuery.data?.map((ressource: any) => (
-            <div key={ressource.id} className="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-4">
+            <Card key={ressource.id} className="flex items-center justify-between p-4">
               <div>
                 <p className="text-sm font-medium text-slate-900">
                   {ressource.titre} — {ressource.matiere_classe?.matieres?.nom}
@@ -51,14 +55,10 @@ export function RessourcesScreen() {
                   {ressource.taille_octets ? ` · ${formatTaille(ressource.taille_octets)}` : ""}
                 </p>
               </div>
-              <button onClick={() => handleTelecharger(ressource.chemin_fichier)} className="text-xs text-slate-500 hover:text-slate-900">
-                Télécharger
-              </button>
-            </div>
+              <Button variant="ghost" onClick={() => handleTelecharger(ressource.chemin_fichier)}>Télécharger</Button>
+            </Card>
           ))}
-          {ressourcesQuery.data?.length === 0 && (
-            <p className="py-6 text-center text-sm text-slate-400">Aucune ressource pour cette classe.</p>
-          )}
+          {ressourcesQuery.data?.length === 0 && <EmptyState message="Aucune ressource pour cette classe." />}
         </div>
       )}
     </div>

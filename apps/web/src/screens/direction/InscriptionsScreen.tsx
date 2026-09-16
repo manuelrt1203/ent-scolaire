@@ -10,6 +10,9 @@ import {
   deleteInscription,
   getAnneeScolaireActive,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Select } from "../../components/ui/Field";
 
 export function InscriptionsScreen() {
   const { client, profile } = useAuth();
@@ -75,70 +78,66 @@ export function InscriptionsScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Inscriptions des élèves</h1>
+      <PageHeader title="Inscriptions des élèves" description="Inscrire les élèves dans leurs classes." />
 
-      <form onSubmit={handleSubmit} className="mb-8 flex items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Élève</label>
-          <select
-            value={eleveId}
-            onChange={(e) => setEleveId(e.target.value)}
-            required
-            disabled={Boolean(editingId)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
-          >
-            <option value="">—</option>
-            {elevesQuery.data?.map((el) => (
-              <option key={el.id} value={el.id}>{el.prenom} {el.nom}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Classe</label>
-          <select value={classeId} onChange={(e) => setClasseId(e.target.value)} required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-            <option value="">—</option>
-            {classesQuery.data?.map((c) => (
-              <option key={c.id} value={c.id}>{c.nom}</option>
-            ))}
-          </select>
-        </div>
-        <button type="submit" disabled={isPending || (!editingId && !anneeQuery.data)} className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-          {editingId ? "Enregistrer" : "Inscrire"}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm} className="px-2 py-2 text-xs text-slate-500 hover:underline">
-            Annuler
-          </button>
-        )}
-      </form>
+      <Card className="mb-8 p-4">
+        <form onSubmit={handleSubmit} className="flex items-end gap-3">
+          <div className="flex-1">
+            <Field label="Élève">
+              <Select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required disabled={Boolean(editingId)}>
+                <option value="">—</option>
+                {elevesQuery.data?.map((el) => (
+                  <option key={el.id} value={el.id}>{el.prenom} {el.nom}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="flex-1">
+            <Field label="Classe">
+              <Select value={classeId} onChange={(e) => setClasseId(e.target.value)} required>
+                <option value="">—</option>
+                {classesQuery.data?.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nom}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <Button type="submit" disabled={isPending || (!editingId && !anneeQuery.data)}>
+            {editingId ? "Enregistrer" : "Inscrire"}
+          </Button>
+          {editingId && (
+            <Button type="button" variant="ghost" onClick={resetForm}>Annuler</Button>
+          )}
+        </form>
+      </Card>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Élève</th>
-              <th className="px-4 py-2">Classe</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {inscriptionsQuery.data?.map((i: any) => (
-              <tr key={i.id}>
-                <td className="px-4 py-2 text-slate-900">{i.profiles?.prenom} {i.profiles?.nom}</td>
-                <td className="px-4 py-2 text-slate-500">{classesQuery.data?.find((c) => c.id === i.classe_id)?.nom}</td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => handleEdit(i)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
-                    Modifier
-                  </button>
-                  <button onClick={() => deleteMutation.mutate(i.id)} className="text-xs text-slate-400 hover:text-red-600">
-                    Supprimer
-                  </button>
-                </td>
+      <Card className="overflow-x-auto">
+        {inscriptionsQuery.data?.length ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2">Élève</th>
+                <th className="px-4 py-2">Classe</th>
+                <th className="px-4 py-2" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {inscriptionsQuery.data.map((i: any) => (
+                <tr key={i.id}>
+                  <td className="px-4 py-2 text-slate-900">{i.profiles?.prenom} {i.profiles?.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{classesQuery.data?.find((c) => c.id === i.classe_id)?.nom}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" className="mr-3" onClick={() => handleEdit(i)}>Modifier</Button>
+                    <Button variant="danger" onClick={() => deleteMutation.mutate(i.id)}>Supprimer</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="Aucune inscription pour le moment." />
+        )}
+      </Card>
     </div>
   );
 }

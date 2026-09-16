@@ -8,6 +8,9 @@ import {
   updatePeriode,
   deletePeriode,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Input } from "../../components/ui/Field";
 
 export function PeriodesScreen() {
   const { client, profile } = useAuth();
@@ -80,109 +83,74 @@ export function PeriodesScreen() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-1 text-lg font-semibold text-slate-900">Périodes</h1>
-      <p className="mb-6 text-sm text-slate-500">
-        Définissez les périodes sur lesquelles porteront les relevés de notes — trimestres, mais aussi des
-        périodes plus fines si besoin (un examen de janvier, un contrôle de février...).
-      </p>
+      <PageHeader
+        title="Périodes"
+        description="Définissez les périodes sur lesquelles porteront les relevés de notes — trimestres, mais aussi des périodes plus fines si besoin (un examen de janvier, un contrôle de février...)."
+      />
 
-      <form onSubmit={handleSubmit} className="mb-8 grid grid-cols-1 gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2">
-        <div className="col-span-2">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Nom</label>
-          <input
-            value={nom}
-            onChange={(e) => setNom(e.target.value)}
-            required
-            placeholder="Examen de janvier"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Date de début</label>
-          <input
-            type="date"
-            value={dateDebut}
-            onChange={(e) => setDateDebut(e.target.value)}
-            required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Date de fin</label>
-          <input
-            type="date"
-            value={dateFin}
-            onChange={(e) => setDateFin(e.target.value)}
-            required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Ordre d'affichage</label>
-          <input
-            type="number"
-            min="1"
-            value={ordre}
-            onChange={(e) => setOrdre(e.target.value)}
-            required
-            className="w-24 rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <div className="col-span-2 flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={isPending || !anneeQuery.data}
-            className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {editingId ? "Enregistrer" : "Ajouter"}
-          </button>
-          {editingId && (
-            <button type="button" onClick={resetForm} className="text-xs text-slate-500 hover:underline">
-              Annuler
-            </button>
-          )}
-          {!anneeQuery.data && !anneeQuery.isLoading && (
-            <span className="text-xs text-amber-700">Aucune année scolaire active — créez-en une avant d'ajouter une période.</span>
-          )}
-        </div>
-      </form>
-
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Nom</th>
-              <th className="px-4 py-2">Du</th>
-              <th className="px-4 py-2">Au</th>
-              <th className="px-4 py-2">Ordre</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {periodesQuery.data?.map((p) => (
-              <tr key={p.id}>
-                <td className="px-4 py-2 text-slate-900">{p.nom}</td>
-                <td className="px-4 py-2 text-slate-500 tabular-nums">{p.date_debut}</td>
-                <td className="px-4 py-2 text-slate-500 tabular-nums">{p.date_fin}</td>
-                <td className="px-4 py-2 text-slate-500 tabular-nums">{p.ordre}</td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => handleEdit(p)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
-                    Modifier
-                  </button>
-                  <button onClick={() => deleteMutation.mutate(p.id)} className="text-xs text-slate-400 hover:text-red-600">
-                    Supprimer
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {periodesQuery.data?.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-6 text-center text-slate-400">Aucune période créée pour l'instant.</td>
-              </tr>
+      <Card className="mb-8 p-4">
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="col-span-2">
+            <Field label="Nom">
+              <Input value={nom} onChange={(e) => setNom(e.target.value)} required placeholder="Examen de janvier" />
+            </Field>
+          </div>
+          <Field label="Date de début">
+            <Input type="date" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} required />
+          </Field>
+          <Field label="Date de fin">
+            <Input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} required />
+          </Field>
+          <div className="w-24">
+            <Field label="Ordre d'affichage">
+              <Input type="number" min="1" value={ordre} onChange={(e) => setOrdre(e.target.value)} required />
+            </Field>
+          </div>
+          <div className="col-span-2 flex items-center gap-3">
+            <Button type="submit" disabled={isPending || !anneeQuery.data}>
+              {editingId ? "Enregistrer" : "Ajouter"}
+            </Button>
+            {editingId && (
+              <Button type="button" variant="ghost" onClick={resetForm}>Annuler</Button>
             )}
-          </tbody>
-        </table>
-      </div>
+            {!anneeQuery.data && !anneeQuery.isLoading && (
+              <span className="text-xs text-amber-700">Aucune année scolaire active — créez-en une avant d'ajouter une période.</span>
+            )}
+          </div>
+        </form>
+      </Card>
+
+      <Card className="overflow-x-auto">
+        {periodesQuery.data?.length ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2">Nom</th>
+                <th className="px-4 py-2">Du</th>
+                <th className="px-4 py-2">Au</th>
+                <th className="px-4 py-2">Ordre</th>
+                <th className="px-4 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {periodesQuery.data.map((p) => (
+                <tr key={p.id}>
+                  <td className="px-4 py-2 text-slate-900">{p.nom}</td>
+                  <td className="px-4 py-2 text-slate-500 tabular-nums">{p.date_debut}</td>
+                  <td className="px-4 py-2 text-slate-500 tabular-nums">{p.date_fin}</td>
+                  <td className="px-4 py-2 text-slate-500 tabular-nums">{p.ordre}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" className="mr-3" onClick={() => handleEdit(p)}>Modifier</Button>
+                    <Button variant="danger" onClick={() => deleteMutation.mutate(p.id)}>Supprimer</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="Aucune période créée pour l'instant." />
+        )}
+      </Card>
     </div>
   );
 }

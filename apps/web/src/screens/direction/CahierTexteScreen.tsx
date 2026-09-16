@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth, getClasses, useCahierTexteClasse } from "@ent/shared";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Select } from "../../components/ui/Field";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR");
@@ -14,22 +16,23 @@ export function CahierTexteScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Cahier de textes</h1>
+      <PageHeader title="Cahier de textes" description="Suivre le contenu des séances par classe." />
 
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-        <label className="mb-1 block text-xs font-medium text-slate-600">Classe</label>
-        <select value={classeId} onChange={(e) => setClasseId(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">—</option>
-          {classesQuery.data?.map((c) => (
-            <option key={c.id} value={c.id}>{c.nom}</option>
-          ))}
-        </select>
-      </div>
+      <Card className="mb-6 p-4">
+        <Field label="Classe">
+          <Select value={classeId} onChange={(e) => setClasseId(e.target.value)}>
+            <option value="">—</option>
+            {classesQuery.data?.map((c) => (
+              <option key={c.id} value={c.id}>{c.nom}</option>
+            ))}
+          </Select>
+        </Field>
+      </Card>
 
       {classeId && (
         <div className="space-y-3">
           {cahierQuery.data?.map((entree: any) => (
-            <div key={entree.id} className="rounded-lg border border-slate-200 bg-white p-4">
+            <Card key={entree.id} className="p-4">
               <p className="mb-2 text-sm font-medium text-slate-900">
                 {formatDate(entree.date_seance)} — {entree.matiere_classe?.matieres?.nom}
               </p>
@@ -40,11 +43,9 @@ export function CahierTexteScreen() {
                   {entree.date_echeance && ` (pour le ${formatDate(entree.date_echeance)})`}
                 </p>
               )}
-            </div>
+            </Card>
           ))}
-          {cahierQuery.data?.length === 0 && (
-            <p className="py-6 text-center text-sm text-slate-400">Aucune entrée pour cette classe.</p>
-          )}
+          {cahierQuery.data?.length === 0 && <EmptyState message="Aucune entrée pour cette classe." />}
         </div>
       )}
     </div>

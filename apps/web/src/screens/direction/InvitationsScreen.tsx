@@ -9,6 +9,9 @@ import {
   useDeleteInvitation,
   type Role,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Select } from "../../components/ui/Field";
 
 const ROLES: { value: Role; label: string }[] = [
   { value: "professeur", label: "Professeur" },
@@ -60,51 +63,51 @@ export function InvitationsScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-1 text-lg font-semibold text-slate-900">Invitations</h1>
-      <p className="mb-6 text-xs text-slate-500">
-        Générez un code que les professeurs/élèves/parents saisissent eux-mêmes dans l'app pour créer leur compte —
-        le rôle (et pour un parent, l'enfant) est verrouillé par le code, jamais choisi par la personne.
-      </p>
+      <PageHeader
+        title="Invitations"
+        description="Générez un code que les professeurs/élèves/parents saisissent eux-mêmes dans l'app pour créer leur compte — le rôle (et pour un parent, l'enfant) est verrouillé par le code, jamais choisi par la personne."
+      />
 
-      <form onSubmit={handleSubmit} className="mb-4 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">Rôle</label>
-          <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-            {ROLES.map((r) => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
-          </select>
-        </div>
-        {role === "eleve" && (
+      <Card className="mb-4 p-4">
+        <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Classe (optionnel)</label>
-            <select value={classeId} onChange={(e) => setClasseId(e.target.value)} className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-              <option value="">Aucune (à affecter plus tard)</option>
-              {classesQuery.data?.map((c) => (
-                <option key={c.id} value={c.id}>{c.nom}</option>
-              ))}
-            </select>
+            <Field label="Rôle">
+              <Select value={role} onChange={(e) => setRole(e.target.value as Role)}>
+                {ROLES.map((r) => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </Select>
+            </Field>
           </div>
-        )}
-        {role === "parent" && (
-          <div>
-            <label className="mb-1 block text-xs font-medium text-slate-600">Élève</label>
-            <select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-              <option value="">—</option>
-              {elevesQuery.data?.map((el) => (
-                <option key={el.id} value={el.id}>{el.prenom} {el.nom}</option>
-              ))}
-            </select>
-          </div>
-        )}
-        <button
-          type="submit"
-          disabled={createMutation.isPending || (role === "parent" && !eleveId)}
-          className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          Générer le code
-        </button>
-      </form>
+          {role === "eleve" && (
+            <div>
+              <Field label="Classe (optionnel)">
+                <Select value={classeId} onChange={(e) => setClasseId(e.target.value)}>
+                  <option value="">Aucune (à affecter plus tard)</option>
+                  {classesQuery.data?.map((c) => (
+                    <option key={c.id} value={c.id}>{c.nom}</option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          )}
+          {role === "parent" && (
+            <div>
+              <Field label="Élève">
+                <Select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required>
+                  <option value="">—</option>
+                  {elevesQuery.data?.map((el) => (
+                    <option key={el.id} value={el.id}>{el.prenom} {el.nom}</option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          )}
+          <Button type="submit" disabled={createMutation.isPending || (role === "parent" && !eleveId)}>
+            Générer le code
+          </Button>
+        </form>
+      </Card>
 
       {dernierCode && (
         <p className="mb-6 rounded-md bg-emerald-50 p-3 text-sm text-emerald-800">
@@ -113,42 +116,39 @@ export function InvitationsScreen() {
         </p>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Code</th>
-              <th className="px-4 py-2">Rôle</th>
-              <th className="px-4 py-2">Rattachement</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {invitationsQuery.data?.map((inv: any) => (
-              <tr key={inv.id}>
-                <td className="px-4 py-2 font-mono text-slate-900">{inv.code}</td>
-                <td className="px-4 py-2 text-slate-500">{ROLES.find((r) => r.value === inv.role)?.label}</td>
-                <td className="px-4 py-2 text-slate-500">
-                  {inv.classes?.nom ?? (inv.eleve ? `${inv.eleve.prenom} ${inv.eleve.nom}` : "—")}
-                </td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => copierCode(inv.id, inv.code)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
-                    {copieId === inv.id ? "Copié !" : "Copier"}
-                  </button>
-                  <button onClick={() => deleteMutation.mutate(inv.id)} className="text-xs text-slate-400 hover:text-red-600">
-                    Révoquer
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {invitationsQuery.data?.length === 0 && (
+      <Card className="overflow-x-auto">
+        {invitationsQuery.data?.length ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
               <tr>
-                <td colSpan={4} className="px-4 py-6 text-center text-slate-400">Aucune invitation générée.</td>
+                <th className="px-4 py-2">Code</th>
+                <th className="px-4 py-2">Rôle</th>
+                <th className="px-4 py-2">Rattachement</th>
+                <th className="px-4 py-2" />
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {invitationsQuery.data.map((inv: any) => (
+                <tr key={inv.id}>
+                  <td className="px-4 py-2 font-mono text-slate-900">{inv.code}</td>
+                  <td className="px-4 py-2 text-slate-500">{ROLES.find((r) => r.value === inv.role)?.label}</td>
+                  <td className="px-4 py-2 text-slate-500">
+                    {inv.classes?.nom ?? (inv.eleve ? `${inv.eleve.prenom} ${inv.eleve.nom}` : "—")}
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" className="mr-3" onClick={() => copierCode(inv.id, inv.code)}>
+                      {copieId === inv.id ? "Copié !" : "Copier"}
+                    </Button>
+                    <Button variant="danger" onClick={() => deleteMutation.mutate(inv.id)}>Révoquer</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="Aucune invitation générée." />
+        )}
+      </Card>
     </div>
   );
 }

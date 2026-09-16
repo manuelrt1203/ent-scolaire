@@ -9,6 +9,9 @@ import {
   useSoumettreReleve,
   getStatutLabel,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, PageHeader } from "../../components/ui/Card";
+import { Field, Select } from "../../components/ui/Field";
 
 export function SaisieNotesScreen() {
   const { client } = useAuth();
@@ -42,38 +45,32 @@ export function SaisieNotesScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Saisie des notes</h1>
+      <PageHeader title="Saisie des notes" description="Saisir et soumettre les notes de vos élèves." />
 
-      <div className="mb-6 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:flex-row">
+      <Card className="mb-6 flex flex-col gap-3 p-4 sm:flex-row">
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Matière / Classe</label>
-          <select
-            value={matiereClasseId}
-            onChange={(e) => setMatiereClasseId(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="">—</option>
-            {affectationsQuery.data?.map((a: any) => (
-              <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
-                {a.matiere_classe.matieres?.nom} — {a.matiere_classe.classes?.nom}
-              </option>
-            ))}
-          </select>
+          <Field label="Matière / Classe">
+            <Select value={matiereClasseId} onChange={(e) => setMatiereClasseId(e.target.value)}>
+              <option value="">—</option>
+              {affectationsQuery.data?.map((a: any) => (
+                <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
+                  {a.matiere_classe.matieres?.nom} — {a.matiere_classe.classes?.nom}
+                </option>
+              ))}
+            </Select>
+          </Field>
         </div>
         <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Période</label>
-          <select
-            value={periodeId}
-            onChange={(e) => setPeriodeId(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          >
-            <option value="">—</option>
-            {periodesQuery.data?.map((p) => (
-              <option key={p.id} value={p.id}>{p.nom}</option>
-            ))}
-          </select>
+          <Field label="Période">
+            <Select value={periodeId} onChange={(e) => setPeriodeId(e.target.value)}>
+              <option value="">—</option>
+              {periodesQuery.data?.map((p) => (
+                <option key={p.id} value={p.id}>{p.nom}</option>
+              ))}
+            </Select>
+          </Field>
         </div>
-      </div>
+      </Card>
 
       {releve && (
         <>
@@ -86,7 +83,7 @@ export function SaisieNotesScreen() {
             )}
           </div>
 
-          <div className="mb-4 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+          <Card className="mb-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                 <tr>
@@ -114,16 +111,12 @@ export function SaisieNotesScreen() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
 
           {isBrouillon && (
-            <button
-              onClick={() => soumettre.mutate(releve.id)}
-              disabled={!toutesRemplies || soumettre.isPending}
-              className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
+            <Button onClick={() => soumettre.mutate(releve.id)} disabled={!toutesRemplies || soumettre.isPending}>
               Soumettre à la direction
-            </button>
+            </Button>
           )}
           {!toutesRemplies && isBrouillon && (
             <p className="mt-2 text-xs text-slate-500">Toutes les notes doivent être renseignées avant soumission.</p>

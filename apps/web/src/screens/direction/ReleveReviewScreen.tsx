@@ -10,6 +10,9 @@ import {
   usePublierReleve,
   getStatutLabel,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
+import { Textarea } from "../../components/ui/Field";
 
 export function ReleveReviewScreen() {
   const { id } = useParams<{ id: string }>();
@@ -46,9 +49,7 @@ export function ReleveReviewScreen() {
 
   return (
     <div className="max-w-3xl">
-      <button onClick={() => navigate(-1)} className="mb-4 text-xs text-slate-500 underline">
-        ← Retour
-      </button>
+      <Button variant="ghost" className="mb-4" onClick={() => navigate(-1)}>← Retour</Button>
 
       <h1 className="mb-1 text-lg font-semibold text-slate-900">
         {releve.matiere_classe?.matieres?.nom} — {releve.matiere_classe?.classes?.nom}
@@ -63,7 +64,7 @@ export function ReleveReviewScreen() {
         </p>
       )}
 
-      <div className="mb-6 overflow-x-auto rounded-lg border border-slate-200 bg-white">
+      <Card className="mb-6 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>
@@ -96,25 +97,23 @@ export function ReleveReviewScreen() {
             ))}
           </tbody>
         </table>
-      </div>
+      </Card>
 
       {isSoumise && (
         <div className="space-y-3">
-          <textarea
+          <Textarea
             value={commentaire}
             onChange={(e) => setCommentaire(e.target.value)}
             placeholder="Commentaire (requis en cas de rejet)"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
             rows={2}
           />
           <div className="flex gap-3">
-            <button
+            <Button
               onClick={() => valider.mutate({ releveId: releve.id, commentaire: commentaire || undefined })}
               disabled={valider.isPending}
-              className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               Valider
-            </button>
+            </Button>
             <button
               onClick={() => {
                 if (!commentaire.trim()) return;

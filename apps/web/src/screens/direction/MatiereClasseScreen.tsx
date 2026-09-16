@@ -10,6 +10,9 @@ import {
   deleteMatiereClasse,
   getAnneeScolaireActive,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Input, Select } from "../../components/ui/Field";
 
 export function MatiereClasseScreen() {
   const { client, profile } = useAuth();
@@ -83,93 +86,73 @@ export function MatiereClasseScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Matières par classe</h1>
+      <PageHeader title="Matières par classe" description="Associer matières, classes et coefficients." />
 
-      <form onSubmit={handleSubmit} className="mb-8 flex items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Classe</label>
-          <select
-            value={classeId}
-            onChange={(e) => setClasseId(e.target.value)}
-            required
-            disabled={Boolean(editingId)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
-          >
-            <option value="">—</option>
-            {classesQuery.data?.map((c) => (
-              <option key={c.id} value={c.id}>{c.nom}</option>
-            ))}
-          </select>
-        </div>
-        <div className="flex-1">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Matière</label>
-          <select
-            value={matiereId}
-            onChange={(e) => setMatiereId(e.target.value)}
-            required
-            disabled={Boolean(editingId)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm disabled:bg-slate-50"
-          >
-            <option value="">—</option>
-            {matieresQuery.data?.map((m) => (
-              <option key={m.id} value={m.id}>{m.nom}</option>
-            ))}
-          </select>
-        </div>
-        <div className="w-24">
-          <label className="mb-1 block text-xs font-medium text-slate-600">Coeff.</label>
-          <input
-            type="number"
-            step="0.5"
-            min="0"
-            value={coefficient}
-            onChange={(e) => setCoefficient(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-          />
-        </div>
-        <button
-          type="submit"
-          disabled={isPending || (!editingId && !anneeQuery.data)}
-          className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {editingId ? "Enregistrer" : "Associer"}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm} className="px-2 py-2 text-xs text-slate-500 hover:underline">
-            Annuler
-          </button>
-        )}
-      </form>
+      <Card className="mb-8 p-4">
+        <form onSubmit={handleSubmit} className="flex items-end gap-3">
+          <div className="flex-1">
+            <Field label="Classe">
+              <Select value={classeId} onChange={(e) => setClasseId(e.target.value)} required disabled={Boolean(editingId)}>
+                <option value="">—</option>
+                {classesQuery.data?.map((c) => (
+                  <option key={c.id} value={c.id}>{c.nom}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="flex-1">
+            <Field label="Matière">
+              <Select value={matiereId} onChange={(e) => setMatiereId(e.target.value)} required disabled={Boolean(editingId)}>
+                <option value="">—</option>
+                {matieresQuery.data?.map((m) => (
+                  <option key={m.id} value={m.id}>{m.nom}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <div className="w-24">
+            <Field label="Coeff.">
+              <Input type="number" step="0.5" min="0" value={coefficient} onChange={(e) => setCoefficient(e.target.value)} />
+            </Field>
+          </div>
+          <Button type="submit" disabled={isPending || (!editingId && !anneeQuery.data)}>
+            {editingId ? "Enregistrer" : "Associer"}
+          </Button>
+          {editingId && (
+            <Button type="button" variant="ghost" onClick={resetForm}>Annuler</Button>
+          )}
+        </form>
+      </Card>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-            <tr>
-              <th className="px-4 py-2">Classe</th>
-              <th className="px-4 py-2">Matière</th>
-              <th className="px-4 py-2">Coefficient</th>
-              <th className="px-4 py-2" />
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {mcQuery.data?.map((mc: any) => (
-              <tr key={mc.id}>
-                <td className="px-4 py-2 text-slate-900">{mc.classes?.nom}</td>
-                <td className="px-4 py-2 text-slate-500">{mc.matieres?.nom}</td>
-                <td className="px-4 py-2 text-slate-500">{mc.coefficient}</td>
-                <td className="px-4 py-2 text-right">
-                  <button onClick={() => handleEdit(mc)} className="mr-3 text-xs text-slate-400 hover:text-slate-900">
-                    Modifier
-                  </button>
-                  <button onClick={() => deleteMutation.mutate(mc.id)} className="text-xs text-slate-400 hover:text-red-600">
-                    Supprimer
-                  </button>
-                </td>
+      <Card className="overflow-x-auto">
+        {mcQuery.data?.length ? (
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
+              <tr>
+                <th className="px-4 py-2">Classe</th>
+                <th className="px-4 py-2">Matière</th>
+                <th className="px-4 py-2">Coefficient</th>
+                <th className="px-4 py-2" />
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {mcQuery.data.map((mc: any) => (
+                <tr key={mc.id}>
+                  <td className="px-4 py-2 text-slate-900">{mc.classes?.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{mc.matieres?.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{mc.coefficient}</td>
+                  <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" className="mr-3" onClick={() => handleEdit(mc)}>Modifier</Button>
+                    <Button variant="danger" onClick={() => deleteMutation.mutate(mc.id)}>Supprimer</Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <EmptyState message="Aucune association matière/classe pour le moment." />
+        )}
+      </Card>
     </div>
   );
 }

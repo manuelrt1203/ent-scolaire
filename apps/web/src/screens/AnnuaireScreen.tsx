@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth, getAnnuaireMessagerie } from "@ent/shared";
+import { Card, EmptyState, PageHeader } from "../components/ui/Card";
 
 const ROLE_LABELS: Record<string, string> = {
   direction: "Direction",
@@ -21,12 +22,12 @@ export function AnnuaireScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Annuaire</h1>
+      <PageHeader title="Annuaire" description="Coordonnées de tous les membres de l'établissement." />
 
       {ROLE_ORDER.filter((role) => (parRole[role]?.length ?? 0) > 0).map((role) => (
         <div key={role} className="mb-6">
           <h2 className="mb-2 text-xs font-medium uppercase text-slate-500">{ROLE_LABELS[role]}</h2>
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
+          <Card className="overflow-x-auto">
             <table className="w-full text-sm">
               <tbody className="divide-y divide-slate-100">
                 {parRole[role]!.map((p: any) => (
@@ -37,11 +38,11 @@ export function AnnuaireScreen() {
                 ))}
               </tbody>
             </table>
-          </div>
+          </Card>
         </div>
       ))}
 
-      {annuaireQuery.data?.length === 0 && <p className="py-6 text-center text-sm text-slate-400">Annuaire vide.</p>}
+      {annuaireQuery.data?.length === 0 && <EmptyState message="Annuaire vide." />}
     </div>
   );
 }

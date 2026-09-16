@@ -8,6 +8,9 @@ import {
   useCreateEvenementVieScolaire,
   useJustifierEvenement,
 } from "@ent/shared";
+import { Button } from "../../components/ui/Button";
+import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { Field, Input, Select } from "../../components/ui/Field";
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("fr-FR");
@@ -41,85 +44,89 @@ export function VieScolaireScreen() {
 
   return (
     <div className="max-w-3xl">
-      <h1 className="mb-6 text-lg font-semibold text-slate-900">Vie scolaire</h1>
+      <PageHeader title="Vie scolaire" description="Absences, retards et sanctions." />
 
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-4">
-        <label className="mb-1 block text-xs font-medium text-slate-600">Classe</label>
-        <select value={classeId} onChange={(e) => setClasseId(e.target.value)} className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm">
-          <option value="">—</option>
-          {classesQuery.data?.map((c) => (
-            <option key={c.id} value={c.id}>{c.nom}</option>
-          ))}
-        </select>
-      </div>
+      <Card className="mb-6 p-4">
+        <Field label="Classe">
+          <Select value={classeId} onChange={(e) => setClasseId(e.target.value)}>
+            <option value="">—</option>
+            {classesQuery.data?.map((c) => (
+              <option key={c.id} value={c.id}>{c.nom}</option>
+            ))}
+          </Select>
+        </Field>
+      </Card>
 
       {classeId && (
         <>
-          <form onSubmit={handleSubmit} className="mb-8 flex flex-wrap items-end gap-3 rounded-lg border border-slate-200 bg-white p-4">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Élève</label>
-              <select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required className="rounded-md border border-slate-300 px-3 py-2 text-sm">
-                <option value="">—</option>
-                {inscriptionsQuery.data?.map((i: any) => (
-                  <option key={i.eleve_id} value={i.eleve_id}>{i.profiles?.prenom} {i.profiles?.nom}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-slate-600">Date</label>
-              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} required className="rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            <div className="flex-1">
-              <label className="mb-1 block text-xs font-medium text-slate-600">Sanction</label>
-              <input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Avertissement, exclusion 1 jour…" required className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm" />
-            </div>
-            <button type="submit" disabled={creerSanction.isPending || !eleveId} className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white disabled:opacity-50">
-              Enregistrer
-            </button>
-          </form>
+          <Card className="mb-8 p-4">
+            <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
+              <div>
+                <Field label="Élève">
+                  <Select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required>
+                    <option value="">—</option>
+                    {inscriptionsQuery.data?.map((i: any) => (
+                      <option key={i.eleve_id} value={i.eleve_id}>{i.profiles?.prenom} {i.profiles?.nom}</option>
+                    ))}
+                  </Select>
+                </Field>
+              </div>
+              <div>
+                <Field label="Date">
+                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
+                </Field>
+              </div>
+              <div className="flex-1">
+                <Field label="Sanction">
+                  <Input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Avertissement, exclusion 1 jour…" required />
+                </Field>
+              </div>
+              <Button type="submit" disabled={creerSanction.isPending || !eleveId}>Enregistrer</Button>
+            </form>
+          </Card>
 
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-                <tr>
-                  <th className="px-4 py-2">Élève</th>
-                  <th className="px-4 py-2">Type</th>
-                  <th className="px-4 py-2">Détail</th>
-                  <th className="px-4 py-2">Date</th>
-                  <th className="px-4 py-2">Justifié</th>
-                  <th className="px-4 py-2" />
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {vieScolaireQuery.data?.map((v: any) => (
-                  <tr key={v.id}>
-                    <td className="px-4 py-2 text-slate-900">{v.profiles?.prenom} {v.profiles?.nom}</td>
-                    <td className="px-4 py-2 text-slate-500 capitalize">{v.type}</td>
-                    <td className="px-4 py-2 text-slate-500">
-                      {v.type === "sanction" ? v.description : v.type === "retard" && v.duree_minutes ? `${v.duree_minutes} min` : v.motif ?? "—"}
-                    </td>
-                    <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
-                    <td className="px-4 py-2 text-slate-500">{v.justifie ? "Oui" : "Non"}</td>
-                    <td className="px-4 py-2 text-right">
-                      {v.type !== "sanction" && !v.justifie && (
-                        <button
-                          onClick={() => justifier.mutate({ id: v.id, justifie: true, motif: "Justifié par la direction" })}
-                          className="text-xs text-slate-400 hover:text-emerald-600"
-                        >
-                          Justifier
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-                {vieScolaireQuery.data?.length === 0 && (
+          <Card className="overflow-x-auto">
+            {vieScolaireQuery.data?.length ? (
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                   <tr>
-                    <td colSpan={6} className="px-4 py-6 text-center text-slate-400">Aucun événement pour cette classe.</td>
+                    <th className="px-4 py-2">Élève</th>
+                    <th className="px-4 py-2">Type</th>
+                    <th className="px-4 py-2">Détail</th>
+                    <th className="px-4 py-2">Date</th>
+                    <th className="px-4 py-2">Justifié</th>
+                    <th className="px-4 py-2" />
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {vieScolaireQuery.data.map((v: any) => (
+                    <tr key={v.id}>
+                      <td className="px-4 py-2 text-slate-900">{v.profiles?.prenom} {v.profiles?.nom}</td>
+                      <td className="px-4 py-2 text-slate-500 capitalize">{v.type}</td>
+                      <td className="px-4 py-2 text-slate-500">
+                        {v.type === "sanction" ? v.description : v.type === "retard" && v.duree_minutes ? `${v.duree_minutes} min` : v.motif ?? "—"}
+                      </td>
+                      <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
+                      <td className="px-4 py-2 text-slate-500">{v.justifie ? "Oui" : "Non"}</td>
+                      <td className="px-4 py-2 text-right">
+                        {v.type !== "sanction" && !v.justifie && (
+                          <Button
+                            variant="ghost"
+                            className="hover:text-emerald-600"
+                            onClick={() => justifier.mutate({ id: v.id, justifie: true, motif: "Justifié par la direction" })}
+                          >
+                            Justifier
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              <EmptyState message="Aucun événement pour cette classe." />
+            )}
+          </Card>
         </>
       )}
     </div>
