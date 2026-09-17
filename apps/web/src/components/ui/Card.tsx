@@ -1,7 +1,19 @@
 import type { ReactNode } from "react";
 
-export function Card({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-lg border border-slate-200 bg-white ${className}`}>{children}</div>;
+export function Card({
+  children,
+  className = "",
+  tinted = false,
+}: {
+  children: ReactNode;
+  className?: string;
+  /** Fond légèrement teinté (bg-slate-50) au lieu du blanc — ex. bulle de
+   * message "envoyé par moi". Un prop plutôt qu'une classe `bg-*` passée en
+   * className : Tailwind ne garantit pas qu'une classe de fond ajoutée après
+   * coup dans la chaîne l'emporte sur le bg-white déjà présent. */
+  tinted?: boolean;
+}) {
+  return <div className={`rounded-lg border border-slate-200 ${tinted ? "bg-slate-50" : "bg-white"} ${className}`}>{children}</div>;
 }
 
 export function PageHeader({ title, description }: { title: string; description?: string }) {

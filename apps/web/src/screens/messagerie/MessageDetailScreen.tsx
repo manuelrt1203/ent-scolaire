@@ -9,6 +9,7 @@ import {
   getPieceJointeSignedUrl,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
 
 function formatTaille(octets: number | null) {
   if (!octets) return "";
@@ -67,10 +68,7 @@ export function MessageDetailScreen() {
           const estMoi = m.expediteur_id === profile?.id;
           const mesDestinataires = m.message_destinataires ?? [];
           return (
-            <div
-              key={m.id}
-              className={`rounded-lg border border-slate-200 p-4 ${estMoi ? "bg-slate-50" : "bg-white"}`}
-            >
+            <Card key={m.id} tinted={estMoi} className="p-4">
               <div className="mb-2 flex items-baseline justify-between">
                 <p className="text-sm font-medium text-slate-900">
                   {estMoi ? "Vous" : `${m.expediteur?.prenom} ${m.expediteur?.nom}`}
@@ -96,7 +94,7 @@ export function MessageDetailScreen() {
                   ))}
                 </div>
               )}
-            </div>
+            </Card>
           );
         })}
       </div>

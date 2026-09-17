@@ -114,28 +114,24 @@ export function ReleveReviewScreen() {
             >
               Valider
             </Button>
-            <button
+            <Button
+              variant="danger-outline"
               onClick={() => {
                 if (!commentaire.trim()) return;
                 rejeter.mutate({ releveId: releve.id, commentaire });
               }}
               disabled={rejeter.isPending || !commentaire.trim()}
-              className="rounded-md border border-red-300 px-4 py-2 text-sm font-medium text-red-700 disabled:opacity-50"
             >
               Rejeter (renvoyer au professeur)
-            </button>
+            </Button>
           </div>
         </div>
       )}
 
       {isValidee && (
-        <button
-          onClick={() => publier.mutate(releve.id)}
-          disabled={publier.isPending}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
+        <Button variant="success" onClick={() => publier.mutate(releve.id)} disabled={publier.isPending}>
           Publier aux élèves et parents
-        </button>
+        </Button>
       )}
     </div>
   );
