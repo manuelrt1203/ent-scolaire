@@ -10,10 +10,13 @@
     "web": "npm run dev --workspace=apps/web",
     "types:generate": "echo 'Types générés via Supabase MCP dans packages/shared/src/types/database.types.ts'",
     "test:workflow": "node --require ./scripts/ws-polyfill.cjs scripts/test-workflow.mjs",
+    "test:notifications": "node scripts/test-notifications.mjs",
+    "test:emploi-du-temps-ics": "tsx scripts/test-emploi-du-temps-ics.mjs",
     "db:backup": "bash scripts/backup-db.sh"
   },
   "devDependencies": {
-    "ws": "^8.18.0"
+    "ws": "^8.18.0",
+    "tsx": "^4.19.2"
   },
   "overrides": {
     "react": "19.1.0",
