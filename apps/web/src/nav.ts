@@ -83,7 +83,7 @@ export const DIRECTION_NAV: NavItem[] = [
   { to: "/direction/messagerie", label: "Messagerie", description: "Échanger des messages avec l'équipe", category: "communication", featured: true },
   { to: "/direction/utilisateurs", label: "Utilisateurs", description: "Gérer les comptes professeurs, élèves et parents", category: "administration" },
   { to: "/direction/invitations", label: "Invitations", description: "Générer des codes d'auto-inscription par rôle", category: "administration" },
-  { to: "/direction/parametres", label: "Paramètres", description: "Durée de conservation des données (RGPD)", category: "administration" },
+  { to: "/direction/parametres", label: "Paramètres", description: "Académie (vacances scolaires) et conservation des données (RGPD)", category: "administration" },
 ];
 
 /** Élève et parent ont exactement le même espace (le parent consulte les

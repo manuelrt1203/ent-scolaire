@@ -25,6 +25,12 @@ export async function updateRetentionEtablissement(
   return data;
 }
 
+export async function updateAcademieEtablissement(client: EntSupabaseClient, etablissementId: string, academie: string | null) {
+  const { data, error } = await client.from("etablissements").update({ academie }).eq("id", etablissementId).select().single();
+  if (error) throw error;
+  return data;
+}
+
 export async function getAnneeScolaireActive(client: EntSupabaseClient, etablissementId: string) {
   const { data, error } = await client
     .from("annees_scolaires")

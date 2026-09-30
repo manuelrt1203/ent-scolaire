@@ -12,6 +12,7 @@
     "test:workflow": "node --require ./scripts/ws-polyfill.cjs scripts/test-workflow.mjs",
     "test:notifications": "node scripts/test-notifications.mjs",
     "test:emploi-du-temps-ics": "tsx scripts/test-emploi-du-temps-ics.mjs",
+    "test:dates-officielles": "tsx scripts/test-dates-officielles.mjs",
     "db:backup": "bash scripts/backup-db.sh"
   },
   "devDependencies": {

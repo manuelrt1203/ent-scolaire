@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useAuth, useEvenementsCalendrier, useCreateEvenementCalendrier, useDeleteEvenementCalendrier } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
+import { DatesOfficielles } from "../../components/calendrier/DatesOfficielles";
 import { Field, Input, Select, Textarea } from "../../components/ui/Field";
 
 const CIBLES: { value: string; label: string }[] = [
@@ -61,6 +62,8 @@ export function CalendrierScreen() {
   return (
     <div className="max-w-3xl">
       <PageHeader title="Calendrier" description="Événements et dates clés de l'année." />
+
+      <DatesOfficielles />
 
       <Card className="mb-8 p-4">
         <form onSubmit={handleSubmit} className="space-y-3">

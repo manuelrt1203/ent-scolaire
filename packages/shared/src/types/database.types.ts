@@ -291,6 +291,7 @@ export type Database = {
       }
       etablissements: {
         Row: {
+          academie: string | null
           adresse: string | null
           created_at: string
           id: string
@@ -299,6 +300,7 @@ export type Database = {
           retention_vie_scolaire_mois: number
         }
         Insert: {
+          academie?: string | null
           adresse?: string | null
           created_at?: string
           id?: string
@@ -307,6 +309,7 @@ export type Database = {
           retention_vie_scolaire_mois?: number
         }
         Update: {
+          academie?: string | null
           adresse?: string | null
           created_at?: string
           id?: string
