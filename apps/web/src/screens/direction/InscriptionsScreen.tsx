@@ -11,6 +11,7 @@ import {
   getAnneeScolaireActive,
   getBulletin,
   getDetailsBulletin,
+  getDecisionConseilPubliee,
   getEtablissement,
   buildBulletinHtml,
   usePeriodes,
@@ -19,6 +20,7 @@ import {
   enregistrerRemiseBulletin,
   annulerRemiseBulletin,
 } from "@ent/shared";
+import { DecisionConseilClasse } from "../../components/DecisionConseilClasse";
 import { imprimerBulletin } from "../../components/imprimerBulletin";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
@@ -31,11 +33,12 @@ const dateFr = new Intl.DateTimeFormat("fr-FR", { timeZone: "Africa/Brazzaville"
 
 export function InscriptionsScreen() {
   const { client, profile } = useAuth();
-  const { pays } = useEtablissementCalendrier(client, profile);
+  const { reglages } = useEtablissementCalendrier(client, profile);
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [eleveId, setEleveId] = useState("");
   const [classeId, setClasseId] = useState("");
+  const [decisionInscriptionId, setDecisionInscriptionId] = useState<string | null>(null);
   const [periodeBulletinId, setPeriodeBulletinId] = useState("");
   const [impressionEnCours, setImpressionEnCours] = useState(false);
   const [erreurBulletin, setErreurBulletin] = useState("");
@@ -96,6 +99,8 @@ export function InscriptionsScreen() {
 
   const periodeBulletin = periodesQuery.data?.find((periode) => periode.id === periodeBulletinId);
 
+  const decisionInscription = inscriptionsQuery.data?.find((inscription) => inscription.id === decisionInscriptionId);
+
   const remisesQuery = useQuery({
     queryKey: ["remises-bulletins", periodeBulletinId],
     queryFn: () => getRemisesBulletins(client, periodeBulletinId),
@@ -109,7 +114,7 @@ export function InscriptionsScreen() {
       : annulerRemiseBulletin(client, periode, inscription),
     onSuccess: (_data, { periode }) => queryClient.invalidateQueries({ queryKey: ["remises-bulletins", periode] }),
   });
-  const echeance = pays === "CG" ? periodeBulletin?.echeance_bulletins : null;
+  const echeance = reglages.echeanceRemiseBulletins ? periodeBulletin?.echeance_bulletins : null;
   const remises = new Map(remisesQuery.data?.map((remise) => [remise.inscription_id, remise]));
 
   async function handleBulletin(inscription: NonNullable<typeof inscriptionsQuery.data>[number]) {
@@ -118,10 +123,11 @@ export function InscriptionsScreen() {
     setImpressionEnCours(true);
     try {
       await imprimerBulletin(async () => {
-        const [lignes, details, etablissement] = await Promise.all([
+        const [lignes, details, etablissement, decisionConseil] = await Promise.all([
           getBulletin(client, inscription.eleve_id, periodeBulletin.id),
           getDetailsBulletin(client, inscription.eleve_id, periodeBulletin.id),
           getEtablissement(client, profile.etablissement_id),
+          getDecisionConseilPubliee(client, inscription.eleve_id, periodeBulletin.id),
         ]);
         if (!lignes.length) throw new Error("Aucune note publiée pour cet élève sur cette période.");
         return buildBulletinHtml({
@@ -131,6 +137,7 @@ export function InscriptionsScreen() {
           periodeNom: periodeBulletin.nom,
           lignes,
           details,
+          decisionConseil,
         });
       });
     } catch (error) {
@@ -179,7 +186,7 @@ export function InscriptionsScreen() {
 
       <div className="mb-3 max-w-xs">
         <Field label="Période des bulletins">
-          <Select value={periodeBulletinId} onChange={(event) => { setPeriodeBulletinId(event.target.value); remiseMutation.reset(); }} disabled={impressionEnCours}>
+          <Select value={periodeBulletinId} onChange={(event) => { setPeriodeBulletinId(event.target.value); setDecisionInscriptionId(null); remiseMutation.reset(); }} disabled={impressionEnCours}>
             <option value="">Choisir une période</option>
             {periodesQuery.data?.map((periode) => (
               <option key={periode.id} value={periode.id}>{periode.nom}</option>
@@ -187,6 +194,15 @@ export function InscriptionsScreen() {
           </Select>
         </Field>
       </div>
+      {periodeBulletin && decisionInscription && (
+        <DecisionConseilClasse
+          key={`${periodeBulletin.id}:${decisionInscription.id}`}
+          inscriptionId={decisionInscription.id}
+          periodeId={periodeBulletin.id}
+          eleve={`${decisionInscription.profiles?.prenom ?? ""} ${decisionInscription.profiles?.nom ?? ""}`.trim()}
+          onFermer={() => setDecisionInscriptionId(null)}
+        />
+      )}
       {echeance && <p className="mb-2 text-sm text-slate-700">Échéance de remise au collège et au lycée {dateFr.format(new Date(echeance))}.</p>}
       {remisesQuery.isError && <p role="alert" className="mb-3 text-sm text-red-700">Impossible de charger les remises.</p>}
       {remiseMutation.error && <p role="alert" className="mb-3 text-sm text-red-700">{remiseMutation.error.message}</p>}
@@ -240,6 +256,11 @@ export function InscriptionsScreen() {
                     </td>
                   )}
                   <td className="px-4 py-2 text-right">
+                    {reglages.decisionConseilLycee && periodeCorrespond && classe?.cycle === "lycee" && (
+                      <Button variant="ghost" className="mr-3" onClick={() => setDecisionInscriptionId(i.id)}>
+                        Décision du conseil
+                      </Button>
+                    )}
                     <Button variant="ghost" className="mr-3" onClick={() => handleBulletin(i)}
                       disabled={impressionEnCours || periodeBulletin?.annee_scolaire_id !== i.annee_scolaire_id}>
                       Imprimer le bulletin

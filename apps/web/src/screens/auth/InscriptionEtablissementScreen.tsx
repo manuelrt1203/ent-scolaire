@@ -1,8 +1,9 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerEtablissement, useAuth, PAYS_CALENDRIER, type PaysCalendrier } from "@ent/shared";
+import { registerEtablissement, useAuth, type PaysCalendrier } from "@ent/shared";
 import { BackButton } from "../../components/ui/BackButton";
 import { Button } from "../../components/ui/Button";
+import { OptionsPays } from "../../components/OptionsPays";
 import { Field, Input, Select } from "../../components/ui/Field";
 import { IconGraduationCap } from "../../components/icons";
 
@@ -108,9 +109,7 @@ export function InscriptionEtablissementScreen() {
               <Field label="Pays de l’établissement">
                 <Select value={pays} onChange={(e) => setPays(e.target.value as PaysCalendrier | "")} required autoFocus>
                   <option value="">Choisir un pays</option>
-                  {Object.entries(PAYS_CALENDRIER).map(([code, nom]) => (
-                    <option key={code} value={code}>{nom}</option>
-                  ))}
+                  <OptionsPays />
                 </Select>
               </Field>
             </div>

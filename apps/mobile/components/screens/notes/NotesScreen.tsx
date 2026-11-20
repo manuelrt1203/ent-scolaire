@@ -10,6 +10,7 @@ import {
   useMoyenneGenerale,
   formatMoyenne,
   getDetailsBulletin,
+  getDecisionConseilPubliee,
   getProfile,
   getEtablissement,
   buildBulletinHtml,
@@ -42,10 +43,11 @@ export function NotesScreen() {
     setErreurBulletin("");
     setTelechargementEnCours(true);
     try {
-      const [eleveProfile, etablissement, details] = await Promise.all([
+      const [eleveProfile, etablissement, details, decisionConseil] = await Promise.all([
         eleveId === profile.id ? Promise.resolve(profile) : getProfile(client, eleveId),
         getEtablissement(client, profile.etablissement_id),
         getDetailsBulletin(client, eleveId, periodeId),
+        getDecisionConseilPubliee(client, eleveId, periodeId),
       ]);
       const periode = periodesQuery.data?.find((p) => p.id === periodeId);
       const html = buildBulletinHtml({
@@ -53,6 +55,7 @@ export function NotesScreen() {
         eleveNom: eleveProfile?.nom ?? "",
         elevePrenom: eleveProfile?.prenom ?? "",
         details,
+        decisionConseil,
         periodeNom: periode?.nom ?? "",
         lignes: bulletinQuery.data,
       });

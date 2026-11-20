@@ -292,6 +292,42 @@ export type Database = {
           },
         ]
       }
+      decisions_conseil_classe: {
+        Row: {
+          decision: string
+          inscription_id: string
+          periode_id: string
+          publiee: boolean
+        }
+        Insert: {
+          decision: string
+          inscription_id: string
+          periode_id: string
+          publiee?: boolean
+        }
+        Update: {
+          decision?: string
+          inscription_id?: string
+          periode_id?: string
+          publiee?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "decisions_conseil_classe_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "decisions_conseil_classe_periode_id_fkey"
+            columns: ["periode_id"]
+            isOneToOne: false
+            referencedRelation: "periodes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       etablissements: {
         Row: {
           academie: string | null

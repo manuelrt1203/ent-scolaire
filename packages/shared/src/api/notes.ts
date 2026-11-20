@@ -271,3 +271,30 @@ export async function annulerRemiseBulletin(client: EntSupabaseClient, periodeId
     .eq("periode_id", periodeId).eq("inscription_id", inscriptionId);
   if (error) throw error;
 }
+
+export async function getDecisionConseil(client: EntSupabaseClient, inscriptionId: string, periodeId: string) {
+  const { data, error } = await client.from("decisions_conseil_classe")
+    .select("decision, publiee").eq("inscription_id", inscriptionId).eq("periode_id", periodeId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
+export async function enregistrerDecisionConseil(
+  client: EntSupabaseClient,
+  decision: TablesInsert<"decisions_conseil_classe">,
+) {
+  const { error } = await client.from("decisions_conseil_classe")
+    .upsert(decision, { onConflict: "periode_id,inscription_id" });
+  if (error) throw error;
+}
+
+export async function getDecisionConseilPubliee(client: EntSupabaseClient, eleveId: string, periodeId: string) {
+  const { data, error } = await client.from("decisions_conseil_classe")
+    .select("decision, inscriptions!inner(eleve_id)")
+    .eq("inscriptions.eleve_id", eleveId)
+    .eq("periode_id", periodeId)
+    .eq("publiee", true)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.decision ?? null;
+}

@@ -18,7 +18,7 @@ import { Field, Select } from "../../components/ui/Field";
 
 export function SaisieNotesScreen() {
   const { client, profile } = useAuth();
-  const { pays, charge } = useEtablissementCalendrier(client, profile);
+  const { reglages, charge } = useEtablissementCalendrier(client, profile);
   const affectationsQuery = useMesAffectations(client);
   const periodesQuery = usePeriodes(client);
 
@@ -35,7 +35,7 @@ export function SaisieNotesScreen() {
   const notes = notesQuery.data ?? [];
   const isBrouillon = releve?.statut === "brouillon";
   const classe = affectationsQuery.data?.find((a) => a.matiere_classe?.id === matiereClasseId)?.matiere_classe?.classes;
-  const evaluationsLycee = (pays === "CG" && classe?.cycle === "lycee") || notes.some(aDesEvaluationsLycee);
+  const evaluationsLycee = (reglages.evaluationsLyceePilote && classe?.cycle === "lycee") || notes.some(aDesEvaluationsLycee);
   const toutesRemplies = notes.length > 0 && notes.every((note) => note.valeur !== null);
   const erreur = releveQuery.error ?? notesQuery.error ?? updateNote.error ?? soumettre.error;
 

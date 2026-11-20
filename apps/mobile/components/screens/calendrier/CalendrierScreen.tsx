@@ -7,10 +7,10 @@ const APERCU = 5;
 /** Vacances scolaires + jours fériés à venir, en lecture seule, au-dessus des événements. */
 function DatesOfficielles() {
   const { client, profile } = useAuth();
-  const { data, isLoading, isError, academie, academieChargee, pays } = useDatesOfficielles(client, profile);
+  const { data, isLoading, isError, academie, academieChargee, calendrierOfficielFrance } = useDatesOfficielles(client, profile);
   const [toutVoir, setToutVoir] = useState(false);
 
-  if (pays === "CG" || isLoading || !academieChargee || isError) return null;
+  if (!calendrierOfficielFrance || isLoading || !academieChargee || isError) return null;
   const dates = toutVoir ? data ?? [] : (data ?? []).slice(0, APERCU);
 
   return (

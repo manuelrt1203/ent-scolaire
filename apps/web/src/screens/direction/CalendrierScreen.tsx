@@ -14,7 +14,7 @@ const CIBLES: { value: string; label: string }[] = [
 
 export function CalendrierScreen() {
   const { client, profile } = useAuth();
-  const { pays, charge } = useEtablissementCalendrier(client, profile);
+  const { pays, reglages, charge } = useEtablissementCalendrier(client, profile);
   const [maintenant] = useState(() => Date.now());
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
@@ -75,12 +75,12 @@ export function CalendrierScreen() {
           </Field>
           <div className="flex flex-wrap gap-3">
             <div>
-              <Field label={pays === "CG" ? "Début (heure de Brazzaville)" : "Début"}>
+              <Field label={reglages.fuseau ? `Début (${reglages.fuseau.libelle})` : "Début"}>
                 <Input type="datetime-local" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} required />
               </Field>
             </div>
             <div>
-              <Field label={pays === "CG" ? "Fin (heure de Brazzaville)" : "Fin"}>
+              <Field label={reglages.fuseau ? `Fin (${reglages.fuseau.libelle})` : "Fin"}>
                 <Input type="datetime-local" value={dateFin} onChange={(e) => setDateFin(e.target.value)} required />
               </Field>
             </div>

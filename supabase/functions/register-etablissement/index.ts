@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Adresse email invalide" }, 400);
   }
 
-  if (pays !== "FR" && pays !== "CG") {
+  if (pays !== "FR" && pays !== "CG" && pays !== "GA") {
     return json({ error: "Pays de l’établissement non pris en charge" }, 400);
   }
 

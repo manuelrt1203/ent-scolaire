@@ -7,6 +7,7 @@ import {
   useMoyenneGenerale,
   formatMoyenne,
   getDetailsBulletin,
+  getDecisionConseilPubliee,
   getProfile,
   getEtablissement,
   buildBulletinHtml,
@@ -44,16 +45,18 @@ export function NotesScreen() {
     try {
       const lignes = bulletinQuery.data;
       await imprimerBulletin(async () => {
-        const [eleveProfile, etablissement, details] = await Promise.all([
+        const [eleveProfile, etablissement, details, decisionConseil] = await Promise.all([
           eleveId === profile.id ? Promise.resolve(profile) : getProfile(client, eleveId),
           getEtablissement(client, profile.etablissement_id),
           getDetailsBulletin(client, eleveId, periodeId),
+          getDecisionConseilPubliee(client, eleveId, periodeId),
         ]);
         return buildBulletinHtml({
           etablissementNom: etablissement?.nom ?? "",
           eleveNom: eleveProfile?.nom ?? "",
           elevePrenom: eleveProfile?.prenom ?? "",
           details,
+          decisionConseil,
           periodeNom: periodesQuery.data?.find((p) => p.id === periodeId)?.nom ?? "",
           lignes,
         });

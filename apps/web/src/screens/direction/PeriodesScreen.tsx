@@ -16,7 +16,7 @@ import { Field, Input } from "../../components/ui/Field";
 
 export function PeriodesScreen() {
   const { client, profile } = useAuth();
-  const { pays } = useEtablissementCalendrier(client, profile);
+  const { reglages } = useEtablissementCalendrier(client, profile);
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [nom, setNom] = useState("");
@@ -109,7 +109,7 @@ export function PeriodesScreen() {
           <Field label="Date de fin">
             <Input type="date" value={dateFin} onChange={(e) => setDateFin(e.target.value)} required />
           </Field>
-          {pays === "CG" && <Field label="Fin des compositions (facultatif)">
+          {reglages.echeanceRemiseBulletins && <Field label="Fin des compositions (facultatif)">
             <Input type="date" value={finCompositions} min={dateDebut || undefined}
               onChange={(e) => setFinCompositions(e.target.value)} />
           </Field>}
@@ -141,7 +141,7 @@ export function PeriodesScreen() {
                 <th className="px-4 py-2">Nom</th>
                 <th className="px-4 py-2">Du</th>
                 <th className="px-4 py-2">Au</th>
-                {pays === "CG" && <th className="px-4 py-2">Échéance de remise</th>}
+                {reglages.echeanceRemiseBulletins && <th className="px-4 py-2">Échéance de remise</th>}
                 <th className="px-4 py-2">Ordre</th>
                 <th className="px-4 py-2" />
               </tr>
@@ -152,7 +152,7 @@ export function PeriodesScreen() {
                   <td className="px-4 py-2 text-slate-900">{p.nom}</td>
                   <td className="px-4 py-2 text-slate-500 tabular-nums">{p.date_debut}</td>
                   <td className="px-4 py-2 text-slate-500 tabular-nums">{p.date_fin}</td>
-                  {pays === "CG" && <td className="px-4 py-2 text-slate-500 tabular-nums">{p.echeance_bulletins ?? "—"}</td>}
+                  {reglages.echeanceRemiseBulletins && <td className="px-4 py-2 text-slate-500 tabular-nums">{p.echeance_bulletins ?? "—"}</td>}
                   <td className="px-4 py-2 text-slate-500 tabular-nums">{p.ordre}</td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="ghost" className="mr-3" onClick={() => handleEdit(p)}>Modifier</Button>

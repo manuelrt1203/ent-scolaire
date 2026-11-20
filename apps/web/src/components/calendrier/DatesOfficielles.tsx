@@ -8,10 +8,10 @@ const APERCU = 5;
 /** Vacances scolaires (académie de l'établissement) + jours fériés à venir, en lecture seule. */
 export function DatesOfficielles() {
   const { client, profile } = useAuth();
-  const { data, isLoading, isError, academie, academieChargee, pays } = useDatesOfficielles(client, profile);
+  const { data, isLoading, isError, academie, academieChargee, calendrierOfficielFrance } = useDatesOfficielles(client, profile);
   const [toutVoir, setToutVoir] = useState(false);
 
-  if (pays === "CG" || isLoading || !academieChargee) return null;
+  if (!calendrierOfficielFrance || isLoading || !academieChargee) return null;
 
   const dates = toutVoir ? data ?? [] : (data ?? []).slice(0, APERCU);
 

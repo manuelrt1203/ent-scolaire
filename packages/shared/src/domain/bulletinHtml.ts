@@ -6,6 +6,7 @@ export interface BulletinHtmlInput {
   etablissementNom: string;
   eleveNom: string;
   elevePrenom: string;
+  decisionConseil?: string | null;
   details: Awaited<ReturnType<typeof getDetailsBulletin>>;
   periodeNom: string;
   lignes: Tables<"v_bulletin">[];
@@ -96,6 +97,9 @@ export function buildBulletinHtml(input: BulletinHtmlInput): string {
           thead { display: table-header-group; }
           tr, .moyenne-generale, .visa { break-inside: avoid; }
           .lycee th, .lycee td { padding: 6px; font-size: 11px; }
+          .decision { margin-top: 18px; break-inside: avoid; }
+          .decision h2 { font-size: 14px; }
+          .decision p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
           .visa { margin-top: 24px; text-align: right; font-size: 13px; }
           @media print {
             body { padding: 0; }
@@ -132,6 +136,10 @@ export function buildBulletinHtml(input: BulletinHtmlInput): string {
           <div class="label">Moyenne générale</div>
           <div class="valeur">${formatMoyenne(moyenne)}</div>
         </div>
+        ${input.decisionConseil ? `<section class="decision">
+          <h2>Décision du conseil de classe</h2>
+          <p>${echapper(input.decisionConseil)}</p>
+        </section>` : ""}
         ${lycee ? '<p class="visa">Visa de la direction</p>' : ""}
       </body>
     </html>

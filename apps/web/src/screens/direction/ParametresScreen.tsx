@@ -1,9 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth, getEtablissement, updateRetentionEtablissement, updateCalendrierEtablissement, ACADEMIES, PAYS_CALENDRIER, type PaysCalendrier } from "@ent/shared";
+import { useAuth, getEtablissement, updateRetentionEtablissement, updateCalendrierEtablissement, ACADEMIES, lirePaysCalendrier, reglagesPays, type PaysCalendrier } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, PageHeader } from "../../components/ui/Card";
+import { OptionsPays } from "../../components/OptionsPays";
 import { Field, Input, Select } from "../../components/ui/Field";
 
 export function ParametresScreen() {
@@ -19,13 +20,14 @@ export function ParametresScreen() {
   const [retentionVieScolaire, setRetentionVieScolaire] = useState("36");
   const [retentionMessagerie, setRetentionMessagerie] = useState("36");
   const [pays, setPays] = useState<PaysCalendrier>("FR");
+  const { calendrierOfficielFrance, fuseau, sourceCalendrier } = reglagesPays(pays);
   const [academie, setAcademie] = useState("");
 
   useEffect(() => {
     if (etablissementQuery.data) {
       setRetentionVieScolaire(String(etablissementQuery.data.retention_vie_scolaire_mois));
       setRetentionMessagerie(String(etablissementQuery.data.retention_messagerie_mois));
-      setPays(etablissementQuery.data.pays_calendrier === "CG" ? "CG" : "FR");
+      setPays(lirePaysCalendrier(etablissementQuery.data.pays_calendrier));
       setAcademie(etablissementQuery.data.academie ?? "");
     }
   }, [etablissementQuery.data]);
@@ -67,13 +69,11 @@ export function ParametresScreen() {
           <div className="max-w-xs">
             <Field label="Pays du calendrier">
               <Select value={pays} onChange={(e) => setPays(e.target.value as PaysCalendrier)}>
-                {Object.entries(PAYS_CALENDRIER).map(([code, nom]) => (
-                  <option key={code} value={code}>{nom}</option>
-                ))}
+                <OptionsPays />
               </Select>
             </Field>
           </div>
-          {pays === "FR" && <div className="max-w-xs">
+          {calendrierOfficielFrance && <div className="max-w-xs">
             <Field label="Académie de l'établissement">
               <Select value={academie} onChange={(e) => setAcademie(e.target.value)}>
                 <option value="">Non renseignée</option>
@@ -86,10 +86,16 @@ export function ParametresScreen() {
             </Field>
           </div>}
           <p className="text-xs text-slate-500">
-            {pays === "CG"
-              ? "Ajoutez les vacances, jours fériés et autres dates de votre établissement dans le calendrier. Les horaires sont affichés à l’heure de Brazzaville."
-              : "Les vacances scolaires proviennent du calendrier officiel de l’Éducation nationale."}
+            {calendrierOfficielFrance
+              ? "Les vacances scolaires proviennent du calendrier officiel de l’Éducation nationale."
+              : "Ajoutez les vacances, jours fériés et autres dates de votre établissement dans le calendrier."}
+            {fuseau && ` Les horaires sont affichés selon l’${fuseau.libelle}.`}
           </p>
+          {sourceCalendrier && (
+            <a href={sourceCalendrier} target="_blank" rel="noreferrer" className="block text-xs text-indigo-ink underline">
+              Consulter le calendrier du ministère
+            </a>
+          )}
           <div className="flex items-center gap-3">
             <Button type="submit" disabled={calendrierMutation.isPending || !etablissementQuery.data}>Enregistrer</Button>
             {calendrierMutation.isError && <span role="alert" className="text-xs text-red-700">{calendrierMutation.error.message}</span>}
