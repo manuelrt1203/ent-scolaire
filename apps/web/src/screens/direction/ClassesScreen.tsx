@@ -11,6 +11,7 @@ import {
   CYCLES_ORDRE,
   NIVEAUX_PAR_CYCLE,
   type CycleScolaire,
+  libelleClasse,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
@@ -36,7 +37,7 @@ export function ClassesScreen() {
   const createMutation = useMutation({
     mutationFn: () =>
       createClasse(client, {
-        nom,
+        nom: nom.trim(),
         cycle,
         niveau,
         serie: serie.trim() || null,
@@ -50,7 +51,7 @@ export function ClassesScreen() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => updateClasse(client, editingId as string, { nom, cycle, niveau, serie: serie.trim() || null }),
+    mutationFn: () => updateClasse(client, editingId as string, { nom: nom.trim(), cycle, niveau, serie: serie.trim() || null }),
     onSuccess: () => {
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["classes"] });
@@ -86,6 +87,7 @@ export function ClassesScreen() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!nom.trim()) return;
     if (editingId) {
       updateMutation.mutate();
     } else {
@@ -101,7 +103,7 @@ export function ClassesScreen() {
 
   return (
     <div className="max-w-2xl">
-      <PageHeader title="Classes" description="Créer et organiser les classes de l'établissement." />
+      <PageHeader title="Classes" description="Créez une fiche pour chaque classe. Par exemple, 6e A et 6e B sont deux classes distinctes du niveau 6e." />
 
       <Card className="mb-8 p-4">
         <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
@@ -125,7 +127,7 @@ export function ClassesScreen() {
           </div>
           <div className="min-w-[10rem] flex-1">
             <Field label="Nom de la classe">
-              <Input value={nom} onChange={(e) => setNom(e.target.value)} required placeholder="A, Bilingue, Terminale A…" />
+              <Input value={nom} onChange={(e) => setNom(e.target.value)} required placeholder="Ex. A ou 6e A" />
             </Field>
           </div>
           {cycle === "lycee" && (
@@ -135,7 +137,7 @@ export function ClassesScreen() {
               </Field>
             </div>
           )}
-          <Button type="submit" disabled={isPending || (!editingId && !anneeQuery.data)}>
+          <Button type="submit" disabled={!nom.trim() || isPending || (!editingId && !anneeQuery.data)}>
             {editingId ? "Enregistrer" : "Ajouter"}
           </Button>
           {editingId && (
@@ -176,7 +178,7 @@ export function ClassesScreen() {
             <tbody className="divide-y divide-slate-100">
               {classes.map((c) => (
                 <tr key={c.id}>
-                  <td className="px-4 py-2 text-slate-900">{c.nom}</td>
+                  <td className="px-4 py-2 text-slate-900">{libelleClasse(c)}</td>
                   <td className="px-4 py-2 text-slate-500">{CYCLE_LABELS[c.cycle]}</td>
                   <td className="px-4 py-2 text-slate-500">{c.niveau}</td>
                   <td className="px-4 py-2 text-slate-500">{c.serie ?? "—"}</td>

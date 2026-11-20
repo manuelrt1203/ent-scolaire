@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, getMatiereClasses, getAffectations, useCreneaux, useCreateCreneau, useDeleteCreneau } from "@ent/shared";
+import { libelleClasse, useAuth, getMatiereClasses, getAffectations, useCreneaux, useCreateCreneau, useDeleteCreneau } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Input, Select } from "../../components/ui/Field";
@@ -55,7 +55,7 @@ export function EmploiDuTempsScreen() {
           >
             <option value="">—</option>
             {mcQuery.data?.map((mc: any) => (
-              <option key={mc.id} value={mc.id}>{mc.matieres?.nom} — {mc.classes?.nom}</option>
+              <option key={mc.id} value={mc.id}>{mc.matieres?.nom} — {libelleClasse(mc.classes)}</option>
             ))}
           </Select>
         </Field>

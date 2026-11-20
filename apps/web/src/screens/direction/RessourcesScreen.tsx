@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, getClasses, useRessourcesClasse, getRessourceSignedUrl } from "@ent/shared";
+import { libelleClasse, useAuth, getClasses, useRessourcesClasse, getRessourceSignedUrl } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Select } from "../../components/ui/Field";
@@ -36,7 +36,7 @@ export function RessourcesScreen() {
           <Select value={classeId} onChange={(e) => setClasseId(e.target.value)}>
             <option value="">—</option>
             {classesQuery.data?.map((c) => (
-              <option key={c.id} value={c.id}>{c.nom}</option>
+              <option key={c.id} value={c.id}>{libelleClasse(c)}</option>
             ))}
           </Select>
         </Field>

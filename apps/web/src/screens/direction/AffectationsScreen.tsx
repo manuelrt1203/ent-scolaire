@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth, getUtilisateurs, getMatiereClasses, getAffectations, createAffectation, deleteAffectation } from "@ent/shared";
+import { libelleClasse, useAuth, getUtilisateurs, getMatiereClasses, getAffectations, createAffectation, deleteAffectation } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Select } from "../../components/ui/Field";
@@ -52,7 +52,7 @@ export function AffectationsScreen() {
               <Select value={matiereClasseId} onChange={(e) => setMatiereClasseId(e.target.value)} required>
                 <option value="">—</option>
                 {mcQuery.data?.map((mc: any) => (
-                  <option key={mc.id} value={mc.id}>{mc.matieres?.nom} — {mc.classes?.nom}</option>
+                  <option key={mc.id} value={mc.id}>{mc.matieres?.nom} — {libelleClasse(mc.classes)}</option>
                 ))}
               </Select>
             </Field>

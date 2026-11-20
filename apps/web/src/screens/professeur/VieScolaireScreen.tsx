@@ -7,6 +7,7 @@ import {
   useVieScolaireClasse,
   useCreateEvenementVieScolaire,
   getJustificatifSignedUrl,
+  libelleClasse,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
@@ -67,7 +68,7 @@ export function VieScolaireScreen() {
             <option value="">—</option>
             {affectationsQuery.data?.map((a: any) => (
               <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
-                {a.matiere_classe.matieres?.nom} — {a.matiere_classe.classes?.nom}
+                {a.matiere_classe.matieres?.nom} — {libelleClasse(a.matiere_classe.classes)}
               </option>
             ))}
           </Select>

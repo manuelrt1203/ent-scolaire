@@ -10,7 +10,7 @@ export type Periode = Tables<"periodes">;
 export async function getMesAffectations(client: EntSupabaseClient) {
   const { data, error } = await client
     .from("affectations")
-    .select("*, matiere_classe(*, matieres(nom, code), classes(nom, niveau, cycle))");
+    .select("*, matiere_classe(*, matieres(nom, code), classes(nom, niveau, serie, cycle))");
   if (error) throw error;
   return data;
 }
@@ -80,7 +80,7 @@ export async function getReleveOrCreate(
 export async function getReleveById(client: EntSupabaseClient, releveId: string) {
   const { data, error } = await client
     .from("releves_notes")
-    .select("*, matiere_classe(*, matieres(nom), classes(nom)), periodes(nom, ordre)")
+    .select("*, matiere_classe(*, matieres(nom), classes(nom, niveau, serie)), periodes(nom, ordre)")
     .eq("id", releveId)
     .single();
   if (error) throw error;
@@ -147,7 +147,7 @@ export async function publierReleve(client: EntSupabaseClient, releveId: string)
 export async function getRelevesForDirection(client: EntSupabaseClient, statuts?: ReleveNotes["statut"][]) {
   let query = client
     .from("releves_notes")
-    .select("*, matiere_classe(*, matieres(nom), classes(nom)), periodes(nom, ordre)")
+    .select("*, matiere_classe(*, matieres(nom), classes(nom, niveau, serie)), periodes(nom, ordre)")
     .order("updated_at", { ascending: false });
   if (statuts && statuts.length > 0) query = query.in("statut", statuts);
   const { data, error } = await query;

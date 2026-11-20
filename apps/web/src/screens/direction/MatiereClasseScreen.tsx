@@ -9,6 +9,7 @@ import {
   updateMatiereClasse,
   deleteMatiereClasse,
   getAnneeScolaireActive,
+  libelleClasse,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
@@ -95,7 +96,7 @@ export function MatiereClasseScreen() {
               <Select value={classeId} onChange={(e) => setClasseId(e.target.value)} required disabled={Boolean(editingId)}>
                 <option value="">—</option>
                 {classesQuery.data?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nom}</option>
+                  <option key={c.id} value={c.id}>{libelleClasse(c)}</option>
                 ))}
               </Select>
             </Field>
@@ -138,7 +139,7 @@ export function MatiereClasseScreen() {
             <tbody className="divide-y divide-slate-100">
               {mcQuery.data.map((mc: any) => (
                 <tr key={mc.id}>
-                  <td className="px-4 py-2 text-slate-900">{mc.classes?.nom}</td>
+                  <td className="px-4 py-2 text-slate-900">{libelleClasse(mc.classes)}</td>
                   <td className="px-4 py-2 text-slate-500">{mc.matieres?.nom}</td>
                   <td className="px-4 py-2 text-slate-500">{mc.coefficient}</td>
                   <td className="px-4 py-2 text-right">

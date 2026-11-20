@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useAuth, useMesAffectations, useCahierTexteMatiereClasse, useCreateEntreeCahierTexte, useDeleteEntreeCahierTexte } from "@ent/shared";
+import { libelleClasse, useAuth, useMesAffectations, useCahierTexteMatiereClasse, useCreateEntreeCahierTexte, useDeleteEntreeCahierTexte } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Input, Select, Textarea } from "../../components/ui/Field";
@@ -52,7 +52,7 @@ export function CahierTexteScreen() {
             <option value="">—</option>
             {affectationsQuery.data?.map((a: any) => (
               <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
-                {a.matiere_classe.matieres?.nom} — {a.matiere_classe.classes?.nom}
+                {a.matiere_classe.matieres?.nom} — {libelleClasse(a.matiere_classe.classes)}
               </option>
             ))}
           </Select>

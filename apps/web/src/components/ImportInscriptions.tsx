@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { getElevesPourImport, importerInscriptions, useAuth, type Classe } from "@ent/shared";
+import { libelleClasse, getElevesPourImport, importerInscriptions, useAuth, type Classe } from "@ent/shared";
 import { lireListeInscriptions, MAX_LIGNES_IMPORT, preparerListeInscriptions } from "../lib/importInscriptionsCsv";
 import { Button } from "./ui/Button";
 import { Card } from "./ui/Card";
@@ -47,7 +47,7 @@ export function ImportInscriptions({ classes, anneeId }: { classes: Classe[]; an
             <option value="">Choisir une classe</option>
             {classes.map((option) => (
               <option key={option.id} value={option.id}>
-                {[option.nom, option.niveau !== option.nom ? option.niveau : null, option.serie].filter(Boolean).join(" · ")}
+                {libelleClasse(option)}
               </option>
             ))}
           </Select>
@@ -86,7 +86,7 @@ export function ImportInscriptions({ classes, anneeId }: { classes: Classe[]; an
           </div>
           <Button disabled={!classe || !aInscrire.length || occupe || inscription.isSuccess}
             onClick={() => classe && inscription.mutate({ cible: classe.id, ids: aInscrire })}>
-            {inscription.isPending ? "Inscription…" : `Inscrire ${aInscrire.length} élève(s)${classe ? ` dans ${classe.nom}` : ""}`}
+            {inscription.isPending ? "Inscription…" : `Inscrire ${aInscrire.length} élève(s)${classe ? ` dans ${libelleClasse(classe)}` : ""}`}
           </Button>
         </>
       )}

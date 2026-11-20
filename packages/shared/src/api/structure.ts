@@ -32,6 +32,13 @@ export async function updateCalendrierEtablissement(client: EntSupabaseClient, e
   return data;
 }
 
+export async function getAnneesScolaires(client: EntSupabaseClient, etablissementId: string) {
+  const { data, error } = await client.from("annees_scolaires").select("id, libelle")
+    .eq("etablissement_id", etablissementId).order("date_debut", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
 export async function getAnneeScolaireActive(client: EntSupabaseClient, etablissementId: string) {
   const { data, error } = await client
     .from("annees_scolaires")
@@ -92,7 +99,7 @@ export async function deleteMatiere(client: EntSupabaseClient, id: string) {
 export async function getMatiereClasses(client: EntSupabaseClient, classeId?: string) {
   let query = client
     .from("matiere_classe")
-    .select("*, matieres(nom, code), classes(nom, niveau)")
+    .select("*, matieres(nom, code), classes(nom, niveau, serie)")
     .order("id");
   if (classeId) query = query.eq("classe_id", classeId);
   const { data, error } = await query;
@@ -127,7 +134,7 @@ export async function deleteMatiereClasse(client: EntSupabaseClient, id: string)
 export async function getAffectations(client: EntSupabaseClient) {
   const { data, error } = await client
     .from("affectations")
-    .select("*, profiles(nom, prenom), matiere_classe(*, matieres(nom), classes(nom))");
+    .select("*, profiles(nom, prenom), matiere_classe(*, matieres(nom), classes(nom, niveau, serie))");
   if (error) throw error;
   return data;
 }
@@ -236,7 +243,7 @@ export async function deleteLienParentEleve(client: EntSupabaseClient, id: strin
 export async function getClasseEleve(client: EntSupabaseClient, eleveId: string) {
   const { data, error } = await client
     .from("inscriptions")
-    .select("classe_id, classes(id, nom, niveau)")
+    .select("classe_id, classes(id, nom, niveau, serie)")
     .eq("eleve_id", eleveId)
     .maybeSingle();
   if (error) throw error;

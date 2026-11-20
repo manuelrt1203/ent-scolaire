@@ -18,3 +18,21 @@ export const NIVEAUX_PAR_CYCLE: Record<CycleScolaire, string[]> = {
   college: ["6ème", "5ème", "4ème", "3ème"],
   lycee: ["Seconde", "Première", "Terminale"],
 };
+
+export function libelleClasse(classe: { nom: string; niveau?: string | null; serie?: string | null } | null | undefined): string {
+  if (!classe) return "";
+  const { nom, niveau, serie } = classe;
+  const libelle = nom.trim();
+  const normaliser = (texte: string) => texte.trim().normalize("NFD").replace(/\p{M}/gu, "")
+    .toLowerCase().replace(/^(\d+)(?:ieme|eme|e)\b/, "$1e");
+  const niveauCourt = niveau?.replace(/^(\d+)(?:ième|ème)$/i, "$1e");
+  const niveauNormalise = normaliser(niveauCourt ?? "");
+  const nomNormalise = normaliser(libelle);
+  const niveauDejaAffiche = nomNormalise === niveauNormalise
+    || nomNormalise.startsWith(niveauNormalise + " ")
+    || nomNormalise.startsWith(niveauNormalise + "-");
+  const nomComplet = niveauCourt && !niveauDejaAffiche ? `${niveauCourt} ${libelle}`.trim() : libelle;
+  return serie && !normaliser(nomComplet).split(/[\s-]+/).includes(normaliser(serie))
+    ? `${nomComplet} · série ${serie}`
+    : nomComplet;
+}

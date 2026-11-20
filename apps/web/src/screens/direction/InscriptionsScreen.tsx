@@ -10,6 +10,7 @@ import {
   updateInscription,
   deleteInscription,
   getAnneeScolaireActive,
+  getAnneesScolaires,
   getBulletin,
   getDetailsBulletin,
   getDecisionConseilPubliee,
@@ -22,7 +23,10 @@ import {
   getRemisesBulletins,
   enregistrerRemiseBulletin,
   annulerRemiseBulletin,
+  libelleClasse,
 } from "@ent/shared";
+import { construireResultatsCsv } from "../../lib/exportResultatsCsv";
+import { telechargerFichierTexte } from "../../lib/telechargerFichier";
 import { ImportInscriptions } from "../../components/ImportInscriptions";
 import { DecisionConseilClasse } from "../../components/DecisionConseilClasse";
 import { imprimerBulletin } from "../../components/imprimerBulletin";
@@ -39,9 +43,11 @@ export function InscriptionsScreen() {
   const { client, profile } = useAuth();
   const { reglages } = useEtablissementCalendrier(client, profile);
   const queryClient = useQueryClient();
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [edition, setEdition] = useState<{ id: string; anneeId: string } | null>(null);
+  const editingId = edition?.id ?? null;
   const [eleveId, setEleveId] = useState("");
   const [classeId, setClasseId] = useState("");
+  const [filtreClasseId, setFiltreClasseId] = useState("");
   const [decisionInscriptionId, setDecisionInscriptionId] = useState<string | null>(null);
   const [periodeBulletinId, setPeriodeBulletinId] = useState("");
   const [classeBulletinId, setClasseBulletinId] = useState("");
@@ -52,7 +58,25 @@ export function InscriptionsScreen() {
 
   const elevesQuery = useQuery({ queryKey: ["utilisateurs", "eleve"], queryFn: () => getUtilisateurs(client, "eleve") });
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => getClasses(client) });
-  const inscriptionsQuery = useQuery({ queryKey: ["inscriptions"], queryFn: () => getInscriptions(client) });
+  const classeFiltre = classesQuery.data?.find((classe) => classe.id === filtreClasseId);
+  const inscriptionsQuery = useQuery({
+    queryKey: ["inscriptions", classeFiltre?.id ?? null, classeFiltre?.annee_scolaire_id ?? null],
+    queryFn: () => classeFiltre
+      ? getInscriptionsClasseAnnee(client, classeFiltre.id, classeFiltre.annee_scolaire_id)
+      : getInscriptions(client),
+  });
+  const anneesQuery = useQuery({
+    queryKey: ["annees-scolaires", profile?.etablissement_id],
+    queryFn: () => getAnneesScolaires(client, profile!.etablissement_id),
+    enabled: Boolean(profile),
+  });
+  const annees = new Map(anneesQuery.data?.map((annee) => [annee.id, annee.libelle]));
+  const comparaison = new Intl.Collator("fr", { numeric: true, sensitivity: "base" });
+  const inscriptionsAffichees = classeFiltre
+    ? [...(inscriptionsQuery.data ?? [])].sort((a, b) =>
+        comparaison.compare(a.profiles?.nom ?? "", b.profiles?.nom ?? "")
+        || comparaison.compare(a.profiles?.prenom ?? "", b.profiles?.prenom ?? ""))
+    : inscriptionsQuery.data ?? [];
   const anneeQuery = useQuery({
     queryKey: ["annee-active", profile?.etablissement_id],
     queryFn: () => getAnneeScolaireActive(client, profile!.etablissement_id),
@@ -81,19 +105,24 @@ export function InscriptionsScreen() {
   });
 
   function resetForm() {
-    setEditingId(null);
+    setEdition(null);
     setEleveId("");
     setClasseId("");
   }
 
-  function handleEdit(i: { id: string; eleve_id: string; classe_id: string }) {
-    setEditingId(i.id);
+  function handleEdit(i: { id: string; eleve_id: string; classe_id: string; annee_scolaire_id: string }) {
+    setEdition({ id: i.id, anneeId: i.annee_scolaire_id });
     setEleveId(i.eleve_id);
     setClasseId(i.classe_id);
   }
 
+  const classesFormulaire = classesQuery.data?.filter((classe) =>
+    classe.annee_scolaire_id === (edition?.anneeId ?? anneeQuery.data?.id),
+  ) ?? [];
+
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!classesFormulaire.some((classe) => classe.id === classeId)) return;
     if (editingId) {
       if (!classeId) return;
       updateMutation.mutate();
@@ -130,11 +159,12 @@ export function InscriptionsScreen() {
     periode: NonNullable<typeof periodeBulletin>,
     etablissementNom: string,
     filtreClasse?: string,
+    inclureDecision = true,
   ): Promise<BulletinHtmlInput> {
     const [lignes, details, decisionConseil] = await Promise.all([
       getBulletin(client, inscription.eleve_id, periode.id),
       getDetailsBulletin(client, inscription.eleve_id, periode.id),
-      getDecisionConseilPubliee(client, inscription.eleve_id, periode.id),
+      inclureDecision ? getDecisionConseilPubliee(client, inscription.eleve_id, periode.id) : null,
     ]);
     const detailsClasse = filtreClasse
       ? details.filter((note) => note.releves_notes?.matiere_classe?.classes?.id === filtreClasse)
@@ -151,12 +181,12 @@ export function InscriptionsScreen() {
     };
   }
 
-  async function lancerImpression(construireHtml: () => Promise<string>) {
+  async function preparerDocument(action: () => Promise<void>) {
     setErreurBulletin("");
     setBilanImpression("");
     setImpressionEnCours(true);
     try {
-      await imprimerBulletin(construireHtml);
+      await action();
     } catch (error) {
       setErreurBulletin(error instanceof Error ? error.message : "Impossible de générer les bulletins. Réessayez.");
     } finally {
@@ -166,21 +196,21 @@ export function InscriptionsScreen() {
 
   async function handleBulletin(inscription: Awaited<ReturnType<typeof getInscriptions>>[number]) {
     if (!profile || !periodeBulletin || impressionEnCours || periodeBulletin.annee_scolaire_id !== inscription.annee_scolaire_id) return;
-    await lancerImpression(async () => {
+    await preparerDocument(() => imprimerBulletin(async () => {
       const etablissement = await getEtablissement(client, profile.etablissement_id);
       const bulletin = await chargerBulletin(inscription, periodeBulletin, etablissement.nom);
       if (!bulletin.lignes.length) throw new Error("Aucune note publiée pour cet élève sur cette période.");
       return buildBulletinHtml(bulletin);
-    });
+    }));
   }
 
-  async function handleBulletinsClasse() {
+  async function handleBulletinsClasse(format: "impression" | "csv") {
     const classe = classesPeriode.find(({ id }) => id === classeBulletinId);
     if (!profile || !periodeBulletin || !classe || impressionEnCours) return;
 
-    await lancerImpression(async () => {
+    const chargerClasse = async () => {
       const [etablissement, inscriptions] = await Promise.all([
-        getEtablissement(client, profile.etablissement_id),
+        format === "impression" ? getEtablissement(client, profile.etablissement_id) : null,
         getInscriptionsClasseAnnee(client, classe.id, periodeBulletin.annee_scolaire_id),
       ]);
       const comparer = new Intl.Collator("fr");
@@ -191,13 +221,24 @@ export function InscriptionsScreen() {
       const bulletins: BulletinHtmlInput[] = [];
       for (let debut = 0; debut < inscriptions.length; debut += 5) {
         const lot = await Promise.all(inscriptions.slice(debut, debut + 5).map((inscription) =>
-          chargerBulletin(inscription, periodeBulletin, etablissement.nom, classe.id)));
+          chargerBulletin(inscription, periodeBulletin, etablissement?.nom ?? "", classe.id, format === "impression")));
         bulletins.push(...lot.filter((bulletin) => bulletin.lignes.some((ligne) => ligne.moyenne != null)));
       }
       if (!bulletins.length) throw new Error("Aucune note publiée pour cette classe sur cette période.");
       const sansNotes = inscriptions.length - bulletins.length;
-      setBilanImpression(`${bulletins.length} bulletin(s) préparé(s).${sansNotes ? ` ${sansNotes} élève(s) sans note publiée.` : ""}`);
-      return buildBulletinsHtml(bulletins);
+      const resultat = format === "impression" ? `${bulletins.length} bulletin(s) préparé(s).` : `Résultats exportés pour ${bulletins.length} élève(s).`;
+      setBilanImpression(`${resultat}${sansNotes ? ` ${sansNotes} élève(s) sans note publiée.` : ""}`);
+      return bulletins;
+    };
+
+    await preparerDocument(async () => {
+      if (format === "impression") {
+        await imprimerBulletin(async () => buildBulletinsHtml(await chargerClasse()));
+      } else {
+        const bulletins = await chargerClasse();
+        const nom = `resultats-${libelleClasse(classe)}-${periodeBulletin.nom}`.replace(/[^\p{L}\p{N}.-]+/gu, "-");
+        telechargerFichierTexte(construireResultatsCsv(bulletins, libelleClasse(classe), periodeBulletin.nom), `${nom}.csv`, "text/csv;charset=utf-8");
+      }
     });
   }
 
@@ -224,8 +265,8 @@ export function InscriptionsScreen() {
             <Field label="Classe">
               <Select value={classeId} onChange={(e) => setClasseId(e.target.value)} required>
                 <option value="">—</option>
-                {classesQuery.data?.map((c) => (
-                  <option key={c.id} value={c.id}>{c.nom}</option>
+                {classesFormulaire.map((c) => (
+                  <option key={c.id} value={c.id}>{libelleClasse(c)}</option>
                 ))}
               </Select>
             </Field>
@@ -259,19 +300,23 @@ export function InscriptionsScreen() {
       </div>
       {periodeBulletin && (
         <div className="mb-3 flex flex-wrap items-end gap-3">
-          <Field label="Classe à imprimer">
+          <Field label="Classe des bulletins et résultats">
             <Select value={classeBulletinId} onChange={(event) => { setClasseBulletinId(event.target.value); setBilanImpression(""); setErreurBulletin(""); }} disabled={impressionEnCours}>
               <option value="">Choisir une classe</option>
               {classesPeriode.map((classe) => (
                 <option key={classe.id} value={classe.id}>
-                  {[classe.nom, classe.niveau !== classe.nom ? classe.niveau : null, classe.serie].filter(Boolean).join(" · ")}
+                  {libelleClasse(classe)}
                 </option>
               ))}
             </Select>
           </Field>
-          <Button variant="secondary" onClick={handleBulletinsClasse} disabled={!classeBulletinId || impressionEnCours}>
-            {impressionEnCours ? "Préparation…" : "Imprimer les bulletins de la classe"}
+          <Button variant="secondary" onClick={() => handleBulletinsClasse("impression")} disabled={!classeBulletinId || impressionEnCours}>
+            Imprimer les bulletins de la classe
           </Button>
+          <Button variant="secondary" onClick={() => handleBulletinsClasse("csv")} disabled={!classeBulletinId || impressionEnCours}>
+            Exporter les résultats (CSV)
+          </Button>
+          {impressionEnCours && <p role="status" className="text-sm text-slate-600">Préparation…</p>}
         </div>
       )}
       {bilanImpression && <p role="status" className="mb-3 text-sm text-slate-700">{bilanImpression}</p>}
@@ -288,8 +333,37 @@ export function InscriptionsScreen() {
       {remisesQuery.isError && <p role="alert" className="mb-3 text-sm text-red-700">Impossible de charger les remises.</p>}
       {remiseMutation.error && <p role="alert" className="mb-3 text-sm text-red-700">{remiseMutation.error.message}</p>}
       {erreurBulletin && <p role="alert" className="mb-3 text-sm text-red-700">{erreurBulletin}</p>}
+      <div className="mb-3 flex flex-wrap items-end gap-3">
+        <Field label="Filtrer les inscriptions par classe">
+          <Select aria-label="Filtrer les inscriptions par classe" value={classeFiltre?.id ?? ""}
+            disabled={classesQuery.isPending || classesQuery.isError}
+            onChange={(event) => {
+              setFiltreClasseId(event.target.value);
+              setDecisionInscriptionId(null);
+            }}>
+            <option value="">Toutes les classes</option>
+            {classesQuery.data?.map((classe) => (
+              <option key={classe.id} value={classe.id}>
+                {libelleClasse(classe)}{annees.get(classe.annee_scolaire_id) ? ` — ${annees.get(classe.annee_scolaire_id)}` : ""}
+              </option>
+            ))}
+          </Select>
+        </Field>
+        {classeFiltre && inscriptionsQuery.isSuccess && (
+          <p role="status" className="pb-2 text-sm text-slate-600">
+            {inscriptionsAffichees.length} {inscriptionsAffichees.length === 1 ? "élève inscrit" : "élèves inscrits"}
+          </p>
+        )}
+      </div>
       <Card className="overflow-x-auto">
-        {inscriptionsQuery.data?.length ? (
+        {inscriptionsQuery.isPending ? (
+          <EmptyState message="Chargement des inscriptions…" />
+        ) : inscriptionsQuery.isError ? (
+          <div className="flex flex-wrap items-center gap-3 p-4">
+            <p role="alert" className="text-sm text-red-700">Impossible de charger les inscriptions.</p>
+            <Button variant="secondary" onClick={() => inscriptionsQuery.refetch()}>Réessayer</Button>
+          </div>
+        ) : inscriptionsAffichees.length ? (
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
               <tr>
@@ -300,7 +374,7 @@ export function InscriptionsScreen() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {inscriptionsQuery.data.map((i) => {
+              {inscriptionsAffichees.map((i) => {
                 const classe = classesQuery.data?.find((c) => c.id === i.classe_id);
                 const remise = remises.get(i.id);
                 const periodeCorrespond = periodeBulletin?.annee_scolaire_id === i.annee_scolaire_id;
@@ -311,7 +385,7 @@ export function InscriptionsScreen() {
                 return (
                 <tr key={i.id}>
                   <td className="px-4 py-2 text-slate-900">{i.profiles?.prenom} {i.profiles?.nom}</td>
-                  <td className="px-4 py-2 text-slate-500">{classe?.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{libelleClasse(classe)}</td>
                   {periodeBulletin && (
                     <td className="px-4 py-2">
                       {periodeCorrespond && remisesQuery.isSuccess ? (
@@ -355,7 +429,7 @@ export function InscriptionsScreen() {
             </tbody>
           </table>
         ) : (
-          <EmptyState message="Aucune inscription pour le moment." />
+          <EmptyState message={classeFiltre ? "Aucun élève inscrit dans cette classe." : "Aucune inscription pour le moment."} />
         )}
       </Card>
     </div>

@@ -1,5 +1,6 @@
 import type { getDetailsBulletin } from "../api/notes";
 import type { Tables } from "../types/database.types";
+import { libelleClasse } from "./classe";
 import { formatMoyenne } from "./moyenne";
 
 export interface BulletinHtmlInput {
@@ -18,6 +19,20 @@ function echapper(texte: string): string {
 
 function afficherNote(note: number | null | undefined): string {
   return note == null ? "—" : note.toFixed(2).replace(".", ",");
+}
+
+export function moyenneBulletin(lignes: readonly Tables<"v_bulletin">[]): number | null {
+  // L'export reflète les seules disciplines publiées qu'il contient.
+  const { points, coefficients } = lignes.reduce((total, ligne) => {
+    if (ligne.moyenne != null && ligne.coefficient != null) {
+      const coefficient = Math.round(ligne.coefficient * 100);
+      total.points += Math.round(ligne.moyenne * 100) * coefficient;
+      total.coefficients += coefficient;
+    }
+    return total;
+  }, { points: 0, coefficients: 0 });
+  return coefficients > 0 ? Math.round(points / coefficients) / 100 : null;
+
 }
 
 /** Les moyennes officielles sont lues dans le relevé publié. */
@@ -39,9 +54,7 @@ function buildBulletinSection(input: BulletinHtmlInput): string {
   }
   const lycee = classe?.cycle === "lycee" || evaluations.size > 0;
   const identiteClasse = [
-    classe?.nom,
-    classe?.niveau !== classe?.nom ? classe?.niveau : null,
-    classe?.serie ? `Série ${classe.serie}` : null,
+    libelleClasse(classe),
     input.periodeNom,
     classe?.annees_scolaires?.libelle,
   ].filter(Boolean).map((texte) => echapper(texte!)).join(" · ");
@@ -68,16 +81,7 @@ function buildBulletinSection(input: BulletinHtmlInput): string {
         </tr>`;
   }).join("");
 
-  // L'export reflète les seules disciplines publiées qu'il contient.
-  const { points, coefficients } = input.lignes.reduce((total, ligne) => {
-    if (ligne.moyenne != null && ligne.coefficient != null) {
-      const coefficient = Math.round(ligne.coefficient * 100);
-      total.points += Math.round(ligne.moyenne * 100) * coefficient;
-      total.coefficients += coefficient;
-    }
-    return total;
-  }, { points: 0, coefficients: 0 });
-  const moyenne = coefficients > 0 ? Math.round(points / coefficients) / 100 : null;
+  const moyenne = moyenneBulletin(input.lignes);
 
   return `
       <article class="bulletin">

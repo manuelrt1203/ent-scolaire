@@ -15,7 +15,7 @@ export async function getCreneaux(
 ) {
   let query = client
     .from("creneaux")
-    .select("*, matiere_classe!inner(*, matieres(nom), classes(nom)), professeur:professeur_id(nom, prenom)")
+    .select("*, matiere_classe!inner(*, matieres(nom), classes(nom, niveau, serie)), professeur:professeur_id(nom, prenom)")
     .order("jour_semaine")
     .order("heure_debut");
   if (filter?.matiereClasseId) query = query.eq("matiere_classe_id", filter.matiereClasseId);

@@ -13,7 +13,7 @@ function genererCode(): string {
 export async function getInvitations(client: EntSupabaseClient) {
   const { data, error } = await client
     .from("invitations")
-    .select("*, classes(nom), eleve:eleve_id(nom, prenom)")
+    .select("*, classes(nom, niveau, serie), eleve:eleve_id(nom, prenom)")
     .order("created_at", { ascending: false });
   if (error) throw error;
   return data;

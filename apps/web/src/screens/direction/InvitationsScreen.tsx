@@ -8,6 +8,7 @@ import {
   useCreateInvitation,
   useDeleteInvitation,
   type Role,
+  libelleClasse,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
@@ -85,7 +86,7 @@ export function InvitationsScreen() {
                 <Select value={classeId} onChange={(e) => setClasseId(e.target.value)}>
                   <option value="">Aucune (à affecter plus tard)</option>
                   {classesQuery.data?.map((c) => (
-                    <option key={c.id} value={c.id}>{c.nom}</option>
+                    <option key={c.id} value={c.id}>{libelleClasse(c)}</option>
                   ))}
                 </Select>
               </Field>
@@ -133,7 +134,7 @@ export function InvitationsScreen() {
                   <td className="px-4 py-2 font-mono text-slate-900">{inv.code}</td>
                   <td className="px-4 py-2 text-slate-500">{ROLES.find((r) => r.value === inv.role)?.label}</td>
                   <td className="px-4 py-2 text-slate-500">
-                    {inv.classes?.nom ?? (inv.eleve ? `${inv.eleve.prenom} ${inv.eleve.nom}` : "—")}
+                    {libelleClasse(inv.classes) || (inv.eleve ? `${inv.eleve.prenom} ${inv.eleve.nom}` : "—")}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="ghost" className="mr-3" onClick={() => copierCode(inv.id, inv.code)}>
