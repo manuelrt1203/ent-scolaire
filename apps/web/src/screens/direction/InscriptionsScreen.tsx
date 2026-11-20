@@ -5,6 +5,7 @@ import {
   getUtilisateurs,
   getClasses,
   getInscriptions,
+  getInscriptionsClasseAnnee,
   createInscription,
   updateInscription,
   deleteInscription,
@@ -14,12 +15,15 @@ import {
   getDecisionConseilPubliee,
   getEtablissement,
   buildBulletinHtml,
+  buildBulletinsHtml,
+  type BulletinHtmlInput,
   usePeriodes,
   useEtablissementCalendrier,
   getRemisesBulletins,
   enregistrerRemiseBulletin,
   annulerRemiseBulletin,
 } from "@ent/shared";
+import { ImportInscriptions } from "../../components/ImportInscriptions";
 import { DecisionConseilClasse } from "../../components/DecisionConseilClasse";
 import { imprimerBulletin } from "../../components/imprimerBulletin";
 import { Button } from "../../components/ui/Button";
@@ -40,6 +44,8 @@ export function InscriptionsScreen() {
   const [classeId, setClasseId] = useState("");
   const [decisionInscriptionId, setDecisionInscriptionId] = useState<string | null>(null);
   const [periodeBulletinId, setPeriodeBulletinId] = useState("");
+  const [classeBulletinId, setClasseBulletinId] = useState("");
+  const [bilanImpression, setBilanImpression] = useState("");
   const [impressionEnCours, setImpressionEnCours] = useState(false);
   const [erreurBulletin, setErreurBulletin] = useState("");
   const periodesQuery = usePeriodes(client);
@@ -117,36 +123,85 @@ export function InscriptionsScreen() {
   const echeance = reglages.echeanceRemiseBulletins ? periodeBulletin?.echeance_bulletins : null;
   const remises = new Map(remisesQuery.data?.map((remise) => [remise.inscription_id, remise]));
 
-  async function handleBulletin(inscription: NonNullable<typeof inscriptionsQuery.data>[number]) {
-    if (!profile || !periodeBulletin || impressionEnCours || periodeBulletin.annee_scolaire_id !== inscription.annee_scolaire_id) return;
+  const classesPeriode = classesQuery.data?.filter((classe) => classe.annee_scolaire_id === periodeBulletin?.annee_scolaire_id) ?? [];
+
+  async function chargerBulletin(
+    inscription: Awaited<ReturnType<typeof getInscriptions>>[number],
+    periode: NonNullable<typeof periodeBulletin>,
+    etablissementNom: string,
+    filtreClasse?: string,
+  ): Promise<BulletinHtmlInput> {
+    const [lignes, details, decisionConseil] = await Promise.all([
+      getBulletin(client, inscription.eleve_id, periode.id),
+      getDetailsBulletin(client, inscription.eleve_id, periode.id),
+      getDecisionConseilPubliee(client, inscription.eleve_id, periode.id),
+    ]);
+    const detailsClasse = filtreClasse
+      ? details.filter((note) => note.releves_notes?.matiere_classe?.classes?.id === filtreClasse)
+      : details;
+    const matieres = new Set(detailsClasse.map((note) => note.releves_notes?.matiere_classe_id));
+    return {
+      etablissementNom,
+      eleveNom: inscription.profiles?.nom ?? "",
+      elevePrenom: inscription.profiles?.prenom ?? "",
+      periodeNom: periode.nom,
+      lignes: filtreClasse ? lignes.filter((ligne) => ligne.matiere_classe_id != null && matieres.has(ligne.matiere_classe_id)) : lignes,
+      details: detailsClasse,
+      decisionConseil,
+    };
+  }
+
+  async function lancerImpression(construireHtml: () => Promise<string>) {
     setErreurBulletin("");
+    setBilanImpression("");
     setImpressionEnCours(true);
     try {
-      await imprimerBulletin(async () => {
-        const [lignes, details, etablissement, decisionConseil] = await Promise.all([
-          getBulletin(client, inscription.eleve_id, periodeBulletin.id),
-          getDetailsBulletin(client, inscription.eleve_id, periodeBulletin.id),
-          getEtablissement(client, profile.etablissement_id),
-          getDecisionConseilPubliee(client, inscription.eleve_id, periodeBulletin.id),
-        ]);
-        if (!lignes.length) throw new Error("Aucune note publiée pour cet élève sur cette période.");
-        return buildBulletinHtml({
-          etablissementNom: etablissement?.nom ?? "",
-          eleveNom: inscription.profiles?.nom ?? "",
-          elevePrenom: inscription.profiles?.prenom ?? "",
-          periodeNom: periodeBulletin.nom,
-          lignes,
-          details,
-          decisionConseil,
-        });
-      });
+      await imprimerBulletin(construireHtml);
     } catch (error) {
-      setErreurBulletin(error instanceof Error ? error.message : "Impossible de générer le bulletin. Réessayez.");
+      setErreurBulletin(error instanceof Error ? error.message : "Impossible de générer les bulletins. Réessayez.");
     } finally {
       setImpressionEnCours(false);
     }
   }
 
+  async function handleBulletin(inscription: Awaited<ReturnType<typeof getInscriptions>>[number]) {
+    if (!profile || !periodeBulletin || impressionEnCours || periodeBulletin.annee_scolaire_id !== inscription.annee_scolaire_id) return;
+    await lancerImpression(async () => {
+      const etablissement = await getEtablissement(client, profile.etablissement_id);
+      const bulletin = await chargerBulletin(inscription, periodeBulletin, etablissement.nom);
+      if (!bulletin.lignes.length) throw new Error("Aucune note publiée pour cet élève sur cette période.");
+      return buildBulletinHtml(bulletin);
+    });
+  }
+
+  async function handleBulletinsClasse() {
+    const classe = classesPeriode.find(({ id }) => id === classeBulletinId);
+    if (!profile || !periodeBulletin || !classe || impressionEnCours) return;
+
+    await lancerImpression(async () => {
+      const [etablissement, inscriptions] = await Promise.all([
+        getEtablissement(client, profile.etablissement_id),
+        getInscriptionsClasseAnnee(client, classe.id, periodeBulletin.annee_scolaire_id),
+      ]);
+      const comparer = new Intl.Collator("fr");
+      inscriptions.sort((a, b) =>
+        comparer.compare(a.profiles?.nom ?? "", b.profiles?.nom ?? "")
+        || comparer.compare(a.profiles?.prenom ?? "", b.profiles?.prenom ?? ""));
+
+      const bulletins: BulletinHtmlInput[] = [];
+      for (let debut = 0; debut < inscriptions.length; debut += 5) {
+        const lot = await Promise.all(inscriptions.slice(debut, debut + 5).map((inscription) =>
+          chargerBulletin(inscription, periodeBulletin, etablissement.nom, classe.id)));
+        bulletins.push(...lot.filter((bulletin) => bulletin.lignes.some((ligne) => ligne.moyenne != null)));
+      }
+      if (!bulletins.length) throw new Error("Aucune note publiée pour cette classe sur cette période.");
+      const sansNotes = inscriptions.length - bulletins.length;
+      setBilanImpression(`${bulletins.length} bulletin(s) préparé(s).${sansNotes ? ` ${sansNotes} élève(s) sans note publiée.` : ""}`);
+      return buildBulletinsHtml(bulletins);
+    });
+  }
+
+  const anneeActive = anneeQuery.data;
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
@@ -184,9 +239,17 @@ export function InscriptionsScreen() {
         </form>
       </Card>
 
+      {anneeActive && (
+        <ImportInscriptions
+          key={anneeActive.id}
+          anneeId={anneeActive.id}
+          classes={classesQuery.data?.filter((classe) => classe.annee_scolaire_id === anneeActive.id) ?? []}
+        />
+      )}
+
       <div className="mb-3 max-w-xs">
         <Field label="Période des bulletins">
-          <Select value={periodeBulletinId} onChange={(event) => { setPeriodeBulletinId(event.target.value); setDecisionInscriptionId(null); remiseMutation.reset(); }} disabled={impressionEnCours}>
+          <Select value={periodeBulletinId} onChange={(event) => { setPeriodeBulletinId(event.target.value); setClasseBulletinId(""); setBilanImpression(""); setErreurBulletin(""); setDecisionInscriptionId(null); remiseMutation.reset(); }} disabled={impressionEnCours}>
             <option value="">Choisir une période</option>
             {periodesQuery.data?.map((periode) => (
               <option key={periode.id} value={periode.id}>{periode.nom}</option>
@@ -194,6 +257,24 @@ export function InscriptionsScreen() {
           </Select>
         </Field>
       </div>
+      {periodeBulletin && (
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <Field label="Classe à imprimer">
+            <Select value={classeBulletinId} onChange={(event) => { setClasseBulletinId(event.target.value); setBilanImpression(""); setErreurBulletin(""); }} disabled={impressionEnCours}>
+              <option value="">Choisir une classe</option>
+              {classesPeriode.map((classe) => (
+                <option key={classe.id} value={classe.id}>
+                  {[classe.nom, classe.niveau !== classe.nom ? classe.niveau : null, classe.serie].filter(Boolean).join(" · ")}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Button variant="secondary" onClick={handleBulletinsClasse} disabled={!classeBulletinId || impressionEnCours}>
+            {impressionEnCours ? "Préparation…" : "Imprimer les bulletins de la classe"}
+          </Button>
+        </div>
+      )}
+      {bilanImpression && <p role="status" className="mb-3 text-sm text-slate-700">{bilanImpression}</p>}
       {periodeBulletin && decisionInscription && (
         <DecisionConseilClasse
           key={`${periodeBulletin.id}:${decisionInscription.id}`}

@@ -21,7 +21,7 @@ function afficherNote(note: number | null | undefined): string {
 }
 
 /** Les moyennes officielles sont lues dans le relevé publié. */
-export function buildBulletinHtml(input: BulletinHtmlInput): string {
+function buildBulletinSection(input: BulletinHtmlInput): string {
   const classes = new Map(
     input.details.flatMap(({ releves_notes }) => {
       const classe = releves_notes?.matiere_classe?.classes;
@@ -80,40 +80,7 @@ export function buildBulletinHtml(input: BulletinHtmlInput): string {
   const moyenne = coefficients > 0 ? Math.round(points / coefficients) / 100 : null;
 
   return `
-    <!doctype html>
-    <html lang="fr">
-      <head>
-        <meta charset="utf-8" />
-        <title>Bulletin scolaire</title>
-        <style>
-          @page { size: A4; margin: 12mm; }
-          body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #0f172a; padding: 24px; }
-          h1 { font-size: 18px; margin-bottom: 4px; }
-          .etablissement { font-size: 13px; color: #64748b; margin-bottom: 24px; }
-          .identite { margin-bottom: 20px; font-size: 13px; }
-          .identite strong { font-size: 15px; }
-          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
-          th, td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 13px; text-align: left; }
-          thead { display: table-header-group; }
-          tr, .moyenne-generale, .visa { break-inside: avoid; }
-          .lycee th, .lycee td { padding: 6px; font-size: 11px; }
-          .decision { margin-top: 18px; break-inside: avoid; }
-          .decision h2 { font-size: 14px; }
-          .decision p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
-          .visa { margin-top: 24px; text-align: right; font-size: 13px; }
-          @media print {
-            body { padding: 0; }
-            .moyenne-generale { background: white; color: #0f172a; border: 1px solid #cbd5e1; }
-            .moyenne-generale .label { color: #334155; }
-          }
-          th { background: #f1f5f9; }
-          .centre { text-align: center; }
-          .moyenne-generale { background: #0f172a; color: white; border-radius: 8px; padding: 16px 20px; }
-          .moyenne-generale .label { font-size: 12px; color: #cbd5e1; }
-          .moyenne-generale .valeur { font-size: 24px; font-weight: 600; }
-        </style>
-      </head>
-      <body>
+      <article class="bulletin">
         <h1>${lycee ? "Bulletin de notes — Lycée" : "Bulletin scolaire"}</h1>
         <div class="etablissement">${echapper(input.etablissementNom)}</div>
         <div class="identite">
@@ -141,7 +108,52 @@ export function buildBulletinHtml(input: BulletinHtmlInput): string {
           <p>${echapper(input.decisionConseil)}</p>
         </section>` : ""}
         ${lycee ? '<p class="visa">Visa de la direction</p>' : ""}
+      </article>`;
+}
+
+export function buildBulletinsHtml(bulletins: readonly BulletinHtmlInput[]): string {
+  return `
+    <!doctype html>
+    <html lang="fr">
+      <head>
+        <meta charset="utf-8" />
+        <title>${bulletins.length === 1 ? "Bulletin scolaire" : "Bulletins scolaires"}</title>
+        <style>
+          @page { size: A4; margin: 12mm; }
+          body { font-family: -apple-system, Helvetica, Arial, sans-serif; color: #0f172a; padding: 24px; }
+          h1 { font-size: 18px; margin-bottom: 4px; }
+          .etablissement { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+          .identite { margin-bottom: 20px; font-size: 13px; }
+          .identite strong { font-size: 15px; }
+          table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+          th, td { border: 1px solid #cbd5e1; padding: 8px 10px; font-size: 13px; text-align: left; }
+          thead { display: table-header-group; }
+          tr, .moyenne-generale, .visa { break-inside: avoid; }
+          .lycee th, .lycee td { padding: 6px; font-size: 11px; }
+          .decision { margin-top: 18px; break-inside: avoid; }
+          .decision h2 { font-size: 14px; }
+          .decision p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+          .visa { margin-top: 24px; text-align: right; font-size: 13px; }
+          th { background: #f1f5f9; }
+          .centre { text-align: center; }
+          .moyenne-generale { background: #0f172a; color: white; border-radius: 8px; padding: 16px 20px; }
+          .moyenne-generale .label { font-size: 12px; color: #cbd5e1; }
+          .moyenne-generale .valeur { font-size: 24px; font-weight: 600; }
+          @media print {
+            body { padding: 0; }
+            .bulletin + .bulletin { break-before: page; page-break-before: always; }
+            .moyenne-generale { background: white; color: #0f172a; border: 1px solid #cbd5e1; }
+            .moyenne-generale .label { color: #334155; }
+          }
+        </style>
+      </head>
+      <body>
+        ${bulletins.map(buildBulletinSection).join("\n")}
       </body>
     </html>
   `;
+}
+
+export function buildBulletinHtml(input: BulletinHtmlInput): string {
+  return buildBulletinsHtml([input]);
 }

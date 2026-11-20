@@ -155,6 +155,19 @@ export async function getInscriptions(client: EntSupabaseClient, classeId?: stri
   return data;
 }
 
+export async function getInscriptionsClasseAnnee(client: EntSupabaseClient, classeId: string, anneeId: string) {
+  const taillePage = 100;
+  const inscriptions: Awaited<ReturnType<typeof getInscriptions>> = [];
+  for (let debut = 0; ; debut += taillePage) {
+    const { data, error } = await client.from("inscriptions").select("*, profiles(nom, prenom, email)")
+      .eq("classe_id", classeId).eq("annee_scolaire_id", anneeId)
+      .order("id").range(debut, debut + taillePage - 1);
+    if (error) throw error;
+    inscriptions.push(...data);
+    if (data.length < taillePage) return inscriptions;
+  }
+}
+
 export async function createInscription(client: EntSupabaseClient, inscription: TablesInsert<"inscriptions">) {
   const { data, error } = await client.from("inscriptions").insert(inscription).select().single();
   if (error) throw error;
@@ -258,4 +271,39 @@ export async function inviteUser(client: EntSupabaseClient, input: InviteUserInp
   const { data, error } = await client.functions.invoke("admin-create-user", { body: input });
   if (error) throw error;
   return data;
+}
+
+export async function getElevesPourImport(client: EntSupabaseClient, etablissementId: string, anneeId: string) {
+  const taillePage = 100;
+  const eleves: Pick<Tables<"profiles">, "id" | "email" | "actif">[] = [];
+  for (let debut = 0; ; debut += taillePage) {
+    const { data, error } = await client.from("profiles").select("id, email, actif")
+      .eq("etablissement_id", etablissementId).eq("role", "eleve")
+      .order("id").range(debut, debut + taillePage - 1);
+    if (error) throw error;
+    eleves.push(...data);
+    if (data.length < taillePage) break;
+  }
+
+  const inscrits = new Set<string>();
+  for (let debut = 0; ; debut += taillePage) {
+    const { data, error } = await client.from("inscriptions").select("eleve_id")
+      .eq("annee_scolaire_id", anneeId)
+      .order("eleve_id").range(debut, debut + taillePage - 1);
+    if (error) throw error;
+    for (const { eleve_id } of data) inscrits.add(eleve_id);
+    if (data.length < taillePage) break;
+  }
+  return { eleves, inscrits };
+}
+
+export async function importerInscriptions(client: EntSupabaseClient, classeId: string, anneeId: string, eleveIds: string[]) {
+  if (!eleveIds.length) return 0;
+  const { data, error } = await client.from("inscriptions")
+    .upsert(eleveIds.map((eleve_id) => ({ eleve_id, classe_id: classeId, annee_scolaire_id: anneeId })), {
+      onConflict: "eleve_id,annee_scolaire_id",
+      ignoreDuplicates: true,
+    }).select("eleve_id");
+  if (error) throw error;
+  return data.length;
 }
