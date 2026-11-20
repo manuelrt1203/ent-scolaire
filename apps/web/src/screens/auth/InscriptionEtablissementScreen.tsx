@@ -1,8 +1,9 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerEtablissement, useAuth, type PaysCalendrier } from "@ent/shared";
+import { registerEtablissement, useAuth, fuseauxCalendrier, type PaysCalendrier } from "@ent/shared";
 import { BackButton } from "../../components/ui/BackButton";
 import { Button } from "../../components/ui/Button";
+import { ChoixFuseau } from "../../components/ChoixFuseau";
 import { OptionsPays } from "../../components/OptionsPays";
 import { Field, Input, Select } from "../../components/ui/Field";
 import { IconGraduationCap } from "../../components/icons";
@@ -38,6 +39,8 @@ export function InscriptionEtablissementScreen() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [pays, setPays] = useState<PaysCalendrier | "">("");
+  const [fuseau, setFuseau] = useState("");
+  const fuseauRequis = pays !== "" && fuseauxCalendrier(pays).length > 1;
   const [etablissementNom, setEtablissementNom] = useState("");
   const [etablissementAdresse, setEtablissementAdresse] = useState("");
   const [directionPrenom, setDirectionPrenom] = useState("");
@@ -58,13 +61,14 @@ export function InscriptionEtablissementScreen() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!pays || loading) return;
+    if (!pays || (fuseauRequis && !fuseau) || loading) return;
     setError(null);
     setLoading(true);
     try {
       const result = await registerEtablissement(client, {
         etablissementNom,
         pays,
+        fuseauCalendrier: fuseauRequis ? fuseau : undefined,
         etablissementAdresse: etablissementAdresse || undefined,
         directionNom,
         directionPrenom,
@@ -107,13 +111,14 @@ export function InscriptionEtablissementScreen() {
             <p className="mb-4 text-sm text-slate-600">Ce choix adapte le calendrier et les réglages scolaires disponibles.</p>
             <div className="mb-6">
               <Field label="Pays de l’établissement">
-                <Select value={pays} onChange={(e) => setPays(e.target.value as PaysCalendrier | "")} required autoFocus>
+                <Select value={pays} onChange={(e) => { setPays(e.target.value as PaysCalendrier | ""); setFuseau(""); }} required autoFocus>
                   <option value="">Choisir un pays</option>
                   <OptionsPays />
                 </Select>
               </Field>
+              {pays && fuseauRequis && <div className="mt-3"><ChoixFuseau pays={pays} valeur={fuseau} onChange={setFuseau} /></div>}
             </div>
-            <Button type="submit" disabled={!pays} className="w-full">Continuer</Button>
+            <Button type="submit" disabled={!pays || (fuseauRequis && !fuseau)} className="w-full">Continuer</Button>
           </form>
         )}
 

@@ -4,7 +4,7 @@ import { DatesOfficielles } from "../../components/calendrier/DatesOfficielles";
 
 export function CalendrierScreen() {
   const { client, profile } = useAuth();
-  const { pays } = useEtablissementCalendrier(client, profile);
+  const { pays, fuseau } = useEtablissementCalendrier(client, profile);
   const evenementsQuery = useEvenementsCalendrier(client);
 
   return (
@@ -17,7 +17,7 @@ export function CalendrierScreen() {
           <Card key={e.id} className="p-4">
             <p className="mb-1 text-sm font-medium text-slate-900">{e.titre}</p>
             <p className="mb-2 text-xs text-slate-400">
-              {formatDateHeureCalendrier(e.date_debut, pays)} – {formatDateHeureCalendrier(e.date_fin, pays)}
+              {formatDateHeureCalendrier(e.date_debut, pays, true, fuseau?.identifiant)} – {formatDateHeureCalendrier(e.date_fin, pays, true, fuseau?.identifiant)}
               {e.lieu && ` · ${e.lieu}`}
             </p>
             {e.description && <p className="text-sm text-slate-700">{e.description}</p>}

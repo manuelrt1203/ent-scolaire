@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { EntSupabaseClient } from "../supabase/createClient";
 import type { Profile } from "../api/auth";
 import { getEtablissement } from "../api/structure";
-import { lirePaysCalendrier, reglagesPays } from "../domain/calendrierLocal";
+import { fuseauCalendrier, lirePaysCalendrier, reglagesPays } from "../domain/calendrierLocal";
 import { getDatesOfficielles } from "../api/calendrierOfficiel";
 
 export function useEtablissementCalendrier(client: EntSupabaseClient, profile: Profile | null) {
@@ -13,7 +13,7 @@ export function useEtablissementCalendrier(client: EntSupabaseClient, profile: P
     enabled: Boolean(profile?.etablissement_id),
   });
   const pays = lirePaysCalendrier(etablissementQuery.data?.pays_calendrier);
-  return { pays, reglages: reglagesPays(pays), academie: etablissementQuery.data?.academie ?? null, charge: etablissementQuery.isSuccess } as const;
+  return { pays, fuseau: fuseauCalendrier(pays, etablissementQuery.data?.fuseau_calendrier), reglages: reglagesPays(pays), academie: etablissementQuery.data?.academie ?? null, charge: etablissementQuery.isSuccess } as const;
 }
 
 /** Les dates officielles sont chargées pour les établissements en France. */

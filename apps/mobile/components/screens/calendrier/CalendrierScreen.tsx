@@ -41,7 +41,7 @@ function DatesOfficielles() {
 
 export function CalendrierScreen() {
   const { client, profile } = useAuth();
-  const { pays } = useEtablissementCalendrier(client, profile);
+  const { pays, fuseau } = useEtablissementCalendrier(client, profile);
   const evenementsQuery = useEvenementsCalendrier(client);
 
   return (
@@ -60,7 +60,7 @@ export function CalendrierScreen() {
         <View className="mb-2 rounded-lg border border-slate-200 bg-white px-4 py-3">
           <Text className="mb-1 text-sm font-medium text-slate-900">{e.titre}</Text>
           <Text className="mb-2 text-xs text-slate-400">
-            {formatDateHeureCalendrier(e.date_debut, pays, false)} – {formatDateHeureCalendrier(e.date_fin, pays, false)}
+            {formatDateHeureCalendrier(e.date_debut, pays, false, fuseau?.identifiant)} – {formatDateHeureCalendrier(e.date_fin, pays, false, fuseau?.identifiant)}
             {e.lieu ? ` · ${e.lieu}` : ""}
           </Text>
           {e.description && <Text className="text-sm text-slate-700">{e.description}</Text>}

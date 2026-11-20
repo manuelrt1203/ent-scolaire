@@ -333,6 +333,7 @@ export type Database = {
           academie: string | null
           adresse: string | null
           created_at: string
+          fuseau_calendrier: string | null
           id: string
           nom: string
           pays_calendrier: string
@@ -343,6 +344,7 @@ export type Database = {
           academie?: string | null
           adresse?: string | null
           created_at?: string
+          fuseau_calendrier?: string | null
           id?: string
           nom: string
           pays_calendrier?: string
@@ -353,6 +355,7 @@ export type Database = {
           academie?: string | null
           adresse?: string | null
           created_at?: string
+          fuseau_calendrier?: string | null
           id?: string
           nom?: string
           pays_calendrier?: string

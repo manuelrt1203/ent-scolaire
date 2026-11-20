@@ -26,8 +26,8 @@ export async function updateRetentionEtablissement(
   return data;
 }
 
-export async function updateCalendrierEtablissement(client: EntSupabaseClient, etablissementId: string, pays: PaysCalendrier, academie: string | null) {
-  const { data, error } = await client.from("etablissements").update({ pays_calendrier: pays, academie }).eq("id", etablissementId).select().single();
+export async function updateCalendrierEtablissement(client: EntSupabaseClient, etablissementId: string, pays: PaysCalendrier, academie: string | null, fuseau: string | null) {
+  const { data, error } = await client.from("etablissements").update({ pays_calendrier: pays, academie, fuseau_calendrier: fuseau }).eq("id", etablissementId).select().single();
   if (error) throw error;
   return data;
 }

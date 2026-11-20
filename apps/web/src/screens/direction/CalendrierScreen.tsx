@@ -14,15 +14,15 @@ const CIBLES: { value: string; label: string }[] = [
 
 export function CalendrierScreen() {
   const { client, profile } = useAuth();
-  const { pays, reglages, charge } = useEtablissementCalendrier(client, profile);
+  const { pays, fuseau, charge } = useEtablissementCalendrier(client, profile);
   const [maintenant] = useState(() => Date.now());
   const [titre, setTitre] = useState("");
   const [description, setDescription] = useState("");
   const [saisieDebut, setDateDebut] = useState<string | null>(null);
   const [saisieFin, setDateFin] = useState<string | null>(null);
   const [erreurDates, setErreurDates] = useState("");
-  const dateDebut = saisieDebut ?? dateHeureSaisieCalendrier(new Date(maintenant), pays);
-  const dateFin = saisieFin ?? dateHeureSaisieCalendrier(new Date(maintenant + 3600_000), pays);
+  const dateDebut = saisieDebut ?? dateHeureSaisieCalendrier(new Date(maintenant), pays, fuseau?.identifiant);
+  const dateFin = saisieFin ?? dateHeureSaisieCalendrier(new Date(maintenant + 3600_000), pays, fuseau?.identifiant);
   const [lieu, setLieu] = useState("");
   const [cible, setCible] = useState("");
 
@@ -33,8 +33,8 @@ export function CalendrierScreen() {
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!profile || !charge || !titre.trim()) return;
-    const debut = lireDateHeureCalendrier(dateDebut, pays);
-    const fin = lireDateHeureCalendrier(dateFin, pays);
+    const debut = lireDateHeureCalendrier(dateDebut, pays, fuseau?.identifiant);
+    const fin = lireDateHeureCalendrier(dateFin, pays, fuseau?.identifiant);
     if (!Number.isFinite(debut.getTime()) || !Number.isFinite(fin.getTime()) || fin < debut) {
       setErreurDates("La fin doit être à la même heure ou après le début.");
       return;
@@ -75,12 +75,12 @@ export function CalendrierScreen() {
           </Field>
           <div className="flex flex-wrap gap-3">
             <div>
-              <Field label={reglages.fuseau ? `Début (${reglages.fuseau.libelle})` : "Début"}>
+              <Field label={fuseau ? `Début (${fuseau.libelle})` : "Début"}>
                 <Input type="datetime-local" value={dateDebut} onChange={(e) => setDateDebut(e.target.value)} required />
               </Field>
             </div>
             <div>
-              <Field label={reglages.fuseau ? `Fin (${reglages.fuseau.libelle})` : "Fin"}>
+              <Field label={fuseau ? `Fin (${fuseau.libelle})` : "Fin"}>
                 <Input type="datetime-local" value={dateFin} onChange={(e) => setDateFin(e.target.value)} required />
               </Field>
             </div>
@@ -117,7 +117,7 @@ export function CalendrierScreen() {
               <Button variant="danger" onClick={() => supprimerEvenement.mutate(e.id)}>Supprimer</Button>
             </div>
             <p className="mb-2 text-xs text-slate-400">
-              {formatDateHeureCalendrier(e.date_debut, pays)} – {formatDateHeureCalendrier(e.date_fin, pays)}
+              {formatDateHeureCalendrier(e.date_debut, pays, true, fuseau?.identifiant)} – {formatDateHeureCalendrier(e.date_fin, pays, true, fuseau?.identifiant)}
               {e.lieu && ` · ${e.lieu}`} · {CIBLES.find((c) => c.value === (e.cible ?? ""))?.label ?? "Tous"}
             </p>
             {e.description && <p className="text-sm text-slate-700">{e.description}</p>}

@@ -44,6 +44,7 @@ export async function setPassword(client: EntSupabaseClient, password: string) {
 
 export interface RegisterEtablissementInput {
   pays?: PaysCalendrier;
+  fuseauCalendrier?: string;
   etablissementNom: string;
   etablissementAdresse?: string;
   directionNom: string;

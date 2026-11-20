@@ -15,7 +15,7 @@ export function OptionsPays() {
     <>
       {[...regions].sort(([a], [b]) => tri.compare(a, b)).map(([region, pays]) => (
         <optgroup key={region} label={region}>
-          {pays.map(({ code, nom }) => <option key={code} value={code}>{nom}</option>)}
+          {[...pays].sort((a, b) => tri.compare(a.nom, b.nom)).map(({ code, nom }) => <option key={code} value={code}>{nom}</option>)}
         </optgroup>
       ))}
     </>

@@ -16,6 +16,8 @@ import { createClient } from "jsr:@supabase/supabase-js@2";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+const PAYS = new Set(["FR", "CG", "GA", "AO", "CM", "CF", "TD", "CD", "GQ", "ST"]);
+const FUSEAUX_RDC = new Set(["Africa/Kinshasa", "Africa/Lubumbashi"]);
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // Appelée depuis un navigateur/Electron (contrairement aux scripts Node de
@@ -54,8 +56,9 @@ Deno.serve(async (req: Request) => {
   }
 
   const body = await req.json();
-  const { etablissementNom, etablissementAdresse, directionNom, directionPrenom, directionEmail, pays = "FR" } = body as {
+  const { etablissementNom, etablissementAdresse, directionNom, directionPrenom, directionEmail, pays = "FR", fuseauCalendrier } = body as {
     pays?: unknown;
+    fuseauCalendrier?: unknown;
     etablissementNom?: string;
     etablissementAdresse?: string;
     directionNom?: string;
@@ -70,15 +73,19 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Adresse email invalide" }, 400);
   }
 
-  if (pays !== "FR" && pays !== "CG" && pays !== "GA") {
+  if (typeof pays !== "string" || !PAYS.has(pays)) {
     return json({ error: "Pays de l’établissement non pris en charge" }, 400);
+  }
+
+  if (pays === "CD" && (typeof fuseauCalendrier !== "string" || !FUSEAUX_RDC.has(fuseauCalendrier))) {
+    return json({ error: "Choisissez le fuseau horaire de l’établissement en RDC" }, 400);
   }
 
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   const { data: etablissement, error: etablissementError } = await adminClient
     .from("etablissements")
-    .insert({ nom: etablissementNom, adresse: etablissementAdresse || null, pays_calendrier: pays })
+    .insert({ nom: etablissementNom, adresse: etablissementAdresse || null, pays_calendrier: pays, fuseau_calendrier: pays === "CD" ? fuseauCalendrier : null })
     .select()
     .single();
   if (etablissementError) {
