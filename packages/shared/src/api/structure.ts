@@ -116,6 +116,20 @@ export async function createMatiereClasse(
   return data;
 }
 
+export async function ajouterMatieresClasse(
+  client: EntSupabaseClient,
+  matieres: TablesInsert<"matiere_classe">[],
+) {
+  if (!matieres.length) return 0;
+  const { data, error } = await client.from("matiere_classe")
+    .upsert(matieres, {
+      onConflict: "classe_id,matiere_id,annee_scolaire_id",
+      ignoreDuplicates: true,
+    }).select("id");
+  if (error) throw error;
+  return data.length;
+}
+
 export async function updateMatiereClasse(
   client: EntSupabaseClient,
   id: string,

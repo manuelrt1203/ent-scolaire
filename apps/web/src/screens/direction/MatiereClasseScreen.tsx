@@ -11,6 +11,7 @@ import {
   getAnneeScolaireActive,
   libelleClasse,
 } from "@ent/shared";
+import { CopierGrilleClasse } from "../../components/CopierGrilleClasse";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Input, Select } from "../../components/ui/Field";
@@ -83,6 +84,8 @@ export function MatiereClasseScreen() {
     createMutation.mutate();
   }
 
+  const anneeActive = anneeQuery.data;
+  const classesActives = classesQuery.data?.filter((classe) => classe.annee_scolaire_id === anneeActive?.id) ?? [];
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
@@ -95,7 +98,7 @@ export function MatiereClasseScreen() {
             <Field label="Classe">
               <Select value={classeId} onChange={(e) => setClasseId(e.target.value)} required disabled={Boolean(editingId)}>
                 <option value="">—</option>
-                {classesQuery.data?.map((c) => (
+                {(editingId ? classesQuery.data ?? [] : classesActives).map((c) => (
                   <option key={c.id} value={c.id}>{libelleClasse(c)}</option>
                 ))}
               </Select>
@@ -124,6 +127,10 @@ export function MatiereClasseScreen() {
           )}
         </form>
       </Card>
+
+      {anneeActive && classesActives.length > 1 && (
+        <CopierGrilleClasse key={anneeActive.id} classes={classesActives} anneeId={anneeActive.id} />
+      )}
 
       <Card className="overflow-x-auto">
         {mcQuery.data?.length ? (
