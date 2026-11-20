@@ -200,6 +200,7 @@ export type Database = {
           id: string
           niveau: string
           nom: string
+          serie: string | null
         }
         Insert: {
           annee_scolaire_id: string
@@ -208,6 +209,7 @@ export type Database = {
           id?: string
           niveau: string
           nom: string
+          serie?: string | null
         }
         Update: {
           annee_scolaire_id?: string
@@ -216,6 +218,7 @@ export type Database = {
           id?: string
           niveau?: string
           nom?: string
+          serie?: string | null
         }
         Relationships: [
           {
@@ -296,6 +299,7 @@ export type Database = {
           created_at: string
           id: string
           nom: string
+          pays_calendrier: string
           retention_messagerie_mois: number
           retention_vie_scolaire_mois: number
         }
@@ -305,6 +309,7 @@ export type Database = {
           created_at?: string
           id?: string
           nom: string
+          pays_calendrier?: string
           retention_messagerie_mois?: number
           retention_vie_scolaire_mois?: number
         }
@@ -314,6 +319,7 @@ export type Database = {
           created_at?: string
           id?: string
           nom?: string
+          pays_calendrier?: string
           retention_messagerie_mois?: number
           retention_vie_scolaire_mois?: number
         }
@@ -766,7 +772,11 @@ export type Database = {
         Row: {
           coefficient_note: number
           commentaire: string | null
+          composition: number | null
           created_at: string
+          devoir_1: number | null
+          devoir_2: number | null
+          devoir_departemental: number | null
           eleve_id: string
           id: string
           libelle: string | null
@@ -777,7 +787,11 @@ export type Database = {
         Insert: {
           coefficient_note?: number
           commentaire?: string | null
+          composition?: number | null
           created_at?: string
+          devoir_1?: number | null
+          devoir_2?: number | null
+          devoir_departemental?: number | null
           eleve_id: string
           id?: string
           libelle?: string | null
@@ -788,7 +802,11 @@ export type Database = {
         Update: {
           coefficient_note?: number
           commentaire?: string | null
+          composition?: number | null
           created_at?: string
+          devoir_1?: number | null
+          devoir_2?: number | null
+          devoir_departemental?: number | null
           eleve_id?: string
           id?: string
           libelle?: string | null
@@ -869,6 +887,8 @@ export type Database = {
           annee_scolaire_id: string
           date_debut: string
           date_fin: string
+          echeance_bulletins: string | null
+          fin_compositions: string | null
           id: string
           nom: string
           ordre: number
@@ -877,6 +897,8 @@ export type Database = {
           annee_scolaire_id: string
           date_debut: string
           date_fin: string
+          echeance_bulletins?: never
+          fin_compositions?: string | null
           id?: string
           nom: string
           ordre: number
@@ -885,6 +907,8 @@ export type Database = {
           annee_scolaire_id?: string
           date_debut?: string
           date_fin?: string
+          echeance_bulletins?: never
+          fin_compositions?: string | null
           id?: string
           nom?: string
           ordre?: number
@@ -1017,6 +1041,42 @@ export type Database = {
             columns: ["valide_par"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      remises_bulletins: {
+        Row: {
+          destinataire: string
+          inscription_id: string
+          periode_id: string
+          remis_le: string
+        }
+        Insert: {
+          destinataire: string
+          inscription_id: string
+          periode_id: string
+          remis_le?: string
+        }
+        Update: {
+          destinataire?: string
+          inscription_id?: string
+          periode_id?: string
+          remis_le?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "remises_bulletins_inscription_id_fkey"
+            columns: ["inscription_id"]
+            isOneToOne: false
+            referencedRelation: "inscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "remises_bulletins_periode_id_fkey"
+            columns: ["periode_id"]
+            isOneToOne: false
+            referencedRelation: "periodes"
             referencedColumns: ["id"]
           },
         ]

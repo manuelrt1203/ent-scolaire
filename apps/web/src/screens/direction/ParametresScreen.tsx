@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useAuth, getEtablissement, updateRetentionEtablissement, updateAcademieEtablissement, ACADEMIES } from "@ent/shared";
+import { useAuth, getEtablissement, updateRetentionEtablissement, updateCalendrierEtablissement, ACADEMIES, PAYS_CALENDRIER, type PaysCalendrier } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, PageHeader } from "../../components/ui/Card";
 import { Field, Input, Select } from "../../components/ui/Field";
@@ -18,12 +18,14 @@ export function ParametresScreen() {
 
   const [retentionVieScolaire, setRetentionVieScolaire] = useState("36");
   const [retentionMessagerie, setRetentionMessagerie] = useState("36");
+  const [pays, setPays] = useState<PaysCalendrier>("FR");
   const [academie, setAcademie] = useState("");
 
   useEffect(() => {
     if (etablissementQuery.data) {
       setRetentionVieScolaire(String(etablissementQuery.data.retention_vie_scolaire_mois));
       setRetentionMessagerie(String(etablissementQuery.data.retention_messagerie_mois));
+      setPays(etablissementQuery.data.pays_calendrier === "CG" ? "CG" : "FR");
       setAcademie(etablissementQuery.data.academie ?? "");
     }
   }, [etablissementQuery.data]);
@@ -37,17 +39,17 @@ export function ParametresScreen() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["etablissement", profile?.etablissement_id] }),
   });
 
-  const academieMutation = useMutation({
-    mutationFn: () => updateAcademieEtablissement(client, profile!.etablissement_id, academie || null),
+  const calendrierMutation = useMutation({
+    mutationFn: () => updateCalendrierEtablissement(client, profile!.etablissement_id, pays, academie || null),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["etablissement", profile?.etablissement_id] });
       queryClient.invalidateQueries({ queryKey: ["dates-officielles"] });
     },
   });
 
-  function handleAcademieSubmit(e: FormEvent) {
+  function handleCalendrierSubmit(e: FormEvent) {
     e.preventDefault();
-    academieMutation.mutate();
+    calendrierMutation.mutate();
   }
 
   function handleSubmit(e: FormEvent) {
@@ -59,10 +61,19 @@ export function ParametresScreen() {
     <div className="max-w-xl">
       <PageHeader title="Paramètres" description="Réglages de l'établissement." />
 
-      <h2 className="mb-2 text-sm font-semibold text-slate-900">Académie</h2>
+      <h2 className="mb-2 text-sm font-semibold text-slate-900">Calendrier scolaire</h2>
       <Card className="mb-8 p-4">
-        <form onSubmit={handleAcademieSubmit} className="space-y-4">
+        <form onSubmit={handleCalendrierSubmit} className="space-y-4">
           <div className="max-w-xs">
+            <Field label="Pays du calendrier">
+              <Select value={pays} onChange={(e) => setPays(e.target.value as PaysCalendrier)}>
+                {Object.entries(PAYS_CALENDRIER).map(([code, nom]) => (
+                  <option key={code} value={code}>{nom}</option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          {pays === "FR" && <div className="max-w-xs">
             <Field label="Académie de l'établissement">
               <Select value={academie} onChange={(e) => setAcademie(e.target.value)}>
                 <option value="">Non renseignée</option>
@@ -73,14 +84,16 @@ export function ParametresScreen() {
                 ))}
               </Select>
             </Field>
-          </div>
+          </div>}
           <p className="text-xs text-slate-500">
-            Détermine les vacances scolaires affichées dans le calendrier de tous les utilisateurs
-            (source : calendrier officiel de l'Éducation nationale).
+            {pays === "CG"
+              ? "Ajoutez les vacances, jours fériés et autres dates de votre établissement dans le calendrier. Les horaires sont affichés à l’heure de Brazzaville."
+              : "Les vacances scolaires proviennent du calendrier officiel de l’Éducation nationale."}
           </p>
           <div className="flex items-center gap-3">
-            <Button type="submit" disabled={academieMutation.isPending || !etablissementQuery.data}>Enregistrer</Button>
-            {academieMutation.isSuccess && <span className="text-xs text-emerald-700">Enregistré.</span>}
+            <Button type="submit" disabled={calendrierMutation.isPending || !etablissementQuery.data}>Enregistrer</Button>
+            {calendrierMutation.isError && <span role="alert" className="text-xs text-red-700">{calendrierMutation.error.message}</span>}
+            {calendrierMutation.isSuccess && <span className="text-xs text-emerald-700">Enregistré.</span>}
           </div>
         </form>
       </Card>

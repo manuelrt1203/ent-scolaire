@@ -54,7 +54,8 @@ Deno.serve(async (req: Request) => {
   }
 
   const body = await req.json();
-  const { etablissementNom, etablissementAdresse, directionNom, directionPrenom, directionEmail } = body as {
+  const { etablissementNom, etablissementAdresse, directionNom, directionPrenom, directionEmail, pays = "FR" } = body as {
+    pays?: unknown;
     etablissementNom?: string;
     etablissementAdresse?: string;
     directionNom?: string;
@@ -69,11 +70,15 @@ Deno.serve(async (req: Request) => {
     return json({ error: "Adresse email invalide" }, 400);
   }
 
+  if (pays !== "FR" && pays !== "CG") {
+    return json({ error: "Pays de l’établissement non pris en charge" }, 400);
+  }
+
   const adminClient = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   const { data: etablissement, error: etablissementError } = await adminClient
     .from("etablissements")
-    .insert({ nom: etablissementNom, adresse: etablissementAdresse || null })
+    .insert({ nom: etablissementNom, adresse: etablissementAdresse || null, pays_calendrier: pays })
     .select()
     .single();
   if (etablissementError) {

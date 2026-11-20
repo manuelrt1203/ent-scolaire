@@ -55,9 +55,7 @@ export function useUpdateNoteValeur(client: EntSupabaseClient, releveId: string 
   return useMutation({
     mutationFn: ({ noteId, valeur }: { noteId: string; valeur: number | null }) =>
       updateNoteValeur(client, noteId, valeur),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes", releveId] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notes", releveId] }),
   });
 }
 

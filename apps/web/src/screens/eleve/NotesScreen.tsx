@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import {
   useAuth,
   usePeriodes,
   useBulletin,
   useMoyenneGenerale,
   formatMoyenne,
-  getClasseEleve,
+  getDetailsBulletin,
   getProfile,
   getEtablissement,
   buildBulletinHtml,
@@ -15,6 +14,7 @@ import {
 import { useViewedEleveId } from "../../lib/ViewedEleveContext";
 import { ChildSwitcher } from "../../components/ChildSwitcher";
 import { Button } from "../../components/ui/Button";
+import { imprimerBulletin } from "../../components/imprimerBulletin";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 
 export function NotesScreen() {
@@ -34,42 +34,32 @@ export function NotesScreen() {
   const bulletinQuery = useBulletin(client, eleveId, periodeId);
   const moyenneGeneraleQuery = useMoyenneGenerale(client, eleveId, periodeId);
 
-  const classeQuery = useQuery({
-    queryKey: ["classe-eleve", eleveId],
-    queryFn: () => getClasseEleve(client, eleveId as string),
-    enabled: Boolean(eleveId),
-  });
-
   const [telechargementEnCours, setTelechargementEnCours] = useState(false);
+  const [erreurBulletin, setErreurBulletin] = useState("");
 
   async function handleTelechargerBulletin() {
     if (!eleveId || !periodeId || !profile || !bulletinQuery.data) return;
+    setErreurBulletin("");
     setTelechargementEnCours(true);
     try {
-      const [eleveProfile, etablissement] = await Promise.all([
-        eleveId === profile.id ? Promise.resolve(profile) : getProfile(client, eleveId),
-        getEtablissement(client, profile.etablissement_id),
-      ]);
-      const periode = periodesQuery.data?.find((p) => p.id === periodeId);
-      const html = buildBulletinHtml({
-        etablissementNom: etablissement?.nom ?? "",
-        eleveNom: eleveProfile?.nom ?? "",
-        elevePrenom: eleveProfile?.prenom ?? "",
-        classeNom: classeQuery.data?.classes?.nom ?? null,
-        periodeNom: periode?.nom ?? "",
-        lignes: bulletinQuery.data,
-        moyenneGenerale: moyenneGeneraleQuery.data ?? null,
+      const lignes = bulletinQuery.data;
+      await imprimerBulletin(async () => {
+        const [eleveProfile, etablissement, details] = await Promise.all([
+          eleveId === profile.id ? Promise.resolve(profile) : getProfile(client, eleveId),
+          getEtablissement(client, profile.etablissement_id),
+          getDetailsBulletin(client, eleveId, periodeId),
+        ]);
+        return buildBulletinHtml({
+          etablissementNom: etablissement?.nom ?? "",
+          eleveNom: eleveProfile?.nom ?? "",
+          elevePrenom: eleveProfile?.prenom ?? "",
+          details,
+          periodeNom: periodesQuery.data?.find((p) => p.id === periodeId)?.nom ?? "",
+          lignes,
+        });
       });
-      // Pas d'équivalent web à expo-print : on ouvre le bulletin dans un
-      // nouvel onglet et on déclenche directement l'impression, où
-      // l'utilisateur choisit "Enregistrer au format PDF" comme destination.
-      const fenetre = window.open("", "_blank");
-      if (fenetre) {
-        fenetre.document.write(html);
-        fenetre.document.close();
-        fenetre.focus();
-        fenetre.print();
-      }
+    } catch (error) {
+      setErreurBulletin(error instanceof Error ? error.message : "Impossible de générer le bulletin. Réessayez.");
     } finally {
       setTelechargementEnCours(false);
     }
@@ -106,6 +96,8 @@ export function NotesScreen() {
           {telechargementEnCours ? "Génération…" : "Télécharger le bulletin (PDF)"}
         </Button>
       )}
+
+      {erreurBulletin && <p role="alert" className="mb-4 text-sm text-red-700">{erreurBulletin}</p>}
 
       <div className="space-y-2">
         {bulletinQuery.data?.map((ligne) => (

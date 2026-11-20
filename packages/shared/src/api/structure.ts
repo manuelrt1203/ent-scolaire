@@ -1,3 +1,4 @@
+import type { PaysCalendrier } from "../domain/calendrierLocal";
 import type { EntSupabaseClient } from "../supabase/createClient";
 import type { Enums, Tables, TablesInsert, TablesUpdate } from "../types/database.types";
 
@@ -25,8 +26,8 @@ export async function updateRetentionEtablissement(
   return data;
 }
 
-export async function updateAcademieEtablissement(client: EntSupabaseClient, etablissementId: string, academie: string | null) {
-  const { data, error } = await client.from("etablissements").update({ academie }).eq("id", etablissementId).select().single();
+export async function updateCalendrierEtablissement(client: EntSupabaseClient, etablissementId: string, pays: PaysCalendrier, academie: string | null) {
+  const { data, error } = await client.from("etablissements").update({ pays_calendrier: pays, academie }).eq("id", etablissementId).select().single();
   if (error) throw error;
   return data;
 }

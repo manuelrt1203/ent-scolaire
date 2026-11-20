@@ -10,7 +10,7 @@ export type Periode = Tables<"periodes">;
 export async function getMesAffectations(client: EntSupabaseClient) {
   const { data, error } = await client
     .from("affectations")
-    .select("*, matiere_classe(*, matieres(nom, code), classes(nom, niveau))");
+    .select("*, matiere_classe(*, matieres(nom, code), classes(nom, niveau, cycle))");
   if (error) throw error;
   return data;
 }
@@ -62,7 +62,7 @@ export async function getReleveOrCreate(
   if (selErr) throw selErr;
 
   if (existing) {
-    await syncNotesForReleve(client, existing.id, matiereClasseId);
+    if (existing.statut === "brouillon") await syncNotesForReleve(client, existing.id, matiereClasseId);
     return existing;
   }
 
@@ -100,6 +100,24 @@ export async function getNotesForReleve(client: EntSupabaseClient, releveId: str
 export async function updateNoteValeur(client: EntSupabaseClient, noteId: string, valeur: number | null) {
   const { error } = await client.from("notes").update({ valeur }).eq("id", noteId);
   if (error) throw error;
+}
+
+export type EvaluationsLycee = Pick<Note, "devoir_1" | "devoir_2" | "devoir_departemental" | "composition">;
+
+export async function updateEvaluationsLycee(
+  client: EntSupabaseClient,
+  noteId: string,
+  evaluations: EvaluationsLycee,
+  updatedAt: string,
+) {
+  const { data, error } = await client.from("notes")
+    .update(evaluations)
+    .eq("id", noteId)
+    .eq("updated_at", updatedAt)
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("La note a changé ou le relevé est verrouillé. Rechargez avant de réessayer.");
 }
 
 export async function soumettreReleve(client: EntSupabaseClient, releveId: string) {
@@ -168,7 +186,20 @@ export async function getBulletin(client: EntSupabaseClient, eleveId: string, pe
     .from("v_bulletin")
     .select("*")
     .eq("eleve_id", eleveId)
-    .eq("periode_id", periodeId);
+    .eq("periode_id", periodeId)
+    .eq("statut", "publiee")
+    .order("matiere");
+  if (error) throw error;
+  return data;
+}
+
+/** Détail publié sur la période, avec la classe de chaque relevé. */
+export async function getDetailsBulletin(client: EntSupabaseClient, eleveId: string, periodeId: string) {
+  const { data, error } = await client.from("notes")
+    .select("devoir_1, devoir_2, devoir_departemental, composition, releves_notes!inner(matiere_classe_id, matiere_classe(classes(id, nom, cycle, niveau, serie, annees_scolaires(libelle))))")
+    .eq("eleve_id", eleveId)
+    .eq("releves_notes.periode_id", periodeId)
+    .eq("releves_notes.statut", "publiee");
   if (error) throw error;
   return data;
 }
@@ -212,5 +243,31 @@ export async function updatePeriode(client: EntSupabaseClient, id: string, perio
 
 export async function deletePeriode(client: EntSupabaseClient, id: string) {
   const { error } = await client.from("periodes").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function getRemisesBulletins(client: EntSupabaseClient, periodeId: string) {
+  const { data, error } = await client.from("remises_bulletins").select("*").eq("periode_id", periodeId);
+  if (error) throw error;
+  return data;
+}
+
+export async function enregistrerRemiseBulletin(
+  client: EntSupabaseClient,
+  periodeId: string,
+  inscriptionId: string,
+  destinataire: "eleve" | "tuteur",
+) {
+  const { error } = await client.from("remises_bulletins").upsert(
+    { periode_id: periodeId, inscription_id: inscriptionId, destinataire },
+    { onConflict: "periode_id,inscription_id", ignoreDuplicates: true },
+  );
+  if (error?.code === "42501") throw new Error("La remise nécessite un bulletin publié pour cette inscription et cette période.");
+  if (error) throw error;
+}
+
+export async function annulerRemiseBulletin(client: EntSupabaseClient, periodeId: string, inscriptionId: string) {
+  const { error } = await client.from("remises_bulletins").delete()
+    .eq("periode_id", periodeId).eq("inscription_id", inscriptionId);
   if (error) throw error;
 }

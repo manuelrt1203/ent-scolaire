@@ -6,6 +6,7 @@ export * from "./domain/classe";
 export * from "./domain/bulletinHtml";
 export * from "./domain/emploiDuTempsIcs";
 export * from "./domain/datesOfficielles";
+export * from "./domain/calendrierLocal";
 export * from "./api/auth";
 export * from "./api/structure";
 export * from "./api/notes";

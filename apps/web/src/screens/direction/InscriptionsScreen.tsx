@@ -9,17 +9,37 @@ import {
   updateInscription,
   deleteInscription,
   getAnneeScolaireActive,
+  getBulletin,
+  getDetailsBulletin,
+  getEtablissement,
+  buildBulletinHtml,
+  usePeriodes,
+  useEtablissementCalendrier,
+  getRemisesBulletins,
+  enregistrerRemiseBulletin,
+  annulerRemiseBulletin,
 } from "@ent/shared";
+import { imprimerBulletin } from "../../components/imprimerBulletin";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Select } from "../../components/ui/Field";
 
+const dateBrazzaville = new Intl.DateTimeFormat("fr-CA", {
+  timeZone: "Africa/Brazzaville", year: "numeric", month: "2-digit", day: "2-digit",
+});
+const dateFr = new Intl.DateTimeFormat("fr-FR", { timeZone: "Africa/Brazzaville", dateStyle: "short" });
+
 export function InscriptionsScreen() {
   const { client, profile } = useAuth();
+  const { pays } = useEtablissementCalendrier(client, profile);
   const queryClient = useQueryClient();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [eleveId, setEleveId] = useState("");
   const [classeId, setClasseId] = useState("");
+  const [periodeBulletinId, setPeriodeBulletinId] = useState("");
+  const [impressionEnCours, setImpressionEnCours] = useState(false);
+  const [erreurBulletin, setErreurBulletin] = useState("");
+  const periodesQuery = usePeriodes(client);
 
   const elevesQuery = useQuery({ queryKey: ["utilisateurs", "eleve"], queryFn: () => getUtilisateurs(client, "eleve") });
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => getClasses(client) });
@@ -74,6 +94,52 @@ export function InscriptionsScreen() {
     createMutation.mutate();
   }
 
+  const periodeBulletin = periodesQuery.data?.find((periode) => periode.id === periodeBulletinId);
+
+  const remisesQuery = useQuery({
+    queryKey: ["remises-bulletins", periodeBulletinId],
+    queryFn: () => getRemisesBulletins(client, periodeBulletinId),
+    enabled: Boolean(periodeBulletinId),
+  });
+  const remiseMutation = useMutation({
+    mutationFn: ({ periode, inscription, destinataire }: {
+      periode: string; inscription: string; destinataire: "eleve" | "tuteur" | null;
+    }) => destinataire
+      ? enregistrerRemiseBulletin(client, periode, inscription, destinataire)
+      : annulerRemiseBulletin(client, periode, inscription),
+    onSuccess: (_data, { periode }) => queryClient.invalidateQueries({ queryKey: ["remises-bulletins", periode] }),
+  });
+  const echeance = pays === "CG" ? periodeBulletin?.echeance_bulletins : null;
+  const remises = new Map(remisesQuery.data?.map((remise) => [remise.inscription_id, remise]));
+
+  async function handleBulletin(inscription: NonNullable<typeof inscriptionsQuery.data>[number]) {
+    if (!profile || !periodeBulletin || impressionEnCours || periodeBulletin.annee_scolaire_id !== inscription.annee_scolaire_id) return;
+    setErreurBulletin("");
+    setImpressionEnCours(true);
+    try {
+      await imprimerBulletin(async () => {
+        const [lignes, details, etablissement] = await Promise.all([
+          getBulletin(client, inscription.eleve_id, periodeBulletin.id),
+          getDetailsBulletin(client, inscription.eleve_id, periodeBulletin.id),
+          getEtablissement(client, profile.etablissement_id),
+        ]);
+        if (!lignes.length) throw new Error("Aucune note publiée pour cet élève sur cette période.");
+        return buildBulletinHtml({
+          etablissementNom: etablissement?.nom ?? "",
+          eleveNom: inscription.profiles?.nom ?? "",
+          elevePrenom: inscription.profiles?.prenom ?? "",
+          periodeNom: periodeBulletin.nom,
+          lignes,
+          details,
+        });
+      });
+    } catch (error) {
+      setErreurBulletin(error instanceof Error ? error.message : "Impossible de générer le bulletin. Réessayez.");
+    } finally {
+      setImpressionEnCours(false);
+    }
+  }
+
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
@@ -111,6 +177,20 @@ export function InscriptionsScreen() {
         </form>
       </Card>
 
+      <div className="mb-3 max-w-xs">
+        <Field label="Période des bulletins">
+          <Select value={periodeBulletinId} onChange={(event) => { setPeriodeBulletinId(event.target.value); remiseMutation.reset(); }} disabled={impressionEnCours}>
+            <option value="">Choisir une période</option>
+            {periodesQuery.data?.map((periode) => (
+              <option key={periode.id} value={periode.id}>{periode.nom}</option>
+            ))}
+          </Select>
+        </Field>
+      </div>
+      {echeance && <p className="mb-2 text-sm text-slate-700">Échéance de remise au collège et au lycée {dateFr.format(new Date(echeance))}.</p>}
+      {remisesQuery.isError && <p role="alert" className="mb-3 text-sm text-red-700">Impossible de charger les remises.</p>}
+      {remiseMutation.error && <p role="alert" className="mb-3 text-sm text-red-700">{remiseMutation.error.message}</p>}
+      {erreurBulletin && <p role="alert" className="mb-3 text-sm text-red-700">{erreurBulletin}</p>}
       <Card className="overflow-x-auto">
         {inscriptionsQuery.data?.length ? (
           <table className="w-full text-sm">
@@ -118,20 +198,58 @@ export function InscriptionsScreen() {
               <tr>
                 <th className="px-4 py-2">Élève</th>
                 <th className="px-4 py-2">Classe</th>
+                {periodeBulletin && <th className="px-4 py-2">Remise du bulletin</th>}
                 <th className="px-4 py-2" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {inscriptionsQuery.data.map((i: any) => (
+              {inscriptionsQuery.data.map((i) => {
+                const classe = classesQuery.data?.find((c) => c.id === i.classe_id);
+                const remise = remises.get(i.id);
+                const periodeCorrespond = periodeBulletin?.annee_scolaire_id === i.annee_scolaire_id;
+                const echeanceClasse = classe?.cycle === "college" || classe?.cycle === "lycee" ? echeance : null;
+                const enRetard = echeanceClasse && dateBrazzaville.format(remise ? new Date(remise.remis_le) : new Date()) > echeanceClasse;
+                const modifierRemise = (destinataire: "eleve" | "tuteur" | null) =>
+                  remiseMutation.mutate({ periode: periodeBulletinId, inscription: i.id, destinataire });
+                return (
                 <tr key={i.id}>
                   <td className="px-4 py-2 text-slate-900">{i.profiles?.prenom} {i.profiles?.nom}</td>
-                  <td className="px-4 py-2 text-slate-500">{classesQuery.data?.find((c) => c.id === i.classe_id)?.nom}</td>
+                  <td className="px-4 py-2 text-slate-500">{classe?.nom}</td>
+                  {periodeBulletin && (
+                    <td className="px-4 py-2">
+                      {periodeCorrespond && remisesQuery.isSuccess ? (
+                        <>
+                          <p className={enRetard ? "text-amber-800" : "text-slate-700"}>
+                            {remise
+                              ? `Remis ${remise.destinataire === "eleve" ? "à l’élève" : "au tuteur"} le ${dateFr.format(new Date(remise.remis_le))}`
+                              : "À remettre"}
+                            {enRetard && " · En retard"}
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {remise ? (
+                              <Button variant="ghost" disabled={remiseMutation.isPending} onClick={() => modifierRemise(null)}>Annuler la remise</Button>
+                            ) : (
+                              <>
+                                <Button variant="ghost" disabled={remiseMutation.isPending} onClick={() => modifierRemise("eleve")}>Remis à l’élève</Button>
+                                <Button variant="ghost" disabled={remiseMutation.isPending} onClick={() => modifierRemise("tuteur")}>Remis au tuteur</Button>
+                              </>
+                            )}
+                          </div>
+                        </>
+                      ) : "—"}
+                    </td>
+                  )}
                   <td className="px-4 py-2 text-right">
+                    <Button variant="ghost" className="mr-3" onClick={() => handleBulletin(i)}
+                      disabled={impressionEnCours || periodeBulletin?.annee_scolaire_id !== i.annee_scolaire_id}>
+                      Imprimer le bulletin
+                    </Button>
                     <Button variant="ghost" className="mr-3" onClick={() => handleEdit(i)}>Modifier</Button>
                     <Button variant="danger" onClick={() => deleteMutation.mutate(i.id)}>Supprimer</Button>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         ) : (

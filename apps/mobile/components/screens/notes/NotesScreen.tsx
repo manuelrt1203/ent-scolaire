@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { View, Text, ScrollView, Pressable } from "react-native";
 import { useRouter } from "expo-router";
-import { useQuery } from "@tanstack/react-query";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import {
@@ -10,7 +9,7 @@ import {
   useBulletin,
   useMoyenneGenerale,
   formatMoyenne,
-  getClasseEleve,
+  getDetailsBulletin,
   getProfile,
   getEtablissement,
   buildBulletinHtml,
@@ -35,36 +34,34 @@ export function NotesScreen() {
   const bulletinQuery = useBulletin(client, eleveId, periodeId);
   const moyenneGeneraleQuery = useMoyenneGenerale(client, eleveId, periodeId);
 
-  const classeQuery = useQuery({
-    queryKey: ["classe-eleve", eleveId],
-    queryFn: () => getClasseEleve(client, eleveId as string),
-    enabled: Boolean(eleveId),
-  });
-
   const [telechargementEnCours, setTelechargementEnCours] = useState(false);
+  const [erreurBulletin, setErreurBulletin] = useState("");
 
   async function handleTelechargerBulletin() {
     if (!eleveId || !periodeId || !profile || !bulletinQuery.data) return;
+    setErreurBulletin("");
     setTelechargementEnCours(true);
     try {
-      const [eleveProfile, etablissement] = await Promise.all([
+      const [eleveProfile, etablissement, details] = await Promise.all([
         eleveId === profile.id ? Promise.resolve(profile) : getProfile(client, eleveId),
         getEtablissement(client, profile.etablissement_id),
+        getDetailsBulletin(client, eleveId, periodeId),
       ]);
       const periode = periodesQuery.data?.find((p) => p.id === periodeId);
       const html = buildBulletinHtml({
         etablissementNom: etablissement?.nom ?? "",
         eleveNom: eleveProfile?.nom ?? "",
         elevePrenom: eleveProfile?.prenom ?? "",
-        classeNom: classeQuery.data?.classes?.nom ?? null,
+        details,
         periodeNom: periode?.nom ?? "",
         lignes: bulletinQuery.data,
-        moyenneGenerale: moyenneGeneraleQuery.data ?? null,
       });
       const { uri } = await Print.printToFileAsync({ html });
       if (await Sharing.isAvailableAsync()) {
         await Sharing.shareAsync(uri);
       }
+    } catch {
+      setErreurBulletin("Impossible de générer le bulletin. Réessayez.");
     } finally {
       setTelechargementEnCours(false);
     }
@@ -106,6 +103,8 @@ export function NotesScreen() {
             </Text>
           </Pressable>
         )}
+
+        {erreurBulletin ? <Text accessibilityRole="alert" className="mb-4 text-sm text-red-700">{erreurBulletin}</Text> : null}
 
         {bulletinQuery.data?.map((ligne) => (
           <Pressable

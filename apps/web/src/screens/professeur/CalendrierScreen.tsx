@@ -1,13 +1,10 @@
-import { useAuth, useEvenementsCalendrier } from "@ent/shared";
+import { useAuth, useEvenementsCalendrier, useEtablissementCalendrier, formatDateHeureCalendrier } from "@ent/shared";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { DatesOfficielles } from "../../components/calendrier/DatesOfficielles";
 
-function formatDateHeure(iso: string) {
-  return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
 export function CalendrierScreen() {
-  const { client } = useAuth();
+  const { client, profile } = useAuth();
+  const { pays } = useEtablissementCalendrier(client, profile);
   const evenementsQuery = useEvenementsCalendrier(client);
 
   return (
@@ -20,7 +17,7 @@ export function CalendrierScreen() {
           <Card key={e.id} className="p-4">
             <p className="mb-1 text-sm font-medium text-slate-900">{e.titre}</p>
             <p className="mb-2 text-xs text-slate-400">
-              {formatDateHeure(e.date_debut)} – {formatDateHeure(e.date_fin)}
+              {formatDateHeureCalendrier(e.date_debut, pays)} – {formatDateHeureCalendrier(e.date_fin, pays)}
               {e.lieu && ` · ${e.lieu}`}
             </p>
             {e.description && <p className="text-sm text-slate-700">{e.description}</p>}

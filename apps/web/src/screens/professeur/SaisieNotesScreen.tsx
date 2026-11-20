@@ -1,6 +1,9 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
+import { useIsMutating } from "@tanstack/react-query";
+import { aDesEvaluationsLycee, EvaluationsLycee } from "../../components/EvaluationsLycee";
 import {
   useAuth,
+  useEtablissementCalendrier,
   useMesAffectations,
   usePeriodes,
   useReleve,
@@ -14,7 +17,8 @@ import { Card, PageHeader } from "../../components/ui/Card";
 import { Field, Select } from "../../components/ui/Field";
 
 export function SaisieNotesScreen() {
-  const { client } = useAuth();
+  const { client, profile } = useAuth();
+  const { pays, charge } = useEtablissementCalendrier(client, profile);
   const affectationsQuery = useMesAffectations(client);
   const periodesQuery = usePeriodes(client);
 
@@ -27,20 +31,19 @@ export function SaisieNotesScreen() {
   const updateNote = useUpdateNoteValeur(client, releve?.id ?? null);
   const soumettre = useSoumettreReleve(client);
 
-  const [valeurs, setValeurs] = useState<Record<string, string>>({});
-
+  const enregistrementEvaluations = useIsMutating({ mutationKey: ["evaluations-lycee", releve?.id] }) > 0;
   const notes = notesQuery.data ?? [];
   const isBrouillon = releve?.statut === "brouillon";
-  const toutesRemplies = useMemo(
-    () => notes.length > 0 && notes.every((n: any) => (valeurs[n.id] ?? n.valeur ?? "") !== ""),
-    [notes, valeurs],
-  );
+  const classe = affectationsQuery.data?.find((a) => a.matiere_classe?.id === matiereClasseId)?.matiere_classe?.classes;
+  const evaluationsLycee = (pays === "CG" && classe?.cycle === "lycee") || notes.some(aDesEvaluationsLycee);
+  const toutesRemplies = notes.length > 0 && notes.every((note) => note.valeur !== null);
+  const erreur = releveQuery.error ?? notesQuery.error ?? updateNote.error ?? soumettre.error;
 
   function handleBlur(noteId: string, raw: string) {
     const trimmed = raw.trim();
     const valeur = trimmed === "" ? null : Number(trimmed);
     if (valeur !== null && (Number.isNaN(valeur) || valeur < 0 || valeur > 20)) return;
-    updateNote.mutate({ noteId, valeur });
+    if (notes.find((note) => note.id === noteId)?.valeur !== valeur) updateNote.mutate({ noteId, valeur });
   }
 
   return (
@@ -72,6 +75,7 @@ export function SaisieNotesScreen() {
         </div>
       </Card>
 
+      {erreur && <p role="alert" className="mb-4 text-sm text-red-700">{erreur.message}</p>}
       {releve && (
         <>
           <div className="mb-4 flex items-center justify-between">
@@ -83,38 +87,52 @@ export function SaisieNotesScreen() {
             )}
           </div>
 
+          {evaluationsLycee && (
+            <p className="mb-3 text-sm text-slate-600">
+              Barème pilote sur 20. La moyenne des trois devoirs et la composition comptent chacune pour moitié.
+            </p>
+          )}
           <Card className="mb-4 overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-4 py-2">Élève</th>
+                  {evaluationsLycee && <th className="px-4 py-2">Évaluations sur 20</th>}
                   <th className="px-4 py-2">Note / 20</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {notes.map((n: any) => (
+                {notes.map((n) => {
+                  const detaillee = aDesEvaluationsLycee(n) || (evaluationsLycee && isBrouillon && n.valeur === null);
+                  return (
                   <tr key={n.id}>
                     <td className="px-4 py-2 text-slate-900">{n.profiles?.prenom} {n.profiles?.nom}</td>
+                    {evaluationsLycee && (
+                      <td className="px-4 py-2">
+                        {detaillee && <EvaluationsLycee key={n.updated_at} note={n} editable={isBrouillon} disabled={soumettre.isPending} />}
+                      </td>
+                    )}
                     <td className="px-4 py-2">
-                      <input
+                      {detaillee ? (n.valeur ?? "—") : <input
                         type="number"
                         min="0"
                         max="20"
                         step="0.25"
-                        disabled={!isBrouillon}
+                        disabled={!charge || !isBrouillon || soumettre.isPending}
                         defaultValue={n.valeur ?? ""}
                         onBlur={(e) => handleBlur(n.id, e.target.value)}
                         className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-50 disabled:text-slate-400"
-                      />
+                      />}
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </Card>
 
           {isBrouillon && (
-            <Button onClick={() => soumettre.mutate(releve.id)} disabled={!toutesRemplies || soumettre.isPending}>
+            <Button onClick={() => soumettre.mutate(releve.id)} disabled={!charge || !toutesRemplies || soumettre.isPending || updateNote.isPending || enregistrementEvaluations}>
               Soumettre à la direction
             </Button>
           )}

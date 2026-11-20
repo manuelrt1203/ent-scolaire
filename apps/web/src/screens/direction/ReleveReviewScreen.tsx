@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useIsMutating } from "@tanstack/react-query";
+import { aDesEvaluationsLycee, EvaluationsLycee } from "../../components/EvaluationsLycee";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   useAuth,
@@ -30,6 +32,10 @@ export function ReleveReviewScreen() {
   const [commentaire, setCommentaire] = useState("");
 
   const notes = notesQuery.data ?? [];
+  const evaluationsLycee = notes.some(aDesEvaluationsLycee);
+  const enregistrementEvaluations = useIsMutating({ mutationKey: ["evaluations-lycee", id] }) > 0;
+  const transitionEnCours = valider.isPending || rejeter.isPending || publier.isPending;
+  const erreur = notesQuery.error ?? updateNote.error ?? valider.error ?? rejeter.error ?? publier.error;
   const coefficient = releve?.matiere_classe?.coefficient ?? 1;
 
   // Aperçu informatif uniquement : la moyenne officielle reste calculée côté
@@ -64,34 +70,43 @@ export function ReleveReviewScreen() {
         </p>
       )}
 
+      {erreur && <p role="alert" className="mb-4 text-sm text-red-700">{erreur.message}</p>}
       <Card className="mb-6 overflow-x-auto">
         <table className="w-full text-sm">
           <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
             <tr>
               <th className="px-4 py-2">Élève</th>
+              {evaluationsLycee && <th className="px-4 py-2">Évaluations sur 20</th>}
               <th className="px-4 py-2">Note / 20</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {notes.map((n: any) => (
+            {notes.map((n) => (
               <tr key={n.id}>
                 <td className="px-4 py-2 text-slate-900">{n.profiles?.prenom} {n.profiles?.nom}</td>
+                {evaluationsLycee && (
+                  <td className="px-4 py-2">
+                    {aDesEvaluationsLycee(n) && (
+                      <EvaluationsLycee key={n.updated_at} note={n} editable={isSoumise} disabled={transitionEnCours} complete />
+                    )}
+                  </td>
+                )}
                 <td className="px-4 py-2">
-                  <input
+                  {aDesEvaluationsLycee(n) ? (n.valeur ?? "—") : <input
                     type="number"
                     min="0"
                     max="20"
                     step="0.25"
-                    disabled={!isSoumise}
+                    disabled={!isSoumise || transitionEnCours}
                     defaultValue={n.valeur ?? ""}
                     onBlur={(e) => {
                       const raw = e.target.value.trim();
                       const valeur = raw === "" ? null : Number(raw);
                       if (valeur !== null && (Number.isNaN(valeur) || valeur < 0 || valeur > 20)) return;
-                      updateNote.mutate({ noteId: n.id, valeur });
+                      if (valeur !== n.valeur) updateNote.mutate({ noteId: n.id, valeur });
                     }}
                     className="w-24 rounded-md border border-slate-300 px-2 py-1 text-sm disabled:bg-slate-50 disabled:text-slate-400"
-                  />
+                  />}
                 </td>
               </tr>
             ))}
@@ -110,7 +125,7 @@ export function ReleveReviewScreen() {
           <div className="flex gap-3">
             <Button
               onClick={() => valider.mutate({ releveId: releve.id, commentaire: commentaire || undefined })}
-              disabled={valider.isPending}
+              disabled={transitionEnCours || enregistrementEvaluations || updateNote.isPending || notes.some((note) => aDesEvaluationsLycee(note) && note.valeur === null)}
             >
               Valider
             </Button>
@@ -120,7 +135,7 @@ export function ReleveReviewScreen() {
                 if (!commentaire.trim()) return;
                 rejeter.mutate({ releveId: releve.id, commentaire });
               }}
-              disabled={rejeter.isPending || !commentaire.trim()}
+              disabled={transitionEnCours || enregistrementEvaluations || updateNote.isPending || !commentaire.trim()}
             >
               Rejeter (renvoyer au professeur)
             </Button>

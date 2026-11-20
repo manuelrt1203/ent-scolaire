@@ -1,20 +1,16 @@
 import { useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
-import { formatDateOfficielle, useAuth, useDatesOfficielles, useEvenementsCalendrier } from "@ent/shared";
+import { formatDateOfficielle, useAuth, useDatesOfficielles, useEvenementsCalendrier, useEtablissementCalendrier, formatDateHeureCalendrier } from "@ent/shared";
 
 const APERCU = 5;
-
-function formatDateHeure(iso: string) {
-  return new Date(iso).toLocaleString("fr-FR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-}
 
 /** Vacances scolaires + jours fériés à venir, en lecture seule, au-dessus des événements. */
 function DatesOfficielles() {
   const { client, profile } = useAuth();
-  const { data, isLoading, isError, academie, academieChargee } = useDatesOfficielles(client, profile);
+  const { data, isLoading, isError, academie, academieChargee, pays } = useDatesOfficielles(client, profile);
   const [toutVoir, setToutVoir] = useState(false);
 
-  if (isLoading || !academieChargee || isError) return null;
+  if (pays === "CG" || isLoading || !academieChargee || isError) return null;
   const dates = toutVoir ? data ?? [] : (data ?? []).slice(0, APERCU);
 
   return (
@@ -44,7 +40,8 @@ function DatesOfficielles() {
 }
 
 export function CalendrierScreen() {
-  const { client } = useAuth();
+  const { client, profile } = useAuth();
+  const { pays } = useEtablissementCalendrier(client, profile);
   const evenementsQuery = useEvenementsCalendrier(client);
 
   return (
@@ -63,7 +60,7 @@ export function CalendrierScreen() {
         <View className="mb-2 rounded-lg border border-slate-200 bg-white px-4 py-3">
           <Text className="mb-1 text-sm font-medium text-slate-900">{e.titre}</Text>
           <Text className="mb-2 text-xs text-slate-400">
-            {formatDateHeure(e.date_debut)} – {formatDateHeure(e.date_fin)}
+            {formatDateHeureCalendrier(e.date_debut, pays, false)} – {formatDateHeureCalendrier(e.date_fin, pays, false)}
             {e.lieu ? ` · ${e.lieu}` : ""}
           </Text>
           {e.description && <Text className="text-sm text-slate-700">{e.description}</Text>}

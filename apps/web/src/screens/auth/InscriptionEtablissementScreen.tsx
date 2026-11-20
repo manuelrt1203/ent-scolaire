@@ -1,12 +1,12 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerEtablissement, useAuth } from "@ent/shared";
+import { registerEtablissement, useAuth, PAYS_CALENDRIER, type PaysCalendrier } from "@ent/shared";
 import { BackButton } from "../../components/ui/BackButton";
 import { Button } from "../../components/ui/Button";
-import { Field, Input } from "../../components/ui/Field";
+import { Field, Input, Select } from "../../components/ui/Field";
 import { IconGraduationCap } from "../../components/icons";
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 function Shell({ children }: { children: ReactNode }) {
   return (
@@ -36,6 +36,7 @@ export function InscriptionEtablissementScreen() {
   const { client } = useAuth();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
+  const [pays, setPays] = useState<PaysCalendrier | "">("");
   const [etablissementNom, setEtablissementNom] = useState("");
   const [etablissementAdresse, setEtablissementAdresse] = useState("");
   const [directionPrenom, setDirectionPrenom] = useState("");
@@ -56,11 +57,13 @@ export function InscriptionEtablissementScreen() {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (!pays || loading) return;
     setError(null);
     setLoading(true);
     try {
       const result = await registerEtablissement(client, {
         etablissementNom,
+        pays,
         etablissementAdresse: etablissementAdresse || undefined,
         directionNom,
         directionPrenom,
@@ -99,6 +102,25 @@ export function InscriptionEtablissementScreen() {
 
         {step === 0 && (
           <form onSubmit={next}>
+            <h1 className="mb-2 text-lg font-semibold text-slate-900">Dans quel pays se trouve votre établissement ?</h1>
+            <p className="mb-4 text-sm text-slate-600">Ce choix adapte le calendrier et les réglages scolaires disponibles.</p>
+            <div className="mb-6">
+              <Field label="Pays de l’établissement">
+                <Select value={pays} onChange={(e) => setPays(e.target.value as PaysCalendrier | "")} required autoFocus>
+                  <option value="">Choisir un pays</option>
+                  {Object.entries(PAYS_CALENDRIER).map(([code, nom]) => (
+                    <option key={code} value={code}>{nom}</option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+            <Button type="submit" disabled={!pays} className="w-full">Continuer</Button>
+          </form>
+        )}
+
+        {step === 1 && (
+          <form onSubmit={next}>
+            <BackButton onClick={back} />
             <h1 className="mb-6 text-lg font-semibold text-slate-900">Comment s'appelle votre établissement ?</h1>
             <div className="mb-6">
               <Field label="Nom de l'établissement">
@@ -109,7 +131,7 @@ export function InscriptionEtablissementScreen() {
           </form>
         )}
 
-        {step === 1 && (
+        {step === 2 && (
           <form onSubmit={next}>
             <BackButton onClick={back} />
             <h1 className="mb-1 text-lg font-semibold text-slate-900">Quelle est son adresse ?</h1>
@@ -123,7 +145,7 @@ export function InscriptionEtablissementScreen() {
           </form>
         )}
 
-        {step === 2 && (
+        {step === 3 && (
           <form onSubmit={next}>
             <BackButton onClick={back} />
             <h1 className="mb-1 text-lg font-semibold text-slate-900">Quel est votre prénom ?</h1>
@@ -137,7 +159,7 @@ export function InscriptionEtablissementScreen() {
           </form>
         )}
 
-        {step === 3 && (
+        {step === 4 && (
           <form onSubmit={next}>
             <BackButton onClick={back} />
             <h1 className="mb-6 text-lg font-semibold text-slate-900">Et votre nom ?</h1>
@@ -150,7 +172,7 @@ export function InscriptionEtablissementScreen() {
           </form>
         )}
 
-        {step === 4 && (
+        {step === 5 && (
           <form onSubmit={handleSubmit}>
             <BackButton onClick={back} />
             <h1 className="mb-1 text-lg font-semibold text-slate-900">Quelle adresse email pour votre compte ?</h1>

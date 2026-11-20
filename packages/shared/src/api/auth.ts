@@ -1,3 +1,4 @@
+import type { PaysCalendrier } from "../domain/calendrierLocal";
 import type { EntSupabaseClient } from "../supabase/createClient";
 import type { Tables } from "../types/database.types";
 
@@ -42,6 +43,7 @@ export async function setPassword(client: EntSupabaseClient, password: string) {
 }
 
 export interface RegisterEtablissementInput {
+  pays?: PaysCalendrier;
   etablissementNom: string;
   etablissementAdresse?: string;
   directionNom: string;

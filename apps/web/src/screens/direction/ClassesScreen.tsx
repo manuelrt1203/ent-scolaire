@@ -23,6 +23,8 @@ export function ClassesScreen() {
   const [nom, setNom] = useState("");
   const [cycle, setCycle] = useState<CycleScolaire>("college");
   const [niveau, setNiveau] = useState(NIVEAUX_PAR_CYCLE.college[0]);
+  const [serie, setSerie] = useState("");
+  const [filtreCycle, setFiltreCycle] = useState<CycleScolaire | "">("");
 
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => getClasses(client) });
   const anneeQuery = useQuery({
@@ -37,6 +39,7 @@ export function ClassesScreen() {
         nom,
         cycle,
         niveau,
+        serie: serie.trim() || null,
         etablissement_id: profile!.etablissement_id,
         annee_scolaire_id: anneeQuery.data!.id,
       }),
@@ -47,7 +50,7 @@ export function ClassesScreen() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: () => updateClasse(client, editingId as string, { nom, cycle, niveau }),
+    mutationFn: () => updateClasse(client, editingId as string, { nom, cycle, niveau, serie: serie.trim() || null }),
     onSuccess: () => {
       resetForm();
       queryClient.invalidateQueries({ queryKey: ["classes"] });
@@ -62,20 +65,23 @@ export function ClassesScreen() {
   function resetForm() {
     setEditingId(null);
     setNom("");
+    setSerie("");
     setCycle("college");
     setNiveau(NIVEAUX_PAR_CYCLE.college[0]);
   }
 
   function handleCycleChange(nouveauCycle: CycleScolaire) {
     setCycle(nouveauCycle);
+    setSerie("");
     setNiveau(NIVEAUX_PAR_CYCLE[nouveauCycle][0]);
   }
 
-  function handleEdit(c: { id: string; nom: string; cycle: CycleScolaire; niveau: string }) {
+  function handleEdit(c: { id: string; nom: string; cycle: CycleScolaire; niveau: string; serie: string | null }) {
     setEditingId(c.id);
     setNom(c.nom);
     setCycle(c.cycle);
     setNiveau(c.niveau);
+    setSerie(c.serie ?? "");
   }
 
   function handleSubmit(e: FormEvent) {
@@ -89,6 +95,9 @@ export function ClassesScreen() {
   }
 
   const isPending = createMutation.isPending || updateMutation.isPending;
+
+  const classes = (classesQuery.data ?? []).filter((classe) => !filtreCycle || classe.cycle === filtreCycle);
+  const erreur = createMutation.error ?? updateMutation.error ?? deleteMutation.error;
 
   return (
     <div className="max-w-2xl">
@@ -119,6 +128,13 @@ export function ClassesScreen() {
               <Input value={nom} onChange={(e) => setNom(e.target.value)} required placeholder="A, Bilingue, Terminale A…" />
             </Field>
           </div>
+          {cycle === "lycee" && (
+            <div className="w-40">
+              <Field label="Série (facultative)">
+                <Input value={serie} onChange={(e) => setSerie(e.target.value)} placeholder="A, C, D…" />
+              </Field>
+            </div>
+          )}
           <Button type="submit" disabled={isPending || (!editingId && !anneeQuery.data)}>
             {editingId ? "Enregistrer" : "Ajouter"}
           </Button>
@@ -128,25 +144,42 @@ export function ClassesScreen() {
             </Button>
           )}
         </form>
+        {erreur && <p role="alert" className="mt-3 text-sm text-red-700">{erreur.message}</p>}
       </Card>
 
+      <div className="mb-3 w-48">
+        <Field label="Filtrer par cycle">
+          <Select value={filtreCycle} onChange={(e) => setFiltreCycle(e.target.value as CycleScolaire | "")}>
+            <option value="">Tous les cycles</option>
+            {CYCLES_ORDRE.map((c) => (
+              <option key={c} value={c}>{CYCLE_LABELS[c]}</option>
+            ))}
+          </Select>
+        </Field>
+      </div>
       <Card className="overflow-x-auto">
-        {classesQuery.data?.length ? (
+        {classesQuery.isPending ? (
+          <EmptyState message="Chargement des classes…" />
+        ) : classesQuery.isError ? (
+          <EmptyState message="Impossible de charger les classes." />
+        ) : classes.length ? (
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
               <tr>
                 <th className="px-4 py-2">Nom</th>
                 <th className="px-4 py-2">Cycle</th>
                 <th className="px-4 py-2">Niveau</th>
+                <th className="px-4 py-2">Série</th>
                 <th className="px-4 py-2" />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {classesQuery.data.map((c) => (
+              {classes.map((c) => (
                 <tr key={c.id}>
                   <td className="px-4 py-2 text-slate-900">{c.nom}</td>
                   <td className="px-4 py-2 text-slate-500">{CYCLE_LABELS[c.cycle]}</td>
                   <td className="px-4 py-2 text-slate-500">{c.niveau}</td>
+                  <td className="px-4 py-2 text-slate-500">{c.serie ?? "—"}</td>
                   <td className="px-4 py-2 text-right">
                     <Button variant="ghost" className="mr-3" onClick={() => handleEdit(c)}>
                       Modifier
@@ -160,7 +193,7 @@ export function ClassesScreen() {
             </tbody>
           </table>
         ) : (
-          <EmptyState message="Aucune classe pour le moment — ajoutez-en une ci-dessus." />
+          <EmptyState message={filtreCycle ? "Aucune classe dans ce cycle." : "Aucune classe pour le moment."} />
         )}
       </Card>
     </div>
