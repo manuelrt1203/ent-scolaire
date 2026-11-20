@@ -21,6 +21,10 @@ ouverte entre tous les rôles.
 - **`supabase/`** : migrations SQL (schéma, RLS, fonctions RPC du cycle de
   vie des notes, moyennes, messagerie), edge function `admin-create-user`.
 
+## Référence produit
+
+- [Rôles et permissions du MVP](docs/roles-et-permissions.md)
+
 ## Démarrage
 
 ```bash
