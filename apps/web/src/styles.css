@@ -19,3 +19,7 @@
 body {
   font-family: var(--font-sans);
 }
+
+.accueil-banniere {
+  background: radial-gradient(ellipse at 95% 0%, #17555e 0%, transparent 65%), #061b31;
+}

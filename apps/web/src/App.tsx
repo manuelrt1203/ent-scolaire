@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { RequireRole } from "./components/RequireRole";
 import { RootRedirect } from "./components/RootRedirect";
 import { Layout } from "./components/Layout";
-import { EleveLayout, ParentLayout, AccueilAvecSwitcher } from "./components/EleveParentLayouts";
+import { EleveLayout, ParentLayout } from "./components/EleveParentLayouts";
 import { DIRECTION_NAV, PROFESSEUR_NAV, ELEVE_NAV, PARENT_NAV } from "./nav";
 
 const LoginScreen = lazy(() => import("./screens/auth/LoginScreen").then((m) => ({ default: m.LoginScreen })));
@@ -137,7 +137,7 @@ const messagerieRoutes = (
 function eleveParentRoutes(nav: typeof ELEVE_NAV) {
   return (
     <>
-      <Route index element={<AccueilAvecSwitcher nav={nav} AccueilScreen={AccueilScreen} />} />
+      <Route index element={<AccueilScreen nav={nav} />} />
       <Route path="notes" element={<EleveNotesScreen />} />
       <Route path="matiere/:matiereClasseId" element={<MatiereDetailScreen />} />
       <Route path="cahier-textes" element={<EleveCahierTexteScreen />} />

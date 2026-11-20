@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import {
   useAuth,
   usePeriodes,
@@ -23,14 +23,16 @@ export function NotesScreen() {
   const eleveId = useViewedEleveId();
 
   const periodesQuery = usePeriodes(client);
+  const [recherche] = useSearchParams();
   const [periodeId, setPeriodeId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!periodeId && periodesQuery.data && periodesQuery.data.length > 0) {
-      const active = periodesQuery.data[periodesQuery.data.length - 1];
+      const active = periodesQuery.data.find(({ id }) => id === recherche.get("periode"))
+        ?? periodesQuery.data[periodesQuery.data.length - 1];
       setPeriodeId(active.id);
     }
-  }, [periodesQuery.data, periodeId]);
+  }, [periodesQuery.data, periodeId, recherche]);
 
   const bulletinQuery = useBulletin(client, eleveId, periodeId);
   const moyenneGeneraleQuery = useMoyenneGenerale(client, eleveId, periodeId);
