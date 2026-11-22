@@ -98,7 +98,7 @@ export function ParametresScreen() {
             {fuseau && ` Les horaires sont affichés selon l’${fuseau.libelle}.`}
           </p>
           {sourceCalendrier && (
-            <a href={sourceCalendrier} target="_blank" rel="noreferrer" className="block text-xs text-indigo-ink underline">
+            <a href={sourceCalendrier} target="_blank" rel="noreferrer" className="block text-xs text-ent-accent underline">
               Consulter le calendrier du ministère
             </a>
           )}
@@ -114,7 +114,7 @@ export function ParametresScreen() {
 
       <p className="mb-4 text-sm text-slate-500">
         Voir la{" "}
-        <Link to="/politique-confidentialite" target="_blank" className="text-indigo-ink hover:underline">
+        <Link to="/politique-confidentialite" target="_blank" className="text-ent-accent hover:underline">
           politique de confidentialité
         </Link>{" "}
         pour le détail des données collectées et des durées de conservation.

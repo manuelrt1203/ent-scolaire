@@ -1,34 +1,20 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { AuthLayout } from "../../components/AuthLayout";
+import { useState, type FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import { registerEtablissement, useAuth, fuseauxCalendrier, type PaysCalendrier } from "@ent/shared";
 import { BackButton } from "../../components/ui/BackButton";
 import { Button } from "../../components/ui/Button";
 import { ChoixFuseau } from "../../components/ChoixFuseau";
 import { OptionsPays } from "../../components/OptionsPays";
 import { Field, Input, Select } from "../../components/ui/Field";
-import { IconGraduationCap } from "../../components/icons";
 
 const TOTAL_STEPS = 6;
-
-function Shell({ children }: { children: ReactNode }) {
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4 py-10">
-      <Link to="/" className="mb-8 flex items-center gap-2.5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-indigo-ink text-white">
-          <IconGraduationCap className="h-5 w-5" />
-        </div>
-        <span className="text-base font-semibold tracking-tight text-midnight-ink">ENT Scolaire</span>
-      </Link>
-      {children}
-    </div>
-  );
-}
 
 function ProgressBar({ step }: { step: number }) {
   return (
     <div className="mb-6 flex gap-1.5">
       {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-        <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? "bg-indigo-ink" : "bg-slate-100"}`} />
+        <div key={i} className={`h-1 flex-1 rounded-full ${i <= step ? "bg-ent-accent" : "bg-slate-100"}`} />
       ))}
     </div>
   );
@@ -84,9 +70,9 @@ export function InscriptionEtablissementScreen() {
 
   if (succes) {
     return (
-      <Shell>
-        <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="mb-4 text-xl font-semibold text-slate-900">Établissement créé</h1>
+      <AuthLayout>
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg sm:p-8">
+          <h1 className="mb-4 text-xl font-semibold tracking-tight text-midnight-ink">Établissement créé</h1>
           <p className="mb-4 text-sm text-slate-600">
             Votre compte direction a été créé pour <span className="font-medium">{succes.email}</span>. Activez-le
             maintenant via « Première connexion » : un code vous sera envoyé par email.
@@ -95,19 +81,19 @@ export function InscriptionEtablissementScreen() {
             Activer mon compte
           </Button>
         </div>
-      </Shell>
+      </AuthLayout>
     );
   }
 
   return (
-    <Shell>
-      <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+    <AuthLayout>
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg sm:p-8">
         <ProgressBar step={step} />
         <p className="mb-4 text-xs font-medium uppercase tracking-wide text-slate-400">Étape {step + 1} sur {TOTAL_STEPS}</p>
 
         {step === 0 && (
           <form onSubmit={next}>
-            <h1 className="mb-2 text-lg font-semibold text-slate-900">Dans quel pays se trouve votre établissement ?</h1>
+            <h1 className="mb-2 text-lg font-semibold tracking-tight text-midnight-ink">Dans quel pays se trouve votre établissement ?</h1>
             <p className="mb-4 text-sm text-slate-600">Ce choix adapte le calendrier et les réglages scolaires disponibles.</p>
             <div className="mb-6">
               <Field label="Pays de l’établissement">
@@ -125,7 +111,7 @@ export function InscriptionEtablissementScreen() {
         {step === 1 && (
           <form onSubmit={next}>
             <BackButton onClick={back} />
-            <h1 className="mb-6 text-lg font-semibold text-slate-900">Comment s'appelle votre établissement ?</h1>
+            <h1 className="mb-6 text-lg font-semibold tracking-tight text-midnight-ink">Comment s'appelle votre établissement ?</h1>
             <div className="mb-6">
               <Field label="Nom de l'établissement">
                 <Input value={etablissementNom} onChange={(e) => setEtablissementNom(e.target.value)} required autoFocus />
@@ -138,7 +124,7 @@ export function InscriptionEtablissementScreen() {
         {step === 2 && (
           <form onSubmit={next}>
             <BackButton onClick={back} />
-            <h1 className="mb-1 text-lg font-semibold text-slate-900">Quelle est son adresse ?</h1>
+            <h1 className="mb-1 text-lg font-semibold tracking-tight text-midnight-ink">Quelle est son adresse ?</h1>
             <p className="mb-6 text-xs text-slate-500">Optionnel — vous pouvez passer cette étape.</p>
             <div className="mb-6">
               <Field label="Adresse">
@@ -152,7 +138,7 @@ export function InscriptionEtablissementScreen() {
         {step === 3 && (
           <form onSubmit={next}>
             <BackButton onClick={back} />
-            <h1 className="mb-1 text-lg font-semibold text-slate-900">Quel est votre prénom ?</h1>
+            <h1 className="mb-1 text-lg font-semibold tracking-tight text-midnight-ink">Quel est votre prénom ?</h1>
             <p className="mb-6 text-xs text-slate-500">Vous serez le premier compte direction de l'établissement.</p>
             <div className="mb-6">
               <Field label="Prénom">
@@ -166,7 +152,7 @@ export function InscriptionEtablissementScreen() {
         {step === 4 && (
           <form onSubmit={next}>
             <BackButton onClick={back} />
-            <h1 className="mb-6 text-lg font-semibold text-slate-900">Et votre nom ?</h1>
+            <h1 className="mb-6 text-lg font-semibold tracking-tight text-midnight-ink">Et votre nom ?</h1>
             <div className="mb-6">
               <Field label="Nom">
                 <Input value={directionNom} onChange={(e) => setDirectionNom(e.target.value)} required autoFocus />
@@ -179,7 +165,7 @@ export function InscriptionEtablissementScreen() {
         {step === 5 && (
           <form onSubmit={handleSubmit}>
             <BackButton onClick={back} />
-            <h1 className="mb-1 text-lg font-semibold text-slate-900">Quelle adresse email pour votre compte ?</h1>
+            <h1 className="mb-1 text-lg font-semibold tracking-tight text-midnight-ink">Quelle adresse email pour votre compte ?</h1>
             <p className="mb-6 text-xs text-slate-500">Elle servira à activer votre compte direction.</p>
             <div className="mb-6">
               <Field label="Email">
@@ -197,6 +183,6 @@ export function InscriptionEtablissementScreen() {
           Retour à la connexion
         </button>
       </div>
-    </Shell>
+    </AuthLayout>
   );
 }

@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth, useNombreNonLus } from "@ent/shared";
 import { CATEGORIES, CATEGORY_META, type NavItem } from "../nav";
-import { IconGraduationCap, IconLogOut, IconHome, IconBookOpen, IconClipboard, IconMail } from "./icons";
+import { IconLogOut, IconHome, IconBookOpen, IconClipboard, IconMail } from "./icons";
+import { EntBrand } from "./EntBrand";
 import { NotificationBell } from "./NotificationBell";
 import { RechercheGlobale } from "./RechercheGlobale";
 
@@ -21,7 +22,6 @@ export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) 
   const nonLusQuery = useNombreNonLus(client);
 
   const espaceParent = profile?.role === "parent";
-  const navigationLaterale = profile?.role === "direction" || espaceParent;
   const [rubriquesOuvertes, setRubriquesOuvertes] = useState(false);
   const accesParent = [
     { to: homePath, label: "Accueil", Icon: IconHome },
@@ -43,13 +43,8 @@ export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) 
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50">
-      <header className="flex items-center justify-between gap-3 bg-midnight-ink px-4 py-3 sm:px-6">
-        <button onClick={() => navigate(homePath)} className="flex min-w-0 shrink-0 items-center gap-2.5">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-teal-700 text-white">
-            <IconGraduationCap className="h-5 w-5" />
-          </div>
-          <span className="hidden truncate text-sm font-semibold tracking-tight text-white sm:inline">ENT Scolaire</span>
-        </button>
+      <header className="flex items-center justify-between gap-3 accueil-banniere border-b border-white/10 px-4 py-3 sm:px-6">
+        <EntBrand homePath={homePath} />
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <RechercheGlobale homePath={homePath} />
           <NotificationBell />
@@ -94,15 +89,13 @@ export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) 
           {rubriquesOuvertes ? "Masquer les rubriques" : "Toutes les rubriques"}
         </button>
       )}
-      <div className={navigationLaterale ? "flex min-w-0 flex-1 flex-col lg:flex-row" : "flex min-w-0 flex-1 flex-col"}>
-        <nav id="menu-rubriques" aria-label="Rubriques" className={navigationLaterale
-          ? `border-b border-slate-200 bg-white px-4 lg:w-56 lg:shrink-0 lg:border-r lg:border-b-0 lg:px-3 lg:py-5 ${espaceParent && !rubriquesOuvertes ? "hidden lg:block" : ""}`
-          : "border-b border-slate-200 bg-white px-4 sm:px-6"}>
-          <div className={navigationLaterale ? `flex gap-3 overflow-x-auto lg:flex-col lg:gap-1 ${espaceParent ? "flex-wrap gap-x-4 gap-y-0" : ""}` : "flex gap-4 overflow-x-auto sm:gap-6"}>
+      <div className="flex min-w-0 flex-1 flex-col lg:flex-row">
+        <nav id="menu-rubriques" aria-label="Rubriques" className={`border-b border-slate-200 bg-white px-4 lg:w-56 lg:shrink-0 lg:border-r lg:border-b-0 lg:px-3 lg:py-5 ${espaceParent && !rubriquesOuvertes ? "hidden lg:block" : ""}`}>
+          <div className={`flex gap-3 overflow-x-auto lg:flex-col lg:gap-1 ${espaceParent ? "flex-wrap gap-x-4 gap-y-0" : ""}`}>
             <button
               onClick={() => allerVersCategorie("tous")}
               aria-current={categorieActive === "tous" ? "page" : undefined}
-              className={`shrink-0 border-b-2 px-1 py-3 text-left text-sm font-medium transition-colors ${navigationLaterale ? "lg:rounded-lg lg:border-b-0 lg:px-3" : ""} ${
+              className={`shrink-0 border-b-2 px-1 py-3 text-left text-sm font-medium transition-colors lg:rounded-lg lg:border-b-0 lg:px-3 ${
                 categorieActive === "tous"
                   ? "border-teal-700 text-teal-800 lg:bg-teal-50"
                   : "border-transparent text-slate-500 hover:text-slate-700"
@@ -119,7 +112,7 @@ export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) 
                   key={categorie}
                   onClick={() => allerVersCategorie(categorie)}
                   aria-current={active ? "page" : undefined}
-                  className={`flex shrink-0 items-center gap-1.5 border-b-2 px-1 py-3 text-left text-sm font-medium transition-colors ${navigationLaterale ? "lg:rounded-lg lg:border-b-0 lg:px-3" : ""} ${
+                  className={`flex shrink-0 items-center gap-1.5 border-b-2 px-1 py-3 text-left text-sm font-medium transition-colors lg:rounded-lg lg:border-b-0 lg:px-3 ${
                     active ? "border-teal-700 text-teal-800 lg:bg-teal-50" : "border-transparent text-slate-500 hover:text-slate-700"
                   }`}
                 >
@@ -136,8 +129,8 @@ export function Layout({ nav, homePath }: { nav: NavItem[]; homePath: string }) 
           </div>
         </nav>
 
-        <main className="min-w-0 flex-1 overflow-y-auto bg-[#f6f8fb] p-4 sm:p-7 lg:p-8">
-          <div className={navigationLaterale ? "mx-auto max-w-6xl" : undefined}><Outlet /></div>
+        <main className="min-w-0 flex-1 overflow-y-auto bg-slate-50 p-4 sm:p-7 lg:p-8">
+          <div className="mx-auto max-w-6xl"><Outlet /></div>
         </main>
       </div>
     </div>

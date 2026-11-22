@@ -15,7 +15,7 @@ export function MatiereDetailScreen() {
 
   return (
     <div className="max-w-2xl">
-      <button onClick={() => navigate(-1)} className="mb-6 text-xs text-slate-500 hover:text-indigo-ink hover:underline">
+      <button onClick={() => navigate(-1)} className="mb-6 text-xs text-slate-500 hover:text-ent-accent hover:underline">
         ← Retour
       </button>
       <div className="space-y-2">

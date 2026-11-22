@@ -17,7 +17,7 @@ export function InboxScreen() {
     <div className="max-w-3xl">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-slate-900">Messagerie</h1>
-        <Link to="../messagerie/nouveau" className="rounded-md bg-indigo-ink px-4 py-2 text-sm font-medium text-white hover:bg-indigo-ink/90">
+        <Link to="../messagerie/nouveau" className="rounded-md bg-ent-accent px-4 py-2 text-sm font-medium text-white hover:bg-ent-accent/90">
           Nouveau message
         </Link>
       </div>

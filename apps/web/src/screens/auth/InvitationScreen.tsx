@@ -1,3 +1,4 @@
+import { AuthLayout } from "../../components/AuthLayout";
 import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { redeemInvitation, useAuth } from "@ent/shared";
@@ -29,9 +30,9 @@ export function InvitationScreen() {
 
   if (succes) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-        <div className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-          <h1 className="mb-4 text-xl font-semibold text-slate-900">Compte créé</h1>
+      <AuthLayout>
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg sm:p-8">
+          <h1 className="mb-4 text-xl font-semibold tracking-tight text-midnight-ink">Compte créé</h1>
           <p className="mb-4 text-sm text-slate-600">
             Activez-le maintenant via « Première connexion » avec <span className="font-medium">{succes.email}</span> :
             un code vous sera envoyé par email.
@@ -39,19 +40,19 @@ export function InvitationScreen() {
           <button
             type="button"
             onClick={() => navigate("/activation")}
-            className="w-full rounded-md bg-indigo-ink px-3 py-2 text-sm font-medium text-white hover:bg-indigo-ink/90"
+            className="w-full rounded-lg bg-ent-accent px-3 py-2 text-sm font-medium text-white hover:bg-ent-accent/90"
           >
             Activer mon compte
           </button>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <form onSubmit={handleSubmit} className="w-full max-w-sm rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
-        <h1 className="mb-1 text-xl font-semibold text-slate-900">J'ai un code d'invitation</h1>
+    <AuthLayout>
+      <form onSubmit={handleSubmit} className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-5 shadow-lg sm:p-8">
+        <h1 className="mb-1 text-xl font-semibold tracking-tight text-midnight-ink">J'ai un code d'invitation</h1>
         <p className="mb-6 text-xs text-slate-500">Le code vous a été transmis par votre établissement.</p>
 
         <label className="mb-1 block text-sm font-medium text-slate-700">Code</label>
@@ -59,7 +60,7 @@ export function InvitationScreen() {
           value={code}
           onChange={(e) => setCode(e.target.value)}
           required
-          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm uppercase tracking-widest focus:border-slate-500 focus:outline-none"
+          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm uppercase tracking-widest focus:border-ent-accent focus:outline-none focus:ring-1 focus:ring-ent-accent"
         />
 
         <label className="mb-1 block text-sm font-medium text-slate-700">Prénom</label>
@@ -67,7 +68,7 @@ export function InvitationScreen() {
           value={prenom}
           onChange={(e) => setPrenom(e.target.value)}
           required
-          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-ent-accent focus:outline-none focus:ring-1 focus:ring-ent-accent"
         />
 
         <label className="mb-1 block text-sm font-medium text-slate-700">Nom</label>
@@ -75,7 +76,7 @@ export function InvitationScreen() {
           value={nom}
           onChange={(e) => setNom(e.target.value)}
           required
-          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-ent-accent focus:outline-none focus:ring-1 focus:ring-ent-accent"
         />
 
         <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
@@ -84,7 +85,7 @@ export function InvitationScreen() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-slate-500 focus:outline-none"
+          className="mb-4 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-ent-accent focus:outline-none focus:ring-1 focus:ring-ent-accent"
         />
 
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
@@ -92,7 +93,7 @@ export function InvitationScreen() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-md bg-indigo-ink px-3 py-2 text-sm font-medium text-white hover:bg-indigo-ink/90 disabled:opacity-50"
+          className="w-full rounded-lg bg-ent-accent px-3 py-2 text-sm font-medium text-white hover:bg-ent-accent/90 disabled:opacity-50"
         >
           {loading ? "Création…" : "Créer mon compte"}
         </button>
@@ -105,6 +106,6 @@ export function InvitationScreen() {
           Retour à la connexion
         </button>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

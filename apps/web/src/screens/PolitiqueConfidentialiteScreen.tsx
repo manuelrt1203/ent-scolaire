@@ -1,21 +1,15 @@
-import { Link } from "react-router-dom";
-import { IconGraduationCap } from "../components/icons";
+import { EntBrand } from "../components/EntBrand";
 
 export function PolitiqueConfidentialiteScreen() {
   return (
     <div className="min-h-screen bg-white">
-      <header className="border-b border-slate-100">
+      <header className="accueil-banniere border-b border-white/10">
         <div className="mx-auto flex max-w-3xl items-center gap-2.5 px-4 py-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-indigo-ink text-white">
-              <IconGraduationCap className="h-4 w-4" />
-            </div>
-            <span className="text-sm font-semibold tracking-tight text-midnight-ink">ENT Scolaire</span>
-          </Link>
+          <EntBrand />
         </div>
       </header>
 
-      <div className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6">
         <h1 className="mb-1 text-2xl font-semibold tracking-tight text-midnight-ink">Politique de confidentialité — ENT Scolaire</h1>
         <p className="mb-8 text-sm text-slate-400">Dernière mise à jour : 19 juillet 2026</p>
 
@@ -261,7 +255,7 @@ export function PolitiqueConfidentialiteScreen() {
             </p>
           </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

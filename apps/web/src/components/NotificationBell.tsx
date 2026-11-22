@@ -66,7 +66,7 @@ export function NotificationBell() {
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
             <span className="text-sm font-semibold text-slate-900">Notifications</span>
             {Boolean(nonLuesQuery.data) && (
-              <button onClick={() => marquerToutesLues.mutate()} className="text-xs text-indigo-ink hover:underline">
+              <button onClick={() => marquerToutesLues.mutate()} className="text-xs text-ent-accent hover:underline">
                 Tout marquer comme lu
               </button>
             )}
@@ -76,10 +76,10 @@ export function NotificationBell() {
               <button
                 key={n.id}
                 onClick={() => handleClickNotification(n)}
-                className={`flex w-full flex-col items-start gap-0.5 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50 ${n.lu ? "" : "bg-periwinkle-wash/40"}`}
+                className={`flex w-full flex-col items-start gap-0.5 border-b border-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-50 ${n.lu ? "" : "bg-ent-tint/40"}`}
               >
                 <div className="flex w-full items-center gap-2">
-                  {!n.lu && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-indigo-ink" />}
+                  {!n.lu && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-ent-accent" />}
                   <span className="flex-1 truncate text-sm font-medium text-slate-900">{n.titre}</span>
                   <span className="shrink-0 text-xs text-slate-400">{formatRelatif(n.created_at)}</span>
                 </div>

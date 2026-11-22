@@ -50,7 +50,7 @@ export function AccueilScreen({ nav }: { nav: NavItem[] }) {
               key={item.to}
               to={item.to}
               className={`group rounded-lg border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
-                misEnAvant ? "border-indigo-ink/25 bg-periwinkle-wash lg:col-span-2" : "border-slate-200 bg-white hover:border-indigo-ink/40"
+                misEnAvant ? "border-ent-accent/25 bg-ent-tint lg:col-span-2" : "border-slate-200 bg-white hover:border-ent-accent/40"
               }`}
             >
               <div className="mb-3 flex items-center justify-between">
@@ -68,10 +68,10 @@ export function AccueilScreen({ nav }: { nav: NavItem[] }) {
               <span className={`block text-sm font-semibold ${misEnAvant ? "text-midnight-ink" : "text-slate-900"}`}>
                 {item.label}
               </span>
-              <p className={`mt-1 text-sm ${misEnAvant ? "text-deep-violet" : "text-slate-500"}`}>{item.description}</p>
+              <p className={`mt-1 text-sm ${misEnAvant ? "text-midnight-ink" : "text-slate-500"}`}>{item.description}</p>
               <span
                 className={`mt-3 inline-flex items-center gap-1 text-xs font-medium transition-colors duration-200 ${
-                  misEnAvant ? "text-indigo-ink" : "text-slate-400"
+                  misEnAvant ? "text-ent-accent" : "text-slate-400"
                 }`}
               >
                 Ouvrir <IconArrowRight className="h-3.5 w-3.5" />

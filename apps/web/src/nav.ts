@@ -37,9 +37,9 @@ export const CATEGORY_META: Record<string, { icon: IconComponent; badge: string;
   enseignements: {
     icon: IconClipboard,
     badge: "bg-violet-50 text-violet-700",
-    dot: "bg-indigo-ink",
-    text: "text-indigo-ink",
-    border: "border-indigo-ink",
+    dot: "bg-violet-600",
+    text: "text-violet-700",
+    border: "border-violet-600",
   },
   "vie-scolaire": {
     icon: IconShield,

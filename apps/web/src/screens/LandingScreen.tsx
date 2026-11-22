@@ -1,3 +1,4 @@
+import { EntBrand } from "../components/EntBrand";
 import { Link } from "react-router-dom";
 import { IconGraduationCap, IconBookOpen, IconClipboard, IconShield, IconMegaphone, IconMail, IconArrowRight, IconHome } from "../components/icons";
 
@@ -42,12 +43,7 @@ export function LandingScreen() {
       <div className="bg-midnight-ink text-white">
         <header className="border-b border-white/10">
           <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-5 py-4 sm:px-8">
-            <div className="flex items-center gap-3 font-semibold">
-              <span className="grid size-10 place-items-center rounded-xl bg-teal-300 text-midnight-ink">
-                <IconGraduationCap className="size-6" aria-hidden="true" />
-              </span>
-              ENT Scolaire
-            </div>
+            <EntBrand />
             <Link to="/login" className="rounded-lg border border-white/30 px-4 py-2 text-sm font-semibold hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-teal-300">
               Se connecter
             </Link>
@@ -55,7 +51,7 @@ export function LandingScreen() {
         </header>
 
         <main>
-          <section className="bg-[radial-gradient(ellipse_at_top_right,rgba(45,212,191,0.22),transparent_60%)]">
+          <section className="accueil-banniere">
             <div className="mx-auto grid max-w-6xl gap-9 px-5 py-12 sm:px-8 lg:grid-cols-[1.15fr_1fr] lg:items-center lg:gap-16 lg:py-20">
               <div>
                 <h1 className="max-w-2xl text-4xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">

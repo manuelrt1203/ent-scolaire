@@ -86,7 +86,7 @@ export function MessageDetailScreen() {
                     <button
                       key={pj.id}
                       onClick={() => handleTelechargerPieceJointe(pj.chemin_fichier)}
-                      className="flex items-center gap-2 text-xs text-indigo-ink hover:underline"
+                      className="flex items-center gap-2 text-xs text-ent-accent hover:underline"
                     >
                       {pj.nom_fichier}
                       {pj.taille_octets ? <span className="text-slate-400">({formatTaille(pj.taille_octets)})</span> : null}

@@ -57,7 +57,7 @@ export function DatesOfficielles() {
       )}
 
       {!isError && (data?.length ?? 0) > APERCU && (
-        <button onClick={() => setToutVoir((v) => !v)} className="mt-2 text-xs font-medium text-indigo-ink hover:underline">
+        <button onClick={() => setToutVoir((v) => !v)} className="mt-2 text-xs font-medium text-ent-accent hover:underline">
           {toutVoir ? "Réduire" : `Afficher les ${data!.length} dates de l'année`}
         </button>
       )}

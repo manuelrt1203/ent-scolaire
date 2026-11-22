@@ -36,7 +36,7 @@ export function ImportInscriptions({ classes, anneeId }: { classes: Classe[]; an
       <p className="text-xs text-slate-600">
         CSV avec une colonne <code>email</code> et une ligne par élève. Les comptes doivent déjà exister. Maximum {MAX_LIGNES_IMPORT} élèves.
       </p>
-      <a className="inline-block text-xs text-indigo-ink underline" download="modele-inscriptions.csv"
+      <a className="inline-block text-xs text-ent-accent underline" download="modele-inscriptions.csv"
         href="data:text/csv;charset=utf-8,email%0Aeleve%40exemple.fr%0A">Télécharger le modèle CSV</a>
       <div className="flex flex-wrap items-end gap-3">
         <Field label="Classe de destination">
