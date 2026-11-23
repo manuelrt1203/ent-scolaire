@@ -1,4 +1,5 @@
 import type { EntSupabaseClient } from "../supabase/createClient";
+import { libelleClasse } from "../domain/classe";
 import type { Tables, TablesInsert } from "../types/database.types";
 
 export type VieScolaireEvenement = Tables<"vie_scolaire_evenements">;
@@ -6,23 +7,72 @@ export type VieScolaireEvenement = Tables<"vie_scolaire_evenements">;
 export async function getVieScolaireEleve(client: EntSupabaseClient, eleveId: string) {
   const { data, error } = await client
     .from("vie_scolaire_evenements")
-    .select("*, creneau:creneau_id(matiere_classe(matieres(nom)))")
+    .select("*, creneau:creneaux!creneau_id(heure_debut, heure_fin, matiere_classe(matieres(nom), classes(nom, niveau, serie)))")
     .eq("eleve_id", eleveId)
     .order("date", { ascending: false });
   if (error) throw error;
   return data;
 }
 
-/** Vue professeur/direction : tous les événements d'une classe, avec le nom
- * de l'élève concerné. */
-export async function getVieScolaireClasse(client: EntSupabaseClient, classeId: string) {
-  const { data, error } = await client
+export function libelleSeanceVieScolaire(creneau: Awaited<ReturnType<typeof getVieScolaireEleve>>[number]["creneau"]): string {
+  if (!creneau) return "";
+  return [
+    creneau.matiere_classe?.matieres?.nom,
+    libelleClasse(creneau.matiere_classe?.classes),
+    `${creneau.heure_debut.slice(0, 5)}–${creneau.heure_fin.slice(0, 5)}`,
+  ].filter(Boolean).join(" · ");
+}
+
+export type FiltreVieScolaireSeance = { creneauId: string; date: string };
+
+/** Événements d'une classe, avec le nom de l'élève concerné. */
+export async function getVieScolaireClasse(
+  client: EntSupabaseClient, classeId: string, seance?: FiltreVieScolaireSeance,
+) {
+  let query = client
     .from("vie_scolaire_evenements")
     .select("*, profiles!eleve_id(nom, prenom)")
     .eq("classe_id", classeId)
     .order("date", { ascending: false });
+  if (seance) {
+    query = query.eq("date", seance.date).eq("creneau_id", seance.creneauId).in("type", ["absence", "retard"]);
+  }
+  const { data, error } = await query;
   if (error) throw error;
   return data;
+}
+
+export type PresenceSeance = {
+  eleve_id: string;
+  statut: "present" | "absence" | "retard";
+  minutes: number | null;
+};
+
+export async function getAppelSeance(client: EntSupabaseClient, creneauId: string, date: string) {
+  const { data: appel, error: erreurAppel } = await client.from("appels_seances")
+    .select("version").eq("creneau_id", creneauId).eq("date", date).maybeSingle();
+  if (erreurAppel) throw erreurAppel;
+  const { data: evenements, error } = await client.from("vie_scolaire_evenements")
+    .select("eleve_id, type, duree_minutes, justifie, justificatif_chemin")
+    .eq("creneau_id", creneauId).eq("date", date).in("type", ["absence", "retard"]);
+  if (error) throw error;
+  return { version: appel?.version ?? 0, evenements };
+}
+
+export async function enregistrerAppelSeance(
+  client: EntSupabaseClient,
+  creneauId: string,
+  date: string,
+  version: number,
+  presences: PresenceSeance[],
+) {
+  const { error } = await client.rpc("enregistrer_appel_seance", {
+    p_creneau_id: creneauId,
+    p_date: date,
+    p_version: version,
+    p_presences: presences,
+  });
+  if (error) throw error;
 }
 
 export async function createEvenementVieScolaire(

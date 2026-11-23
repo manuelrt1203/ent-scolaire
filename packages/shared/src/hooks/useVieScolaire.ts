@@ -10,6 +10,7 @@ import {
   deleteEvenementVieScolaire,
   uploaderJustificatifAbsence,
   type FichierJustificatif,
+  type FiltreVieScolaireSeance,
 } from "../api/vieScolaire";
 
 export function useVieScolaireEleve(client: EntSupabaseClient, eleveId: string | null) {
@@ -20,10 +21,10 @@ export function useVieScolaireEleve(client: EntSupabaseClient, eleveId: string |
   });
 }
 
-export function useVieScolaireClasse(client: EntSupabaseClient, classeId: string | null) {
+export function useVieScolaireClasse(client: EntSupabaseClient, classeId: string | null, seance?: FiltreVieScolaireSeance) {
   return useQuery({
-    queryKey: ["vie-scolaire-classe", classeId],
-    queryFn: () => getVieScolaireClasse(client, classeId as string),
+    queryKey: seance ? ["vie-scolaire-classe", classeId, seance] : ["vie-scolaire-classe", classeId],
+    queryFn: () => getVieScolaireClasse(client, classeId as string, seance),
     enabled: Boolean(classeId),
   });
 }

@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useAuth, useVieScolaireEleve, useUploaderJustificatifAbsence, getJustificatifSignedUrl, FORMATS_JUSTIFICATIF_ACCEPTES } from "@ent/shared";
+import { useAuth, useVieScolaireEleve, useUploaderJustificatifAbsence, getJustificatifSignedUrl, FORMATS_JUSTIFICATIF_ACCEPTES, libelleSeanceVieScolaire } from "@ent/shared";
 import { useViewedEleveId } from "../../lib/ViewedEleveContext";
 import { ChildSwitcher } from "../../components/ChildSwitcher";
 import { statutJustificatif, LIBELLES_JUSTIFICATIF } from "../../lib/statutJustificatif";
@@ -22,7 +22,7 @@ const FILTRES = [
 ] as const;
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString("fr-FR");
+  return new Date(iso).toLocaleDateString("fr-FR", { timeZone: "UTC" });
 }
 
 export function VieScolaireScreen() {
@@ -125,12 +125,14 @@ export function VieScolaireScreen() {
       <div className="space-y-3">
         {affiches.map((v) => {
           const statut = statutJustificatif(v);
+          const seance = libelleSeanceVieScolaire(v.creneau);
           return (
             <Card key={v.id} className="p-4">
               <div className="mb-1 flex items-center justify-between">
                 <span className="text-sm font-medium text-slate-900">{TYPE_LABELS[v.type]}</span>
-                <span className="text-xs text-slate-400">{formatDate(v.date)}</span>
+                <time dateTime={v.date} className="text-xs text-slate-500">{formatDate(v.date)}</time>
               </div>
+              {seance && <p className="mb-1 break-words text-sm text-slate-700">{seance}</p>}
               {v.type === "sanction" && v.description && <p className="text-sm text-slate-700">{v.description}</p>}
               {v.type === "retard" && v.duree_minutes != null && <p className="text-sm text-slate-700">{v.duree_minutes} min</p>}
               {statut && (

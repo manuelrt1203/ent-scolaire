@@ -254,12 +254,10 @@ export async function deleteLienParentEleve(client: EntSupabaseClient, id: strin
  * parent, un professeur de la classe, ou la direction). Utilisé côté mobile
  * pour résoudre la classe d'un élève/enfant avant de filtrer emploi du temps
  * et cahier de textes. */
-export async function getClasseEleve(client: EntSupabaseClient, eleveId: string) {
-  const { data, error } = await client
-    .from("inscriptions")
-    .select("classe_id, classes(id, nom, niveau, serie)")
-    .eq("eleve_id", eleveId)
-    .maybeSingle();
+export async function getClasseEleve(client: EntSupabaseClient, eleveId: string, anneeId?: string) {
+  let query = client.from("inscriptions").select("classe_id, classes(id, nom, niveau, serie)").eq("eleve_id", eleveId);
+  if (anneeId) query = query.eq("annee_scolaire_id", anneeId);
+  const { data, error } = await query.maybeSingle();
   if (error) throw error;
   return data;
 }

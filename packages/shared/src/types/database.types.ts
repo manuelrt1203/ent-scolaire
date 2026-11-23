@@ -237,6 +237,20 @@ export type Database = {
           },
         ]
       }
+      appels_seances: {
+        Row: { creneau_id: string; date: string; version: number }
+        Insert: { creneau_id: string; date: string; version?: number }
+        Update: { creneau_id?: string; date?: string; version?: number }
+        Relationships: [
+          {
+            foreignKeyName: "appels_seances_creneau_id_fkey"
+            columns: ["creneau_id"]
+            isOneToOne: false
+            referencedRelation: "creneaux"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       creneaux: {
         Row: {
           created_at: string
@@ -1287,6 +1301,10 @@ export type Database = {
       }
     }
     Functions: {
+      enregistrer_appel_seance: {
+        Args: { p_creneau_id: string; p_date: string; p_version: number; p_presences: Json }
+        Returns: undefined
+      }
       ajouter_justificatif_absence: {
         Args: { p_chemin: string; p_vie_scolaire_id: string }
         Returns: undefined

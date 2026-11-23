@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth, getClasseEleve, useCreneaux, getAnneeScolaireActive, buildEmploiDuTempsIcs } from "@ent/shared";
 import { useViewedEleveId } from "../../lib/ViewedEleveContext";
+import { ChildSwitcher } from "../../components/ChildSwitcher";
 import { Button } from "../../components/ui/Button";
 import { Card, PageHeader } from "../../components/ui/Card";
 import { telechargerFichierTexte } from "../../lib/telechargerFichier";
@@ -11,24 +12,24 @@ export function EmploiDuTempsScreen() {
   const { client, profile } = useAuth();
   const eleveId = useViewedEleveId();
 
-  const classeQuery = useQuery({
-    queryKey: ["classe-eleve", eleveId],
-    queryFn: () => getClasseEleve(client, eleveId as string),
-    enabled: Boolean(eleveId),
-  });
-  const classeId = classeQuery.data?.classe_id ?? null;
-
-  const creneauxQuery = useCreneaux(client, classeId ? { classeId } : undefined);
   const anneeQuery = useQuery({
     queryKey: ["annee-active", profile?.etablissement_id],
     queryFn: () => getAnneeScolaireActive(client, profile!.etablissement_id),
     enabled: Boolean(profile),
   });
+  const anneeId = anneeQuery.data?.id;
+  const classeQuery = useQuery({
+    queryKey: ["classe-eleve", eleveId, anneeId],
+    queryFn: () => getClasseEleve(client, eleveId!, anneeId),
+    enabled: Boolean(eleveId && anneeId),
+  });
+  const classeId = classeQuery.data?.classe_id ?? null;
+  const creneauxQuery = useCreneaux(client, { classeId: classeId ?? undefined }, Boolean(classeId));
 
   const parJour = JOURS.map((_, i) => (creneauxQuery.data ?? []).filter((c: any) => c.jour_semaine === i + 1));
 
   function handleExporterIcs() {
-    if (!creneauxQuery.data || !anneeQuery.data) return;
+    if (!classeId || !creneauxQuery.data || !anneeQuery.data) return;
     const ics = buildEmploiDuTempsIcs(
       creneauxQuery.data.map((c: any) => ({
         id: c.id,
@@ -46,6 +47,7 @@ export function EmploiDuTempsScreen() {
 
   return (
     <div className="max-w-2xl">
+      {profile?.role === "parent" && <ChildSwitcher />}
       <div className="flex items-start justify-between gap-4">
         <PageHeader title="Emploi du temps" description="Votre emploi du temps de la semaine." />
         <Button
@@ -56,7 +58,13 @@ export function EmploiDuTempsScreen() {
           Exporter (.ics)
         </Button>
       </div>
-      <div className="space-y-6">
+      {(anneeQuery.isError || classeQuery.isError || creneauxQuery.isError) && <p role="alert" className="text-sm text-red-700">Impossible de charger l’emploi du temps.</p>}
+      {eleveId && (anneeQuery.isPending || (anneeId && classeQuery.isPending) || (classeId && creneauxQuery.isPending)) && (
+        <p role="status" className="text-sm text-slate-600">Chargement de l’emploi du temps…</p>
+      )}
+      {anneeQuery.isSuccess && !anneeId && <p className="text-sm text-slate-600">Aucune année scolaire active.</p>}
+      {eleveId && classeQuery.isSuccess && !classeId && <p className="text-sm text-slate-600">Aucune classe rattachée pour le moment.</p>}
+      {classeId && creneauxQuery.isSuccess && <div className="space-y-6">
         {JOURS.map((jour, i) => (
           <div key={jour}>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">{jour}</p>
@@ -75,7 +83,7 @@ export function EmploiDuTempsScreen() {
             </div>
           </div>
         ))}
-      </div>
+      </div>}
     </div>
   );
 }

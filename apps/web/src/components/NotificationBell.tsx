@@ -83,7 +83,7 @@ export function NotificationBell() {
                   <span className="flex-1 truncate text-sm font-medium text-slate-900">{n.titre}</span>
                   <span className="shrink-0 text-xs text-slate-400">{formatRelatif(n.created_at)}</span>
                 </div>
-                {n.contenu && <p className="line-clamp-2 pl-3.5 text-xs text-slate-500">{n.contenu}</p>}
+                {n.contenu && <p className={`pl-3.5 text-xs text-slate-600 ${n.type === "emploi_du_temps" ? "whitespace-pre-line" : "line-clamp-2"}`}>{n.contenu}</p>}
               </button>
             ))}
             {notificationsQuery.data?.length === 0 && (
