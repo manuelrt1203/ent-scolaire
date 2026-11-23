@@ -1,6 +1,3 @@
--- Corrige l'avertissement "search_path mutable" du linter Supabase sur les
--- fonctions qui n'étaient pas encore SECURITY DEFINER.
-
 create or replace function set_updated_at() returns trigger
   language plpgsql set search_path = public as $$
 begin

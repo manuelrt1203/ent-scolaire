@@ -1,8 +1,7 @@
 -- classes_select et matiere_classe_select se référençaient mutuellement via des
--- sous-requêtes RLS-protégées, provoquant une récursion infinie (détecté par
--- un test end-to-end réel, pas par le linter). On casse le cycle avec des
--- fonctions SECURITY DEFINER qui contournent RLS sur les tables qu'elles
--- interrogent directement (même technique que current_profile_role()).
+-- sous-requêtes RLS-protégées, provoquant une récursion infinie. On casse le
+-- cycle avec des fonctions SECURITY DEFINER qui contournent RLS sur les tables
+-- qu'elles interrogent directement (même technique que current_profile_role()).
 
 create function professeur_a_acces_classe(p_classe_id uuid) returns boolean
   language sql stable security definer set search_path = public as $$

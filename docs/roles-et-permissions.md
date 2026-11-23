@@ -2,7 +2,7 @@
 
 La cible du MVP comprend cinq profils pour le personnel et deux pour les familles. Une personne peut cumuler plusieurs fonctions dans son établissement, chacune avec un périmètre défini. L’accueil et les menus reflètent les actions qu’elle est autorisée à effectuer.
 
-Le code actuel comporte quatre rôles, Direction, Professeur, Élève et Parent. Cette référence décrit la cible fonctionnelle. La Direction assume aujourd’hui les tâches qui seront réparties entre le chef d’établissement, la direction des études, la vie scolaire et le secrétariat. [Schéma initial et rôles actuels](../supabase/migrations/0001_init_schema.sql)
+Le code actuel comporte quatre rôles, Direction, Professeur, Élève et Parent. Cette référence décrit la cible fonctionnelle. La Direction assume aujourd’hui les tâches qui seront réparties entre le chef d’établissement, la direction des études, la vie scolaire et le secrétariat. [Schéma initial et rôles actuels](../supabase/migrations/20260714202851_init_schema.sql)
 
 ## Organisation des établissements
 

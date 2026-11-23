@@ -1,7 +1,6 @@
 -- Row Level Security : la vraie frontière de sécurité, car les deux clients
 -- (Electron et mobile) embarquent la clé anonyme publique.
 
--- Fonctions SECURITY DEFINER pour éviter la récursion RLS sur profiles.
 create function current_profile_role() returns role_utilisateur
   language sql stable security definer set search_path = public as
   $$ select role from profiles where id = auth.uid() $$;
@@ -24,7 +23,6 @@ alter table releves_notes enable row level security;
 alter table notes enable row level security;
 alter table historique_releves enable row level security;
 
--- Tables de référence : lecture par tout membre de l'établissement, écriture réservée à la direction.
 create policy etablissements_select on etablissements for select
   using (id = current_etablissement_id());
 create policy etablissements_write on etablissements for all
@@ -49,8 +47,6 @@ create policy matieres_write on matieres for all
   using (current_profile_role() = 'direction' and etablissement_id = current_etablissement_id())
   with check (current_profile_role() = 'direction' and etablissement_id = current_etablissement_id());
 
--- profiles : chacun voit son propre profil ; direction voit tout son établissement ;
--- profs voient les élèves de leurs classes affectées ; parents voient leurs enfants liés.
 create policy profiles_select_self on profiles for select
   using (id = auth.uid());
 create policy profiles_select_direction on profiles for select
@@ -77,7 +73,6 @@ create policy profiles_update_self on profiles for update
 create policy profiles_write_direction on profiles for update
   using (current_profile_role() = 'direction' and etablissement_id = current_etablissement_id())
   with check (current_profile_role() = 'direction' and etablissement_id = current_etablissement_id());
--- Pas d'INSERT client sur profiles : uniquement via l'edge function admin-create-user (service role).
 
 create policy classes_select on classes for select
   using (
@@ -127,7 +122,6 @@ create policy liens_write on liens_parents_eleves for all
   using (current_profile_role() = 'direction')
   with check (current_profile_role() = 'direction');
 
--- releves_notes : le cœur du workflow.
 create policy releves_select_direction on releves_notes for select
   using (
     current_profile_role() = 'direction'
@@ -160,7 +154,6 @@ create policy releves_update_direction on releves_notes for update
     and statut in ('validee', 'publiee', 'brouillon')
   );
 
--- notes : suit le statut du relevé parent.
 create policy notes_select_professeur on notes for select
   using (exists (select 1 from releves_notes r join affectations a on a.matiere_classe_id = r.matiere_classe_id where r.id = notes.releve_id and a.professeur_id = auth.uid()));
 create policy notes_select_direction on notes for select
@@ -196,7 +189,6 @@ create policy notes_update_direction on notes for update
 create policy notes_delete_professeur on notes for delete
   using (exists (select 1 from releves_notes r join affectations a on a.matiere_classe_id = r.matiere_classe_id where r.id = notes.releve_id and a.professeur_id = auth.uid() and r.statut = 'brouillon'));
 
--- historique_releves : aucune écriture cliente (uniquement via les fonctions RPC, security definer).
 create policy historique_select on historique_releves for select
   using (
     exists (select 1 from releves_notes r join affectations a on a.matiere_classe_id = r.matiere_classe_id where r.id = historique_releves.releve_id and a.professeur_id = auth.uid())

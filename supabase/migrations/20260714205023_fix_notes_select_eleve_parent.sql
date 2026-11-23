@@ -1,6 +1,8 @@
--- Les élèves/parents n'avaient aucune policy SELECT sur releves_notes : la
--- sous-requête de notes_select_eleve/parent vers releves_notes était donc
--- bloquée par RLS, rendant la lecture des notes publiées impossible.
+-- Les élèves/parents n'ont aucune policy SELECT sur releves_notes (ils ne
+-- consultent que via la table notes / la vue v_bulletin). La sous-requête de
+-- notes_select_eleve/parent vers releves_notes était donc bloquée par RLS,
+-- rendant la lecture des notes publiées impossible. On contourne via une
+-- fonction SECURITY DEFINER dédiée.
 
 create function releve_est_publie(p_releve_id uuid) returns boolean
   language sql stable security definer set search_path = public as $$

@@ -1,8 +1,3 @@
--- Transitions de statut du relevé : fonctions SECURITY DEFINER qui revérifient
--- explicitement rôle/propriété/statut avant d'écrire. Ce sont elles la vraie
--- frontière de sécurité pour le workflow ; les policies RLS sur les tables
--- brutes ne sont qu'une défense en profondeur.
-
 create function soumettre_releve(p_releve_id uuid) returns void
   language plpgsql security definer set search_path = public as $$
 declare
@@ -112,9 +107,6 @@ begin
 end;
 $$;
 
--- Moyennes : source unique de vérité côté base, pondérées par les coefficients.
--- security invoker (par défaut) : elles s'appuient sur les tables protégées par
--- RLS, donc un appelant sans droit de lecture obtient simplement null.
 create function calculer_moyenne_matiere(p_eleve_id uuid, p_matiere_classe_id uuid, p_periode_id uuid)
   returns numeric language sql stable as $$
   select round(sum(n.valeur * n.coefficient_note) / nullif(sum(n.coefficient_note) filter (where n.valeur is not null), 0), 2)
@@ -138,8 +130,6 @@ create function calculer_moyenne_generale(p_eleve_id uuid, p_periode_id uuid)
   from m where moyenne is not null
 $$;
 
--- Vue de consultation : security_invoker obligatoire, sinon elle tournerait avec
--- les privilèges du créateur et fuiterait des données entre rôles.
 create view v_bulletin with (security_invoker = true) as
   select
     n.eleve_id,

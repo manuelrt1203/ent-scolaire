@@ -38,10 +38,10 @@ begin
   insert into periodes (id, annee_scolaire_id, nom, ordre, date_debut, date_fin) values
     (gen_random_uuid(), v_annee, 'Trimestre 3', 3, '2026-04-13', '2026-07-01') returning id into v_t3;
 
-  insert into classes (id, etablissement_id, annee_scolaire_id, nom, niveau) values
-    (gen_random_uuid(), v_etab, v_annee, 'Terminale A', 'Terminale') returning id into v_classe1;
-  insert into classes (id, etablissement_id, annee_scolaire_id, nom, niveau) values
-    (gen_random_uuid(), v_etab, v_annee, 'Première B', 'Première') returning id into v_classe2;
+  insert into classes (id, etablissement_id, annee_scolaire_id, nom, niveau, cycle) values
+    (gen_random_uuid(), v_etab, v_annee, 'Terminale A', 'Terminale', 'lycee') returning id into v_classe1;
+  insert into classes (id, etablissement_id, annee_scolaire_id, nom, niveau, cycle) values
+    (gen_random_uuid(), v_etab, v_annee, 'Première B', 'Première', 'lycee') returning id into v_classe2;
 
   insert into matieres (id, etablissement_id, nom, code) values (gen_random_uuid(), v_etab, 'Mathématiques', 'MATH') returning id into v_maths;
   insert into matieres (id, etablissement_id, nom, code) values (gen_random_uuid(), v_etab, 'Français', 'FR') returning id into v_francais;

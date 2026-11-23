@@ -1,6 +1,3 @@
--- Messagerie interne (type webmail) : ouverte entre tous les rôles d'un
--- même établissement, pas de pièces jointes ni de threading en v1.
-
 create table messages (
   id uuid primary key default gen_random_uuid(),
   expediteur_id uuid not null references profiles(id) on delete cascade,
@@ -26,20 +23,11 @@ create index idx_destinataires_destinataire on message_destinataires(destinatair
 alter table messages enable row level security;
 alter table message_destinataires enable row level security;
 
--- Évite que la policy SELECT de messages interroge message_destinataires
--- avec RLS (qui elle-même interroge messages) : cycle classique déjà
--- rencontré sur ce projet (voir migrations 0005/0008). Lookup direct,
--- RLS contournée pour cette seule vérification.
 create function est_destinataire_message(p_message_id uuid) returns boolean
   language sql stable security definer set search_path = public as $$
   select exists (select 1 from message_destinataires where message_id = p_message_id and destinataire_id = auth.uid())
 $$;
 
--- profiles n'est visible que par relation (self/direction/prof de la
--- classe/parent lié) — pas ouvert à tout l'établissement. Un expéditeur
--- doit pourtant pouvoir vérifier qu'un destinataire arbitraire (avec qui
--- il n'a par ailleurs aucune relation) appartient au même établissement.
--- Lookup direct, contourne cette restriction pour cette seule vérification.
 create function profile_etablissement_id(p_user_id uuid) returns uuid
   language sql stable security definer set search_path = public as $$
   select etablissement_id from profiles where id = p_user_id
@@ -67,10 +55,6 @@ create policy destinataires_update on message_destinataires for update
   using (destinataire_id = auth.uid())
   with check (destinataire_id = auth.uid());
 
--- Frontière de sécurité réelle (comme soumettre_releve/valider_releve etc.) :
--- insère le message et ses destinataires en une transaction, revérifie
--- l'établissement de chaque destinataire. Les policies RLS ci-dessus sont
--- une défense en profondeur, pas le seul rempart.
 create function envoyer_message(p_sujet text, p_corps text, p_destinataires uuid[]) returns uuid
   language plpgsql security definer set search_path = public as $$
 declare

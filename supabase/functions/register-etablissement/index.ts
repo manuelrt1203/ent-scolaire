@@ -2,7 +2,7 @@
 // etablissements + annees_scolaires + le premier compte direction, en
 // utilisant la clé service-role (contourne RLS — c'est la seule façon de
 // créer ces lignes, il n'existe aucune policy d'INSERT qui puisse jamais
-// passer pour un tout premier établissement, voir 0002_rls_policies.sql).
+// passer pour un tout premier établissement, voir 20260714203014_rls_policies.sql).
 //
 // Contrairement à admin-create-user, cette fonction est appelable par un
 // visiteur anonyme (page publique avant toute connexion) : aucune

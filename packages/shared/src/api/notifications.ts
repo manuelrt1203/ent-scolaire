@@ -2,7 +2,7 @@ import type { EntSupabaseClient } from "../supabase/createClient";
 
 /** Les lignes sont créées uniquement par des triggers côté base (note
  * publiée, actualité, cahier de textes, vie scolaire) — voir la migration
- * 0010_notifications.sql. Le client ne fait jamais d'insert ici. */
+ * 20260916204628_notifications.sql. Le client ne fait jamais d'insert ici. */
 export async function getNotifications(client: EntSupabaseClient, limit = 30) {
   const { data, error } = await client
     .from("notifications")

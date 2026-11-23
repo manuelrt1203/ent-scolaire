@@ -30,8 +30,6 @@ create table periodes (
   date_fin date not null
 );
 
--- profiles.id référence auth.users(id) : un profil est créé après la création
--- du compte Auth (voir edge function admin-create-user).
 create table profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   etablissement_id uuid not null references etablissements(id) on delete restrict,
@@ -90,8 +88,6 @@ create table liens_parents_eleves (
   unique (parent_id, eleve_id)
 );
 
--- Une ligne = "le relevé de notes de telle matière, telle classe, telle période".
--- Le statut vit ici, pas sur chaque note individuelle.
 create table releves_notes (
   id uuid primary key default gen_random_uuid(),
   matiere_classe_id uuid not null references matiere_classe(id) on delete cascade,
