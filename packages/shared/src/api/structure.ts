@@ -273,7 +273,7 @@ export async function getMesEnfants(client: EntSupabaseClient) {
 
   const { data, error } = await client
     .from("liens_parents_eleves")
-    .select("eleve_id, eleve:eleve_id(id, nom, prenom)")
+    .select("eleve_id, eleve:profiles!eleve_id(id, nom, prenom)")
     .eq("parent_id", user.id);
   if (error) throw error;
   return data;

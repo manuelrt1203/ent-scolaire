@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   useAuth,
@@ -22,14 +23,15 @@ function formatDate(iso: string) {
 
 export function VieScolaireScreen() {
   const { client, profile } = useAuth();
-  const [classeId, setClasseId] = useState("");
+  const [filtres, setFiltres] = useSearchParams();
   const [eleveId, setEleveId] = useState("");
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState("");
-  const [piecesSeulement, setPiecesSeulement] = useState(false);
+  const piecesSeulement = filtres.get("justificatifs") === "attente";
   const [erreurLecture, setErreurLecture] = useState("");
 
   const classesQuery = useQuery({ queryKey: ["classes"], queryFn: () => getClasses(client) });
+  const classeId = classesQuery.data?.find(({ id }) => id === filtres.get("classe"))?.id ?? "";
   const inscriptionsQuery = useQuery({
     queryKey: ["inscriptions", classeId],
     queryFn: () => getInscriptions(client, classeId),
@@ -70,9 +72,8 @@ export function VieScolaireScreen() {
       <Card className="mb-6 p-4">
         <Field label="Classe">
           <Select aria-label="Classe" value={classeId} onChange={(e) => {
-            setClasseId(e.target.value);
+            setFiltres(e.target.value ? { classe: e.target.value } : {}, { replace: true });
             setEleveId("");
-            setPiecesSeulement(false);
             setErreurLecture("");
           }}>
             <option value="">—</option>
@@ -113,7 +114,7 @@ export function VieScolaireScreen() {
 
           {vieScolaireQuery.isSuccess && (
             <label className="mb-4 flex w-fit items-center gap-2 text-sm font-medium">
-              <input type="checkbox" checked={piecesSeulement} onChange={(e) => setPiecesSeulement(e.target.checked)} />
+              <input type="checkbox" checked={piecesSeulement} onChange={(e) => setFiltres(e.target.checked ? { classe: classeId, justificatifs: "attente" } : { classe: classeId }, { replace: true })} />
               Justificatifs à examiner ({aExaminer.length})
             </label>
           )}

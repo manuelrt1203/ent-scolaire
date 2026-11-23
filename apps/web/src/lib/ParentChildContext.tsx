@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth, getMesEnfants } from "@ent/shared";
 
@@ -13,14 +14,27 @@ const ParentChildContext = createContext<ParentChildContextValue | null>(null);
 export function ParentChildProvider({ children }: { children: ReactNode }) {
   const { client } = useAuth();
   const enfantsQuery = useQuery({ queryKey: ["mes-enfants"], queryFn: () => getMesEnfants(client) });
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selection, setSelection] = useState<string | null>(null);
+  const [parametres, setParametres] = useSearchParams();
 
-  const enfants = (enfantsQuery.data ?? []).map((l: any) => l.eleve).filter(Boolean);
+  const enfants = (enfantsQuery.data ?? []).flatMap(({ eleve }) => eleve ? [eleve] : []);
+
+  const demande = parametres.get("enfant");
+  const enfantDemande = enfants.find(({ id }) => id === demande);
+  const selectedId = enfantDemande?.id ?? enfants.find(({ id }) => id === selection)?.id ?? enfants[0]?.id ?? null;
 
   useEffect(() => {
-    if (!selectedId && enfants.length > 0) setSelectedId(enfants[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enfants.length]);
+    if (enfantDemande) setSelection(enfantDemande.id);
+  }, [enfantDemande]);
+
+  function setSelectedId(id: string) {
+    setSelection(id);
+    if (demande) {
+      const suivants = new URLSearchParams(parametres);
+      suivants.delete("enfant");
+      setParametres(suivants, { replace: true });
+    }
+  }
 
   return (
     <ParentChildContext.Provider value={{ enfants, selectedId, setSelectedId }}>{children}</ParentChildContext.Provider>
