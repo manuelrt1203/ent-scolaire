@@ -34,7 +34,8 @@ export function VieScolaireScreen() {
           {v.type === "retard" && v.duree_minutes != null && <Text className="text-sm text-slate-700">{v.duree_minutes} min</Text>}
           {v.type !== "sanction" && (
             <Text className={`mt-1 text-xs ${v.justifie ? "text-emerald-600" : "text-amber-600"}`}>
-              {v.justifie ? "Justifié" : "Non justifié"}
+              {v.justifie ? "Justifié" : v.justificatif_motif_refus ? "Justificatif refusé" : v.justificatif_chemin ? "Justificatif en attente de validation" : "À justifier"}
+              {v.justificatif_motif_refus ? ` · ${v.justificatif_motif_refus}` : ""}
               {v.motif ? ` · ${v.motif}` : ""}
             </Text>
           )}

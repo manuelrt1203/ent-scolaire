@@ -6,6 +6,7 @@ import {
   getVieScolaireClasse,
   createEvenementVieScolaire,
   justifierEvenement,
+  examinerJustificatif,
   deleteEvenementVieScolaire,
   uploaderJustificatifAbsence,
 } from "../api/vieScolaire";
@@ -46,6 +47,17 @@ export function useJustifierEvenement(client: EntSupabaseClient) {
       queryClient.invalidateQueries({ queryKey: ["vie-scolaire-eleve"] });
       queryClient.invalidateQueries({ queryKey: ["vie-scolaire-classe"] });
     },
+  });
+}
+
+export function useExaminerJustificatif(client: EntSupabaseClient) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (decision: Parameters<typeof examinerJustificatif>[1]) => examinerJustificatif(client, decision),
+    onSettled: () => Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["vie-scolaire-eleve"] }),
+      queryClient.invalidateQueries({ queryKey: ["vie-scolaire-classe"] }),
+    ]),
   });
 }
 

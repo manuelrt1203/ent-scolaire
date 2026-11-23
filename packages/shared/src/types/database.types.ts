@@ -1186,6 +1186,7 @@ export type Database = {
           eleve_id: string
           id: string
           justificatif_chemin: string | null
+          justificatif_motif_refus: string | null
           justifie: boolean
           motif: string | null
           signale_par: string | null
@@ -1201,6 +1202,7 @@ export type Database = {
           eleve_id: string
           id?: string
           justificatif_chemin?: string | null
+          justificatif_motif_refus?: string | null
           justifie?: boolean
           motif?: string | null
           signale_par?: string | null
@@ -1216,6 +1218,7 @@ export type Database = {
           eleve_id?: string
           id?: string
           justificatif_chemin?: string | null
+          justificatif_motif_refus?: string | null
           justifie?: boolean
           motif?: string | null
           signale_par?: string | null

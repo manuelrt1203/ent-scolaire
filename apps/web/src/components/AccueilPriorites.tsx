@@ -90,7 +90,7 @@ export function PrioritesParent() {
 
   if (!enfant) return <p className="mt-4 text-sm text-slate-600">Le suivi s’affiche quand un enfant est rattaché à votre compte.</p>;
   const prochain = charge ? prochainCreneau(coursQuery.data ?? [], new Date(), fuseau?.identifiant) : undefined;
-  const absences = vie.data?.filter((evenement) => evenement.type === "absence" && !evenement.justifie && !evenement.justificatif_chemin).length ?? 0;
+  const absences = vie.data?.filter((evenement) => evenement.type === "absence" && !evenement.justifie && (!evenement.justificatif_chemin || evenement.justificatif_motif_refus)).length ?? 0;
 
   return (
     <section aria-label="Suivi de l’enfant" className="space-y-3">
@@ -110,7 +110,7 @@ export function PrioritesParent() {
         <Carte titre="Dernier bulletin disponible" lien={bulletin.data ? `/parent/notes?periode=${bulletin.data.id}` : "/parent/notes"} action="Voir les notes" icone={IconBookOpen} enfants={
           <p>{bulletin.data?.nom ?? (bulletin.isError || periodes.isError ? "Résultats indisponibles" : bulletin.isPending ? "Chargement…" : "Aucun résultat publié")}</p>
         } />
-        <Carte titre="Absences à justifier" lien="/parent/vie-scolaire" action="Voir la vie scolaire" icone={IconShield} enfants={
+        <Carte titre="Absences à justifier" lien="/parent/vie-scolaire?filtre=absences-a-justifier" action="Voir la vie scolaire" icone={IconShield} enfants={
           vie.isSuccess ? <strong className="text-2xl font-semibold tabular-nums text-midnight-ink">{absences}</strong> : <p>{vie.isError ? "Suivi indisponible" : "Chargement…"}</p>
         } />
       </div>

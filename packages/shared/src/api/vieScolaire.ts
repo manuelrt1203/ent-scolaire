@@ -18,7 +18,7 @@ export async function getVieScolaireEleve(client: EntSupabaseClient, eleveId: st
 export async function getVieScolaireClasse(client: EntSupabaseClient, classeId: string) {
   const { data, error } = await client
     .from("vie_scolaire_evenements")
-    .select("*, profiles:eleve_id(nom, prenom)")
+    .select("*, profiles!eleve_id(nom, prenom)")
     .eq("classe_id", classeId)
     .order("date", { ascending: false });
   if (error) throw error;
@@ -36,8 +36,31 @@ export async function createEvenementVieScolaire(
 
 /** Direction uniquement (RLS) : justifie/modifie le motif d'une absence ou d'un retard. */
 export async function justifierEvenement(client: EntSupabaseClient, id: string, justifie: boolean, motif?: string) {
-  const { error } = await client.from("vie_scolaire_evenements").update({ justifie, motif }).eq("id", id);
+  const { data, error } = await client.from("vie_scolaire_evenements")
+    .update({ justifie, motif }).eq("id", id).is("justificatif_chemin", null)
+    .select("id").maybeSingle();
   if (error) throw error;
+  if (!data) throw new Error("L’événement a changé. Rechargez la liste pour le traiter.");
+}
+
+export async function examinerJustificatif(
+  client: EntSupabaseClient,
+  decision: { id: string; chemin: string; motifRefus: string | null },
+) {
+  const motif = decision.motifRefus?.trim() ?? null;
+  if (motif === "") throw new Error("Indiquez le motif du refus.");
+  // La RLS réserve la modification à la direction de cet établissement.
+  const { data, error } = await client.from("vie_scolaire_evenements")
+    .update({ justifie: motif === null, justificatif_motif_refus: motif })
+    .eq("id", decision.id)
+    .eq("justificatif_chemin", decision.chemin)
+    .eq("justifie", false)
+    .is("justificatif_motif_refus", null)
+    .in("type", ["absence", "retard"])
+    .select("id")
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) throw new Error("Le justificatif a déjà été traité ou n’est plus disponible.");
 }
 
 export async function deleteEvenementVieScolaire(client: EntSupabaseClient, id: string) {
@@ -46,6 +69,19 @@ export async function deleteEvenementVieScolaire(client: EntSupabaseClient, id: 
 }
 
 const BUCKET_JUSTIFICATIFS = "vie-scolaire-justificatifs";
+
+const FORMATS_JUSTIFICATIF = [
+  { mime: "application/pdf", extensions: ["pdf"] },
+  { mime: "image/jpeg", extensions: ["jpg", "jpeg"] },
+  { mime: "image/png", extensions: ["png"] },
+  { mime: "image/webp", extensions: ["webp"] },
+  { mime: "image/heic", extensions: ["heic"] },
+  { mime: "image/heif", extensions: ["heif"] },
+];
+
+export const FORMATS_JUSTIFICATIF_ACCEPTES = FORMATS_JUSTIFICATIF
+  .flatMap(({ mime, extensions }) => [mime, ...extensions.map((extension) => `.${extension}`)])
+  .join(",");
 
 /** Élève concerné ou l'un de ses parents uniquement (policies storage +
  * vérification côté RPC). L'écriture de la colonne passe par la RPC
@@ -56,11 +92,20 @@ export async function uploaderJustificatifAbsence(
   vieScolaireId: string,
   file: File | Blob,
 ) {
-  const nomFichier = file instanceof File ? file.name : "justificatif";
-  const chemin = `${vieScolaireId}/${crypto.randomUUID()}-${nomFichier}`;
+  const extension = typeof File !== "undefined" && file instanceof File
+    ? file.name.split(".").pop()?.toLowerCase()
+    : undefined;
+  const format = FORMATS_JUSTIFICATIF.find(({ mime, extensions }) =>
+    file.type && file.type !== "application/octet-stream"
+      ? file.type === mime
+      : Boolean(extension && extensions.includes(extension))
+  );
+  if (!format) throw new Error("Choisissez une photo (JPG, PNG, WebP, HEIC ou HEIF) ou un fichier PDF.");
+  if (file.size === 0) throw new Error("Le fichier est vide. Choisissez une autre photo ou un autre PDF.");
 
-  const { error: uploadError } = await client.storage.from(BUCKET_JUSTIFICATIFS).upload(chemin, file, {
-    contentType: file.type || undefined,
+  const chemin = `${vieScolaireId}/${crypto.randomUUID()}.${format.extensions[0]}`;
+  const { error: uploadError } = await client.storage.from(BUCKET_JUSTIFICATIFS).upload(chemin, file.slice(0, file.size, format.mime), {
+    contentType: format.mime,
   });
   if (uploadError) throw uploadError;
 

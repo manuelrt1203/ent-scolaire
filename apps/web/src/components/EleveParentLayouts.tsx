@@ -15,8 +15,7 @@ export function EleveLayout() {
 }
 
 /** Parent : la donnée consultée dépend de l'enfant sélectionné (ChildSwitcher,
- * affiché uniquement sur l'accueil et les notes — voir AccueilScreen et
- * screens/eleve/NotesScreen.tsx, même choix que l'app mobile). */
+ * affiché sur l’accueil, les notes et la vie scolaire). */
 function ParentLayoutInner() {
   const { selectedId } = useParentChild();
   return (

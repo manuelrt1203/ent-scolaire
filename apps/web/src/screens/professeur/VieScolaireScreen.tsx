@@ -9,6 +9,7 @@ import {
   getJustificatifSignedUrl,
   libelleClasse,
 } from "@ent/shared";
+import { statutJustificatif, LIBELLES_JUSTIFICATIF } from "../../lib/statutJustificatif";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Input, Select } from "../../components/ui/Field";
@@ -44,14 +45,16 @@ export function VieScolaireScreen() {
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!eleveId || !classeId || !profile) return;
+    if (!inscriptionsQuery.data?.some((inscription) => inscription.eleve_id === eleveId) || !classeId || !profile) return;
+    const minutes = Number(dureeMinutes);
+    if (type === "retard" && (!Number.isInteger(minutes) || minutes < 1)) return;
     creerEvenement.mutate(
       {
         eleve_id: eleveId,
         classe_id: classeId,
         type,
         date,
-        duree_minutes: type === "retard" ? Number(dureeMinutes) : null,
+        duree_minutes: type === "retard" ? minutes : null,
         signale_par: profile.id,
       },
       { onSuccess: () => setEleveId("") },
@@ -64,7 +67,10 @@ export function VieScolaireScreen() {
 
       <Card className="mb-6 p-4">
         <Field label="Matière / Classe">
-          <Select value={matiereClasseId} onChange={(e) => setMatiereClasseId(e.target.value)}>
+          <Select aria-label="Matière / Classe" value={matiereClasseId} onChange={(e) => {
+            setMatiereClasseId(e.target.value);
+            setEleveId("");
+          }}>
             <option value="">—</option>
             {affectationsQuery.data?.map((a: any) => (
               <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
@@ -81,9 +87,9 @@ export function VieScolaireScreen() {
             <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
               <div>
                 <Field label="Élève">
-                  <Select value={eleveId} onChange={(e) => setEleveId(e.target.value)} required>
+                  <Select aria-label="Élève" value={eleveId} onChange={(e) => setEleveId(e.target.value)} required>
                     <option value="">—</option>
-                    {inscriptionsQuery.data?.map((i: any) => (
+                    {inscriptionsQuery.data?.map((i) => (
                       <option key={i.eleve_id} value={i.eleve_id}>{i.profiles?.prenom} {i.profiles?.nom}</option>
                     ))}
                   </Select>
@@ -105,7 +111,7 @@ export function VieScolaireScreen() {
               {type === "retard" && (
                 <div className="w-20">
                   <Field label="Minutes">
-                    <Input type="number" min="1" value={dureeMinutes} onChange={(e) => setDureeMinutes(e.target.value)} />
+                    <Input type="number" min="1" required value={dureeMinutes} onChange={(e) => setDureeMinutes(e.target.value)} />
                   </Field>
                 </div>
               )}
@@ -113,6 +119,7 @@ export function VieScolaireScreen() {
             </form>
           </Card>
 
+          {creerEvenement.isError && <p role="alert" className="mb-4 text-sm text-red-700">Impossible d’enregistrer le signalement.</p>}
           <Card className="overflow-x-auto">
             {vieScolaireQuery.data?.length ? (
               <table className="w-full text-sm">
@@ -126,21 +133,24 @@ export function VieScolaireScreen() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {vieScolaireQuery.data.map((v: any) => (
-                    <tr key={v.id}>
-                      <td className="px-4 py-2 text-slate-900">{v.profiles?.prenom} {v.profiles?.nom}</td>
-                      <td className="px-4 py-2 text-slate-500 capitalize">{v.type}{v.type === "retard" && v.duree_minutes ? ` (${v.duree_minutes} min)` : ""}</td>
-                      <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
-                      <td className="px-4 py-2 text-slate-500">{v.justifie ? "Oui" : "Non"}</td>
-                      <td className="px-4 py-2 text-right">
-                        {v.justificatif_chemin && (
-                          <Button variant="ghost" onClick={() => handleVoirJustificatif(v.justificatif_chemin)}>
-                            Justificatif
-                          </Button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
+                  {vieScolaireQuery.data.map((v) => {
+                    const statut = statutJustificatif(v);
+                    return (
+                      <tr key={v.id}>
+                        <td className="px-4 py-2 text-slate-900">{v.profiles?.prenom} {v.profiles?.nom}</td>
+                        <td className="px-4 py-2 text-slate-500 capitalize">{v.type}{v.type === "retard" && v.duree_minutes ? ` (${v.duree_minutes} min)` : ""}</td>
+                        <td className="px-4 py-2 text-slate-500">{formatDate(v.date)}</td>
+                        <td className="px-4 py-2 text-slate-500">{statut ? LIBELLES_JUSTIFICATIF[statut] : "—"}</td>
+                        <td className="px-4 py-2 text-right">
+                          {v.justificatif_chemin && (
+                            <Button variant="ghost" onClick={() => handleVoirJustificatif(v.justificatif_chemin!)}>
+                              Justificatif
+                            </Button>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             ) : (
