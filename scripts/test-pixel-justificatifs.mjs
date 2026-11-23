@@ -1,16 +1,32 @@
 import { randomBytes } from "node:crypto";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createServer } from "node:http";
 import { isIPv4 } from "node:net";
 import { fileURLToPath } from "node:url";
 
-const adresse = process.argv[2];
-if (!isIPv4(adresse) || adresse === "0.0.0.0" || adresse.startsWith("127.")) {
-  console.error("Indiquez l’adresse IPv4 de l’ordinateur sur le réseau Wi-Fi.");
+const usb = process.argv[2] === "--usb";
+const adresse = usb ? "127.0.0.1" : process.argv[2];
+if (!usb && (!isIPv4(adresse) || adresse === "0.0.0.0" || adresse.startsWith("127."))) {
+  console.error("Utilisation : node scripts/test-pixel-justificatifs.mjs --usb ou ADRESSE_IPV4_WIFI");
   process.exit(1);
 }
 
 const port = 8095;
+const portExpo = 8081;
+if (usb) {
+  for (const portLocal of [portExpo, port]) {
+    const cible = `tcp:${portLocal}`;
+    const resultat = spawnSync("adb", ["-d", "reverse", cible, cible], { stdio: "inherit" });
+    if (resultat.error?.code === "ENOENT") {
+      console.error("ADB est absent. Installez le paquet adb avant de relancer le test.");
+      process.exit(1);
+    }
+    if (resultat.status !== 0) {
+      console.error("Vérifiez le câble, activez le débogage USB et acceptez l’autorisation sur le Pixel.");
+      process.exit(1);
+    }
+  }
+}
 const url = `http://${adresse}:${port}`;
 const email = "eleve@pixel.test";
 const password = randomBytes(9).toString("hex");
@@ -90,7 +106,9 @@ const serveur = createServer(async (req, res) => {
 serveur.listen(port, adresse, () => {
   console.log(`Compte fictif\nEmail ${email}\nMot de passe ${password}\nChoisir Vie scolaire puis envoyer un fichier fictif par absence.\n`);
   const cwd = fileURLToPath(new URL("../apps/mobile/", import.meta.url));
-  const expo = spawn("npx", ["expo", "start", "--go", "--lan"], {
+  const optionsExpo = usb ? ["--localhost", "--port", String(portExpo)] : ["--lan"];
+  if (usb) console.log(`Dans Expo Go, ouvrez exp://127.0.0.1:${portExpo} (ou scannez le QR code).`);
+  const expo = spawn("npx", ["expo", "start", "--go", ...optionsExpo], {
     cwd, stdio: "inherit",
     env: { ...process.env, REACT_NATIVE_PACKAGER_HOSTNAME: adresse, EXPO_PUBLIC_SUPABASE_URL: url, EXPO_PUBLIC_SUPABASE_ANON_KEY: "cle-fictive" },
   });
