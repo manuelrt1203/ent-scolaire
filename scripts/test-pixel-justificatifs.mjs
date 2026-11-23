@@ -40,6 +40,11 @@ const dossiers = ["2026-11-20", "2026-11-21"].map((date, i) => ({
   justificatif_chemin: null, justificatif_motif_refus: null,
 }));
 const transferts = new Map();
+const pieces = new Map();
+const stockage = "/storage/v1/object/vie-scolaire-justificatifs/";
+const liensSignes = "/storage/v1/object/sign/vie-scolaire-justificatifs/";
+const typesAcceptes = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"]);
+const tailleMaximale = 20 * 1024 * 1024;
 const login = { access_token: token, refresh_token: token, token_type: "bearer", expires_in: 3600, user };
 
 async function lireJson(req) {
@@ -69,31 +74,61 @@ const serveur = createServer(async (req, res) => {
       if (body.email === email && body.password === password) return repondre(200, login);
       return repondre(400, { message: "Identifiants de test incorrects" });
     }
+    if (req.method === "GET" && cible.pathname.startsWith(liensSignes)) {
+      const chemin = decodeURIComponent(cible.pathname.slice(liensSignes.length));
+      const piece = pieces.get(chemin);
+      if (!piece?.signature || piece.signature !== cible.searchParams.get("token") || piece.expiration <= Date.now()) {
+        return repondre(403, { message: "Lien de test invalide ou expiré" });
+      }
+      res.writeHead(200, {
+        "content-type": piece.type,
+        "content-length": piece.taille,
+        "content-disposition": "inline",
+        "cache-control": "no-store",
+        "x-content-type-options": "nosniff",
+      });
+      return res.end(piece.contenu);
+    }
     if (req.headers.authorization !== `Bearer ${token}`) return repondre(401, { message: "Connexion requise" });
     if (cible.pathname === "/auth/v1/user" || cible.pathname === "/rest/v1/profiles") return repondre(200, user);
     if (cible.pathname === "/rest/v1/vie_scolaire_evenements") return repondre(200, dossiers);
     if (cible.pathname === "/rest/v1/etablissements") return repondre(200, { id: user.etablissement_id, nom: "École fictive", pays_calendrier: "CG" });
 
-    const stockage = "/storage/v1/object/vie-scolaire-justificatifs/";
+    if (req.method === "POST" && cible.pathname.startsWith(liensSignes)) {
+      const chemin = decodeURIComponent(cible.pathname.slice(liensSignes.length));
+      const piece = pieces.get(chemin);
+      if (!piece) return repondre(404, { message: "Justificatif introuvable" });
+      const { expiresIn } = await lireJson(req);
+      const secondes = Number.isFinite(expiresIn) ? Math.max(1, Math.min(3600, expiresIn)) : 3600;
+      piece.signature = randomBytes(24).toString("hex");
+      piece.expiration = Date.now() + secondes * 1000;
+      const cheminUrl = chemin.split("/").map(encodeURIComponent).join("/");
+      return repondre(200, { signedURL: `/object/sign/vie-scolaire-justificatifs/${cheminUrl}?token=${piece.signature}` });
+    }
     if (req.method === "POST" && cible.pathname.startsWith(stockage)) {
       const chemin = decodeURIComponent(cible.pathname.slice(stockage.length));
-      if (!dossiers.some(({ id }) => chemin.startsWith(`${id}/`))) return repondre(400, { message: "Absence inconnue" });
-      let taille = 0;
-      for await (const chunk of req) taille += chunk.length;
+      const dossier = dossiers.find(({ id }) => chemin.startsWith(`${id}/`));
+      if (!dossier || dossier.justificatif_chemin) return repondre(400, { message: "Absence indisponible" });
       const type = req.headers["content-type"];
-      if (!taille || !type || !(type.startsWith("image/") || type === "application/pdf")) {
-        return repondre(400, { message: "Photo ou PDF requis" });
+      if (!typesAcceptes.has(type)) return repondre(400, { message: "Photo ou PDF requis" });
+      const blocs = [];
+      let taille = 0;
+      for await (const chunk of req) {
+        taille += chunk.length;
+        if (taille <= tailleMaximale) blocs.push(chunk);
       }
-      transferts.set(chemin, { type, taille });
+      if (!taille || taille > tailleMaximale) return repondre(400, { message: "Fichier vide ou supérieur à 20 Mo" });
+      transferts.set(dossier.id, { chemin, type, taille, contenu: Buffer.concat(blocs) });
       return repondre(200, { Key: chemin });
     }
     if (cible.pathname === "/rest/v1/rpc/ajouter_justificatif_absence") {
       const { p_vie_scolaire_id, p_chemin } = await lireJson(req);
       const dossier = dossiers.find(({ id }) => id === p_vie_scolaire_id);
-      const transfert = transferts.get(p_chemin);
-      if (!dossier || !transfert || !p_chemin.startsWith(`${dossier.id}/`)) return repondre(400, { message: "Pièce inconnue" });
+      const transfert = transferts.get(p_vie_scolaire_id);
+      if (!dossier || dossier.justificatif_chemin || transfert?.chemin !== p_chemin) return repondre(400, { message: "Pièce inconnue" });
       dossier.justificatif_chemin = p_chemin;
-      transferts.delete(p_chemin);
+      pieces.set(p_chemin, transfert);
+      transferts.delete(dossier.id);
       console.log(`Justificatif en attente · ${dossier.date} · ${transfert.type} · ${transfert.taille} octets reçus`);
       return repondre(200, null);
     }
