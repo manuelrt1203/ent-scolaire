@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   enregistrerAppelSeance, getAppelSeance, getInscriptionsClasseAnnee,
-  libelleClasse, useAuth, type getCreneaux, type PresenceSeance,
+  libelleClasse, useAuth, useExceptionsCreneaux, appliquerExceptionCreneau, type getCreneaux, type PresenceSeance,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState } from "../../components/ui/Card";
@@ -10,12 +10,16 @@ import { Field, Input, Select } from "../../components/ui/Field";
 
 type Creneau = Awaited<ReturnType<typeof getCreneaux>>[number];
 
-export function AppelSeance({ creneau, jour, fermer }: { creneau: Creneau; jour: string; fermer: () => void }) {
+export function AppelSeance({ creneau, jour, dateInitiale, fermer }: { creneau: Creneau; jour: string; dateInitiale?: string; fermer: () => void }) {
   const { client } = useAuth();
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(dateInitiale ?? "");
   const { classe_id: classeId, annee_scolaire_id: anneeId } = creneau.matiere_classe;
   const jourChoisi = date ? new Date(`${date}T00:00:00Z`).getUTCDay() : null;
   const dateValide = jourChoisi === creneau.jour_semaine;
+  const exceptions = useExceptionsCreneaux(client, [creneau.id], dateValide ? date : "");
+  const exception = exceptions.data?.[0];
+  const seance = appliquerExceptionCreneau(creneau, exception);
+  const appelDisponible = dateValide && exceptions.isSuccess && !exception?.annule;
   const inscriptions = useQuery({
     queryKey: ["inscriptions", classeId, anneeId],
     queryFn: () => getInscriptionsClasseAnnee(client, classeId, anneeId),
@@ -23,7 +27,7 @@ export function AppelSeance({ creneau, jour, fermer }: { creneau: Creneau; jour:
   const appel = useQuery({
     queryKey: ["appel-seance", creneau.id, date],
     queryFn: () => getAppelSeance(client, creneau.id, date),
-    enabled: dateValide,
+    enabled: appelDisponible,
   });
 
   return (
@@ -32,7 +36,7 @@ export function AppelSeance({ creneau, jour, fermer }: { creneau: Creneau; jour:
         <div>
           <h2 className="text-lg font-semibold">Appel · {creneau.matiere_classe.matieres?.nom ?? "Cours"}</h2>
           <p className="text-sm text-slate-600">
-            {libelleClasse(creneau.matiere_classe.classes)} · {jour} · {creneau.heure_debut.slice(0, 5)}–{creneau.heure_fin.slice(0, 5)}
+            {libelleClasse(creneau.matiere_classe.classes)} · {jour} · {exception?.annule ? "Séance annulée" : `${seance.heure_debut.slice(0, 5)}–${seance.heure_fin.slice(0, 5)}`}
           </p>
         </div>
         <Button variant="secondary" onClick={fermer}>Fermer l’appel</Button>
@@ -43,9 +47,9 @@ export function AppelSeance({ creneau, jour, fermer }: { creneau: Creneau; jour:
         </Field>
         {date && !dateValide && <p className="mt-2 text-sm text-amber-800">Ce cours a lieu le {jour.toLowerCase()}.</p>}
       </div>
-      {(inscriptions.isError || appel.isError) && <p role="alert" className="text-sm text-red-700">Impossible de charger l’appel.</p>}
-      {dateValide && (inscriptions.isPending || appel.isPending) && <p role="status" className="text-sm text-slate-600">Chargement de la liste…</p>}
-      {dateValide && inscriptions.isSuccess && appel.isSuccess && (inscriptions.data.length > 0 ? (
+      {(exceptions.isError || inscriptions.isError || appel.isError) && <p role="alert" className="text-sm text-red-700">Impossible de charger l’appel.</p>}
+      {dateValide && (exceptions.isPending || (appelDisponible && (inscriptions.isPending || appel.isPending))) && <p role="status" className="text-sm text-slate-600">Chargement de la liste…</p>}
+      {appelDisponible && inscriptions.isSuccess && appel.isSuccess && (inscriptions.data.length > 0 ? (
         <FeuilleAppel
           key={date}
           creneauId={creneau.id}

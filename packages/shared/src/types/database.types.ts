@@ -237,6 +237,20 @@ export type Database = {
           },
         ]
       }
+      exceptions_creneaux: {
+        Row: { creneau_id: string; date: string; annule: boolean; heure_debut: string | null; heure_fin: string | null; salle: string | null }
+        Insert: { creneau_id: string; date: string; annule: boolean; heure_debut?: string | null; heure_fin?: string | null; salle?: string | null }
+        Update: { creneau_id?: string; date?: string; annule?: boolean; heure_debut?: string | null; heure_fin?: string | null; salle?: string | null }
+        Relationships: [
+          {
+            foreignKeyName: "exceptions_creneaux_creneau_id_fkey"
+            columns: ["creneau_id"]
+            isOneToOne: false
+            referencedRelation: "creneaux"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appels_seances: {
         Row: { creneau_id: string; date: string; version: number }
         Insert: { creneau_id: string; date: string; version?: number }
@@ -1301,6 +1315,10 @@ export type Database = {
       }
     }
     Functions: {
+      planifier_exception_creneau: {
+        Args: { p_creneau_id: string; p_date: string; p_action: string; p_debut: string | null; p_fin: string | null; p_salle: string | null }
+        Returns: undefined
+      }
       enregistrer_appel_seance: {
         Args: { p_creneau_id: string; p_date: string; p_version: number; p_presences: Json }
         Returns: undefined

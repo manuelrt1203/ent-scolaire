@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { libelleClasse, useAuth, getClasses, getMatiereClasses, getAffectations, useCreneaux, useCreateCreneau, useDeleteCreneau, useUpdateCreneau } from "@ent/shared";
+import { ExceptionSeance } from "./ExceptionSeance";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { Field, Input, Select } from "../../components/ui/Field";
@@ -10,6 +11,7 @@ const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 export function EmploiDuTempsScreen() {
   const { client } = useAuth();
   const [classeId, setClasseId] = useState("");
+  const [exceptionId, setExceptionId] = useState<string | null>(null);
   const [editionId, setEditionId] = useState<string | null>(null);
   const [matiereClasseId, setMatiereClasseId] = useState("");
   const [professeurId, setProfesseurId] = useState("");
@@ -22,6 +24,7 @@ export function EmploiDuTempsScreen() {
   const mcQuery = useQuery({ queryKey: ["matiere-classes", classeId], queryFn: () => getMatiereClasses(client, classeId), enabled: Boolean(classeId) });
   const affectationsQuery = useQuery({ queryKey: ["affectations"], queryFn: () => getAffectations(client) });
   const creneauxQuery = useCreneaux(client, classeId ? { classeId } : undefined);
+  const creneauException = creneauxQuery.data?.find(({ id }) => id === exceptionId);
   const createCreneau = useCreateCreneau(client);
   const updateCreneau = useUpdateCreneau(client);
   const deleteCreneau = useDeleteCreneau(client);
@@ -71,6 +74,7 @@ export function EmploiDuTempsScreen() {
         <Field label="Classe">
           <Select aria-label="Classe" value={classeId} disabled={mutationEnCours} onChange={(event) => {
             setClasseId(event.target.value);
+            setExceptionId(null);
             annulerEdition();
           }}>
             <option value="">Choisir une classe</option>
@@ -83,6 +87,7 @@ export function EmploiDuTempsScreen() {
 
       {classeId && (
         <>
+          {creneauException && <ExceptionSeance key={creneauException.id} creneau={creneauException} fermer={() => setExceptionId(null)} />}
           <Card className="mb-8 p-4">
             <h2 className="mb-3 text-lg font-semibold">{editionId ? "Modifier le cours" : "Ajouter un cours"}</h2>
             <form onSubmit={handleSubmit} className="flex flex-wrap items-end gap-3">
@@ -160,7 +165,9 @@ export function EmploiDuTempsScreen() {
                     <td className="px-4 py-2 text-slate-500">{c.professeur?.prenom} {c.professeur?.nom}</td>
                     <td className="px-4 py-2 text-slate-500">{c.salle ?? "—"}</td>
                     <td className="px-4 py-2 text-right">
-                      <Button variant="ghost" disabled={mutationEnCours} onClick={() => {
+                      <Button variant="ghost" disabled={mutationEnCours} onClick={() => setExceptionId(c.id)}>Modifier une séance</Button>
+                      <Button variant="ghost" className="ml-2" disabled={mutationEnCours} onClick={() => {
+                        setExceptionId(null);
                         setEditionId(c.id);
                         setMatiereClasseId(c.matiere_classe_id);
                         setProfesseurId(c.professeur_id);

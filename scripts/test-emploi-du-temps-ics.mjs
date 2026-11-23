@@ -65,4 +65,20 @@ console.log("\n=== Plusieurs créneaux -> plusieurs VEVENT ===");
   console.log("OK: un VEVENT généré par créneau");
 }
 
+{
+  const ics = buildEmploiDuTempsIcs(
+    [{ id: "maths", jour_semaine: 2, heure_debut: "08:00", heure_fin: "09:00", salle: "A1", matiere: "Maths" }],
+    anneeScolaire,
+    [
+      { creneau_id: "maths", date: "2026-11-24", annule: false, heure_debut: "10:00", heure_fin: "11:00", salle: "B2" },
+      { creneau_id: "maths", date: "2026-12-01", annule: true, heure_debut: null, heure_fin: null, salle: null },
+    ],
+  );
+  assert.match(ics, /EXDATE:20261201T080000/);
+  assert.match(ics, /RECURRENCE-ID:20261124T080000\r\nDTSTART:20261124T100000\r\nDTEND:20261124T110000\r\nSUMMARY:Maths \(B2\)\r\nLOCATION:B2/);
+  assert.equal((ics.match(/UID:maths@ent-scolaire/g) ?? []).length, 2);
+  assert.equal((ics.match(/RRULE:/g) ?? []).length, 1);
+  console.log("OK: séance déplacée et séance annulée exportées.");
+}
+
 console.log("\n=== EMPLOI DU TEMPS (.ics) VÉRIFIÉ AVEC SUCCÈS ===");

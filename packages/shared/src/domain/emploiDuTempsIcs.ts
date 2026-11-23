@@ -17,53 +17,78 @@ export interface CreneauPourIcs {
   detail?: string | null;
 }
 
-function pad(n: number) {
-  return String(n).padStart(2, "0");
+export interface ExceptionPourIcs {
+  creneau_id: string;
+  date: string;
+  annule: boolean;
+  heure_debut: string | null;
+  heure_fin: string | null;
+  salle: string | null;
 }
 
-function formatDateIcs(date: Date) {
-  return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}T${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+function dateHeureIcs(date: string, heure: string) {
+  const [h, m, s = "00"] = heure.split(":");
+  return `${date.replaceAll("-", "")}T${h}${m}${s.slice(0, 2)}`;
 }
 
-function premiereOccurrence(dateDebutAnnee: Date, jourSemaine: number, heure: string) {
-  const [h, m, s] = heure.split(":").map(Number);
-  const d = new Date(dateDebutAnnee);
-  const diff = (jourSemaine - d.getDay() + 7) % 7;
-  d.setDate(d.getDate() + diff);
-  d.setHours(h, m, s ?? 0, 0);
-  return d;
+function premiereOccurrence(dateDebutAnnee: string, jourSemaine: number) {
+  const date = new Date(`${dateDebutAnnee}T00:00:00Z`);
+  date.setUTCDate(date.getUTCDate() + (jourSemaine - date.getUTCDay() + 7) % 7);
+  return date.toISOString().slice(0, 10);
 }
 
 function echapperTexte(texte: string) {
-  return texte.replace(/([,;])/g, "\\$1");
+  return texte.replace(/([\\,;])/g, "\\$1").replace(/\r\n|\r|\n/g, "\\n");
+}
+
+function ajouterDetails(lignes: string[], creneau: CreneauPourIcs, salle = creneau.salle) {
+  lignes.push(`SUMMARY:${echapperTexte(creneau.matiere + (salle ? ` (${salle})` : ""))}`);
+  if (salle) lignes.push(`LOCATION:${echapperTexte(salle)}`);
+  if (creneau.detail) lignes.push(`DESCRIPTION:${echapperTexte(creneau.detail)}`);
+  lignes.push("END:VEVENT");
 }
 
 export function buildEmploiDuTempsIcs(
   creneaux: CreneauPourIcs[],
   anneeScolaire: { date_debut: string; date_fin: string },
+  exceptions: ExceptionPourIcs[] = [],
 ) {
-  const dateDebut = new Date(anneeScolaire.date_debut);
-  const dateFin = new Date(anneeScolaire.date_fin);
-  dateFin.setHours(23, 59, 59, 0);
-  const until = formatDateIcs(dateFin);
-
+  const until = dateHeureIcs(anneeScolaire.date_fin, "23:59:59");
+  const dtstamp = new Date().toISOString().replace(/[-:]|\.\d{3}/g, "");
   const lignes = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//ENT Scolaire//Emploi du temps//FR", "CALSCALE:GREGORIAN"];
 
   for (const c of creneaux) {
-    const debut = premiereOccurrence(dateDebut, c.jour_semaine, c.heure_debut);
-    const fin = premiereOccurrence(dateDebut, c.jour_semaine, c.heure_fin);
-    const resume = echapperTexte(c.matiere + (c.salle ? ` (${c.salle})` : ""));
-
+    const premiereDate = premiereOccurrence(anneeScolaire.date_debut, c.jour_semaine);
+    if (premiereDate > anneeScolaire.date_fin) continue;
+    const ponctuelles = exceptions.filter((exception) =>
+      exception.creneau_id === c.id && exception.date >= premiereDate && exception.date <= anneeScolaire.date_fin
+    );
+    const uid = `UID:${c.id}@ent-scolaire`;
     lignes.push(
       "BEGIN:VEVENT",
-      `UID:${c.id}@ent-scolaire`,
-      `DTSTART:${formatDateIcs(debut)}`,
-      `DTEND:${formatDateIcs(fin)}`,
+      uid,
+      `DTSTAMP:${dtstamp}`,
+      `DTSTART:${dateHeureIcs(premiereDate, c.heure_debut)}`,
+      `DTEND:${dateHeureIcs(premiereDate, c.heure_fin)}`,
       `RRULE:FREQ=WEEKLY;UNTIL=${until}`,
-      `SUMMARY:${resume}`,
     );
-    if (c.detail) lignes.push(`DESCRIPTION:${echapperTexte(c.detail)}`);
-    lignes.push("END:VEVENT");
+    for (const exception of ponctuelles) {
+      if (exception.annule) lignes.push(`EXDATE:${dateHeureIcs(exception.date, c.heure_debut)}`);
+    }
+    ajouterDetails(lignes, c);
+
+    for (const exception of ponctuelles) {
+      if (exception.annule || !exception.heure_debut || !exception.heure_fin) continue;
+      lignes.push(
+        "BEGIN:VEVENT",
+        uid,
+        `DTSTAMP:${dtstamp}`,
+        `RECURRENCE-ID:${dateHeureIcs(exception.date, c.heure_debut)}`,
+        `DTSTART:${dateHeureIcs(exception.date, exception.heure_debut)}`,
+        `DTEND:${dateHeureIcs(exception.date, exception.heure_fin)}`,
+      );
+      ajouterDetails(lignes, c, exception.salle);
+    }
   }
 
   lignes.push("END:VCALENDAR");

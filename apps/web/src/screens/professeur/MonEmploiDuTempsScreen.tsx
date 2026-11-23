@@ -1,16 +1,19 @@
+import { SemainePlanning, useSemainePlanning } from "../../components/SemainePlanning";
 import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { useAuth, useCreneaux, getAnneeScolaireActive, buildEmploiDuTempsIcs } from "@ent/shared";
+import { useAuth, useCreneaux, usePlanningSemaine, dateCreneauSemaine, getAnneeScolaireActive } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
 import { Card, EmptyState, PageHeader } from "../../components/ui/Card";
 import { AppelSeance } from "./AppelSeance";
-import { telechargerFichierTexte } from "../../lib/telechargerFichier";
+import { useExporterEmploiDuTemps } from "../../lib/useExporterEmploiDuTemps";
 
 const JOURS = ["Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"];
 
 export function MonEmploiDuTempsScreen() {
   const { client, profile } = useAuth();
   const creneauxQuery = useCreneaux(client);
+  const lundi = useSemainePlanning();
+  const planning = usePlanningSemaine(client, creneauxQuery.data ?? [], lundi);
   const [parametres, setParametres] = useSearchParams();
   const creneauAppel = creneauxQuery.data?.find(({ id, professeur_id }) =>
     id === parametres.get("appel") && professeur_id === profile?.id
@@ -30,10 +33,12 @@ export function MonEmploiDuTempsScreen() {
     enabled: Boolean(profile),
   });
 
+  const exportIcs = useExporterEmploiDuTemps();
+
   function handleExporterIcs() {
     if (!creneauxQuery.data || !anneeQuery.data) return;
-    const ics = buildEmploiDuTempsIcs(
-      creneauxQuery.data.map((c) => ({
+    exportIcs.mutate({
+      creneaux: creneauxQuery.data.map((c) => ({
         id: c.id,
         jour_semaine: c.jour_semaine,
         heure_debut: c.heure_debut,
@@ -42,9 +47,8 @@ export function MonEmploiDuTempsScreen() {
         matiere: c.matiere_classe?.matieres?.nom ?? "Cours",
         detail: c.matiere_classe?.classes?.nom,
       })),
-      anneeQuery.data,
-    );
-    telechargerFichierTexte(ics, "emploi-du-temps.ics", "text/calendar");
+      annee: anneeQuery.data,
+    });
   }
 
   return (
@@ -54,17 +58,24 @@ export function MonEmploiDuTempsScreen() {
         <Button
           variant="secondary"
           onClick={handleExporterIcs}
-          disabled={!creneauxQuery.data?.length || !anneeQuery.data}
+          disabled={!creneauxQuery.data?.length || !anneeQuery.data || exportIcs.isPending}
         >
-          Exporter (.ics)
+          {exportIcs.isPending ? "Export en cours…" : "Exporter (.ics)"}
         </Button>
       </div>
+      {exportIcs.isError && <p role="alert" className="mb-3 text-sm text-red-700">Impossible d’exporter l’emploi du temps. Réessayez.</p>}
+      <SemainePlanning lundi={lundi} />
       {creneauAppel && (
-        <AppelSeance key={creneauAppel.id} creneau={creneauAppel}
+        <AppelSeance key={`${creneauAppel.id}-${lundi}`} creneau={creneauAppel}
+          dateInitiale={dateCreneauSemaine(lundi, creneauAppel.jour_semaine)}
           jour={JOURS[creneauAppel.jour_semaine - 1]} fermer={() => afficherAppel(null)} />
       )}
       <Card className="overflow-x-auto">
-        {creneauxQuery.data?.length ? (
+        {creneauxQuery.isError || planning.isError ? (
+          <EmptyState message="Impossible de charger l’emploi du temps." />
+        ) : creneauxQuery.isPending || planning.isPending ? (
+          <EmptyState message="Chargement de l’emploi du temps…" />
+        ) : planning.seances.length ? (
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
               <tr>
@@ -77,15 +88,17 @@ export function MonEmploiDuTempsScreen() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {creneauxQuery.data.map((c) => (
+              {planning.seances.map((c) => (
                 <tr key={c.id}>
                   <td className="px-4 py-2 text-slate-900">{JOURS[c.jour_semaine - 1]}</td>
-                  <td className="px-4 py-2 text-slate-500">{c.heure_debut.slice(0, 5)} – {c.heure_fin.slice(0, 5)}</td>
+                  <td className="px-4 py-2 text-slate-500">{c.annule ? <span className="font-medium text-red-700">Séance annulée</span> : `${c.heure_debut.slice(0, 5)} – ${c.heure_fin.slice(0, 5)}`}
+                    {c.modifie && <span className="block text-xs text-amber-800">Séance modifiée</span>}
+                  </td>
                   <td className="px-4 py-2 text-slate-500">{c.matiere_classe?.matieres?.nom}</td>
                   <td className="px-4 py-2 text-slate-500">{c.matiere_classe?.classes?.nom}</td>
-                  <td className="px-4 py-2 text-slate-500">{c.salle ?? "—"}</td>
+                  <td className="px-4 py-2 text-slate-500">{(c.annule ? null : c.salle) ?? "—"}</td>
                   <td className="px-4 py-2">
-                    {c.professeur_id === profile?.id && (
+                    {!c.annule && c.professeur_id === profile?.id && (
                       <Button variant="secondary" className="whitespace-nowrap" onClick={() => afficherAppel(c.id)}>
                         Faire l’appel
                       </Button>

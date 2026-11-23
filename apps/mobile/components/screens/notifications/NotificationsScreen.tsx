@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FlatList, Pressable, Text, View } from "react-native";
+import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import { useAuth, useMarquerNotificationCommeLue, useMarquerToutesNotificationsCommeLues, useNotifications } from "@ent/shared";
 import { NAV } from "../../nav";
@@ -10,6 +11,7 @@ export function NotificationsScreen({ espace, choisirEnfant }: {
 }) {
   const { client } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const notifications = useNotifications(client);
   const marquerLue = useMarquerNotificationCommeLue(client);
   const toutMarquer = useMarquerToutesNotificationsCommeLues(client);
@@ -24,12 +26,16 @@ export function NotificationsScreen({ espace, choisirEnfant }: {
     const destination = NAV.find(({ segment }) => chemin === `/${espace}${segment}`);
     if (!destination) return;
 
-    const enfant = new URLSearchParams(recherche).get("enfant");
+    const params = new URLSearchParams(recherche);
+    const enfant = params.get("enfant");
     if (enfant && choisirEnfant && !choisirEnfant(enfant)) {
       setErreurLien("Le dossier de cet enfant n’est plus accessible.");
       return;
     }
-    router.push(`/(${espace})${destination.segment}` as never);
+    const pathname = `/(${espace})${destination.segment}` as never;
+    const semaine = destination.segment === "/emploi-du-temps" ? params.get("semaine") : null;
+    if (semaine) void queryClient.invalidateQueries({ queryKey: ["exceptions-creneaux"] });
+    router.push(semaine ? { pathname, params: { semaine } } : pathname);
   }
 
   return (

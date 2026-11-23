@@ -1,4 +1,5 @@
 import type { EntSupabaseClient } from "../supabase/createClient";
+import { appliquerExceptionCreneau } from "./emploiDuTemps";
 import { libelleClasse } from "../domain/classe";
 import type { Tables, TablesInsert } from "../types/database.types";
 
@@ -7,11 +8,16 @@ export type VieScolaireEvenement = Tables<"vie_scolaire_evenements">;
 export async function getVieScolaireEleve(client: EntSupabaseClient, eleveId: string) {
   const { data, error } = await client
     .from("vie_scolaire_evenements")
-    .select("*, creneau:creneaux!creneau_id(heure_debut, heure_fin, matiere_classe(matieres(nom), classes(nom, niveau, serie)))")
+    .select("*, creneau:creneaux!creneau_id(heure_debut, heure_fin, salle, exceptions_creneaux(*), matiere_classe(matieres(nom), classes(nom, niveau, serie)))")
     .eq("eleve_id", eleveId)
     .order("date", { ascending: false });
   if (error) throw error;
-  return data;
+  return data.map(({ creneau, ...evenement }) => {
+    if (!creneau) return { ...evenement, creneau: null };
+    const { exceptions_creneaux, ...cours } = creneau;
+    const exception = exceptions_creneaux?.find(({ date }) => date === evenement.date);
+    return { ...evenement, creneau: appliquerExceptionCreneau(cours, exception) };
+  });
 }
 
 export function libelleSeanceVieScolaire(creneau: Awaited<ReturnType<typeof getVieScolaireEleve>>[number]["creneau"]): string {

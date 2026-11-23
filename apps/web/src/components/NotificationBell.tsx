@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import {
   useAuth,
@@ -24,6 +25,7 @@ function formatRelatif(iso: string) {
 export function NotificationBell() {
   const { client } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [ouvert, setOuvert] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -43,7 +45,11 @@ export function NotificationBell() {
   function handleClickNotification(n: { id: string; lu: boolean; lien: string | null }) {
     if (!n.lu) marquerLue.mutate(n.id);
     setOuvert(false);
-    if (n.lien) navigate(n.lien);
+    if (!n.lien) return;
+    if (n.lien.split("?")[0].endsWith("/emploi-du-temps")) {
+      void queryClient.invalidateQueries({ queryKey: ["exceptions-creneaux"] });
+    }
+    navigate(n.lien);
   }
 
   return (
