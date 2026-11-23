@@ -79,6 +79,15 @@ const FORMATS_JUSTIFICATIF = [
   { mime: "image/heif", extensions: ["heif"] },
 ];
 
+export const TYPES_MIME_JUSTIFICATIF = FORMATS_JUSTIFICATIF.map(({ mime }) => mime);
+
+export type FichierJustificatif = (Blob & { name?: string }) | {
+  donnees: ArrayBuffer;
+  name: string;
+  type: string;
+  uuid: string;
+};
+
 export const FORMATS_JUSTIFICATIF_ACCEPTES = FORMATS_JUSTIFICATIF
   .flatMap(({ mime, extensions }) => [mime, ...extensions.map((extension) => `.${extension}`)])
   .join(",");
@@ -86,25 +95,26 @@ export const FORMATS_JUSTIFICATIF_ACCEPTES = FORMATS_JUSTIFICATIF
 /** Élève concerné ou l'un de ses parents uniquement (policies storage +
  * vérification côté RPC). L'écriture de la colonne passe par la RPC
  * ajouter_justificatif_absence plutôt qu'un update direct de la table, qui
- * n'autorise que la direction (voir migration 0012). */
+ * n'autorise que la direction. */
 export async function uploaderJustificatifAbsence(
   client: EntSupabaseClient,
   vieScolaireId: string,
-  file: File | Blob,
+  file: FichierJustificatif,
 ) {
-  const extension = typeof File !== "undefined" && file instanceof File
-    ? file.name.split(".").pop()?.toLowerCase()
-    : undefined;
+  const extension = file.name?.split(".").pop()?.toLowerCase();
   const format = FORMATS_JUSTIFICATIF.find(({ mime, extensions }) =>
     file.type && file.type !== "application/octet-stream"
       ? file.type === mime
       : Boolean(extension && extensions.includes(extension))
   );
   if (!format) throw new Error("Choisissez une photo (JPG, PNG, WebP, HEIC ou HEIF) ou un fichier PDF.");
-  if (file.size === 0) throw new Error("Le fichier est vide. Choisissez une autre photo ou un autre PDF.");
+  const taille = "donnees" in file ? file.donnees.byteLength : file.size;
+  if (taille === 0) throw new Error("Le fichier est vide. Choisissez une autre photo ou un autre PDF.");
 
-  const chemin = `${vieScolaireId}/${crypto.randomUUID()}.${format.extensions[0]}`;
-  const { error: uploadError } = await client.storage.from(BUCKET_JUSTIFICATIFS).upload(chemin, file.slice(0, file.size, format.mime), {
+  const uuid = "donnees" in file ? file.uuid : crypto.randomUUID();
+  const chemin = `${vieScolaireId}/${uuid}.${format.extensions[0]}`;
+  const contenu = "donnees" in file ? file.donnees : file.slice(0, file.size, format.mime);
+  const { error: uploadError } = await client.storage.from(BUCKET_JUSTIFICATIFS).upload(chemin, contenu, {
     contentType: format.mime,
   });
   if (uploadError) throw uploadError;

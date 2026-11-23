@@ -9,6 +9,7 @@ import {
   examinerJustificatif,
   deleteEvenementVieScolaire,
   uploaderJustificatifAbsence,
+  type FichierJustificatif,
 } from "../api/vieScolaire";
 
 export function useVieScolaireEleve(client: EntSupabaseClient, eleveId: string | null) {
@@ -64,7 +65,7 @@ export function useExaminerJustificatif(client: EntSupabaseClient) {
 export function useUploaderJustificatifAbsence(client: EntSupabaseClient) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ vieScolaireId, file }: { vieScolaireId: string; file: File | Blob }) =>
+    mutationFn: ({ vieScolaireId, file }: { vieScolaireId: string; file: FichierJustificatif }) =>
       uploaderJustificatifAbsence(client, vieScolaireId, file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["vie-scolaire-eleve"] });
