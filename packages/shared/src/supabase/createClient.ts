@@ -15,20 +15,21 @@ export interface CreateClientOptions {
   /** Requis côté React Native (AsyncStorage). Omis côté Electron : le renderer
    * est un environnement DOM, supabase-js utilise localStorage par défaut. */
   storage?: StorageLike;
+  persistSession?: boolean;
 }
 
-export function createClient({ url, anonKey, storage }: CreateClientOptions): EntSupabaseClient {
+export function createClient({ url, anonKey, storage, persistSession = true }: CreateClientOptions): EntSupabaseClient {
   return createSupabaseClient<Database>(url, anonKey, {
     auth: storage
       ? {
           storage,
           autoRefreshToken: true,
-          persistSession: true,
+          persistSession,
           detectSessionInUrl: false,
         }
       : {
           autoRefreshToken: true,
-          persistSession: true,
+          persistSession,
         },
   });
 }

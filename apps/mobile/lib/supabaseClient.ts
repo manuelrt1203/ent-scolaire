@@ -11,4 +11,5 @@ export const supabase = createClient({
   url: process.env.EXPO_PUBLIC_SUPABASE_URL!,
   anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
   storage: AsyncStorage,
+  persistSession: process.env.EXPO_PUBLIC_ENT_TEST_PIXEL !== "1",
 });

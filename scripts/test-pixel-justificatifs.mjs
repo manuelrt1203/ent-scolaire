@@ -145,7 +145,7 @@ serveur.listen(port, adresse, () => {
   if (usb) console.log(`Dans Expo Go, ouvrez exp://127.0.0.1:${portExpo} (ou scannez le QR code).`);
   const expo = spawn("npx", ["expo", "start", "--go", ...optionsExpo], {
     cwd, stdio: "inherit",
-    env: { ...process.env, REACT_NATIVE_PACKAGER_HOSTNAME: adresse, EXPO_PUBLIC_SUPABASE_URL: url, EXPO_PUBLIC_SUPABASE_ANON_KEY: "cle-fictive" },
+    env: { ...process.env, REACT_NATIVE_PACKAGER_HOSTNAME: adresse, EXPO_PUBLIC_SUPABASE_URL: url, EXPO_PUBLIC_SUPABASE_ANON_KEY: "cle-fictive", EXPO_PUBLIC_ENT_TEST_PIXEL: "1" },
   });
   expo.on("error", (error) => { console.error(error.message); serveur.close(); process.exitCode = 1; });
   expo.on("exit", (code) => { serveur.close(); process.exitCode = code ?? 0; });
