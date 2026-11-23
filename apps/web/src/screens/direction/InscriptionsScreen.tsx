@@ -12,6 +12,7 @@ import {
   getAnneeScolaireActive,
   getAnneesScolaires,
   getBulletin,
+  getElevesAvecBulletinClasse,
   getDetailsBulletin,
   getDecisionConseilPubliee,
   getEtablissement,
@@ -154,11 +155,30 @@ export function InscriptionsScreen() {
 
   const classesPeriode = classesQuery.data?.filter((classe) => classe.annee_scolaire_id === periodeBulletin?.annee_scolaire_id) ?? [];
 
+  const classeBulletin = classesPeriode.find(({ id }) => id === classeBulletinId);
+  const apercuBulletins = useQuery({
+    queryKey: ["inscriptions", "apercu-bulletins", classeBulletin?.id, periodeBulletin?.id],
+    queryFn: async () => {
+      if (!classeBulletin || !periodeBulletin) return [];
+      const { id: classeId, annee_scolaire_id: anneeId } = classeBulletin;
+      const [inscriptions, elevesAvecBulletin] = await Promise.all([
+        getInscriptionsClasseAnnee(client, classeId, anneeId),
+        getElevesAvecBulletinClasse(client, classeId, anneeId, periodeBulletin.id),
+      ]);
+      return inscriptions.map((inscription) => ({
+        id: inscription.id,
+        nom: [inscription.profiles?.nom, inscription.profiles?.prenom].filter(Boolean).join(" "),
+        disponible: elevesAvecBulletin.has(inscription.eleve_id),
+      })).sort((a, b) => a.nom.localeCompare(b.nom, "fr"));
+    },
+    enabled: Boolean(classeBulletin && periodeBulletin),
+  });
+  const disponibles = apercuBulletins.data?.filter(({ disponible }) => disponible).length ?? 0;
+
   async function chargerBulletin(
     inscription: Awaited<ReturnType<typeof getInscriptions>>[number],
     periode: NonNullable<typeof periodeBulletin>,
     etablissementNom: string,
-    filtreClasse?: string,
     inclureDecision = true,
   ): Promise<BulletinHtmlInput> {
     const [lignes, details, decisionConseil] = await Promise.all([
@@ -166,16 +186,16 @@ export function InscriptionsScreen() {
       getDetailsBulletin(client, inscription.eleve_id, periode.id),
       inclureDecision ? getDecisionConseilPubliee(client, inscription.eleve_id, periode.id) : null,
     ]);
-    const detailsClasse = filtreClasse
-      ? details.filter((note) => note.releves_notes?.matiere_classe?.classes?.id === filtreClasse)
-      : details;
+    const detailsClasse = details.filter((note) =>
+      note.releves_notes?.matiere_classe?.classes?.id === inscription.classe_id
+    );
     const matieres = new Set(detailsClasse.map((note) => note.releves_notes?.matiere_classe_id));
     return {
       etablissementNom,
       eleveNom: inscription.profiles?.nom ?? "",
       elevePrenom: inscription.profiles?.prenom ?? "",
       periodeNom: periode.nom,
-      lignes: filtreClasse ? lignes.filter((ligne) => ligne.matiere_classe_id != null && matieres.has(ligne.matiere_classe_id)) : lignes,
+      lignes: lignes.filter((ligne) => ligne.matiere_classe_id != null && matieres.has(ligne.matiere_classe_id)),
       details: detailsClasse,
       decisionConseil,
     };
@@ -199,13 +219,13 @@ export function InscriptionsScreen() {
     await preparerDocument(() => imprimerBulletin(async () => {
       const etablissement = await getEtablissement(client, profile.etablissement_id);
       const bulletin = await chargerBulletin(inscription, periodeBulletin, etablissement.nom);
-      if (!bulletin.lignes.length) throw new Error("Aucune note publiée pour cet élève sur cette période.");
+      if (!bulletin.lignes.some(({ moyenne }) => moyenne != null)) throw new Error("Aucune note publiée pour cet élève sur cette période.");
       return buildBulletinHtml(bulletin);
     }));
   }
 
   async function handleBulletinsClasse(format: "impression" | "csv") {
-    const classe = classesPeriode.find(({ id }) => id === classeBulletinId);
+    const classe = classeBulletin;
     if (!profile || !periodeBulletin || !classe || impressionEnCours) return;
 
     const chargerClasse = async () => {
@@ -221,7 +241,7 @@ export function InscriptionsScreen() {
       const bulletins: BulletinHtmlInput[] = [];
       for (let debut = 0; debut < inscriptions.length; debut += 5) {
         const lot = await Promise.all(inscriptions.slice(debut, debut + 5).map((inscription) =>
-          chargerBulletin(inscription, periodeBulletin, etablissement?.nom ?? "", classe.id, format === "impression")));
+          chargerBulletin(inscription, periodeBulletin, etablissement?.nom ?? "", format === "impression")));
         bulletins.push(...lot.filter((bulletin) => bulletin.lignes.some((ligne) => ligne.moyenne != null)));
       }
       if (!bulletins.length) throw new Error("Aucune note publiée pour cette classe sur cette période.");
@@ -290,7 +310,7 @@ export function InscriptionsScreen() {
 
       <div className="mb-3 max-w-xs">
         <Field label="Période des bulletins">
-          <Select value={periodeBulletinId} onChange={(event) => { setPeriodeBulletinId(event.target.value); setClasseBulletinId(""); setBilanImpression(""); setErreurBulletin(""); setDecisionInscriptionId(null); remiseMutation.reset(); }} disabled={impressionEnCours}>
+          <Select aria-label="Période des bulletins" value={periodeBulletinId} onChange={(event) => { setPeriodeBulletinId(event.target.value); setClasseBulletinId(""); setBilanImpression(""); setErreurBulletin(""); setDecisionInscriptionId(null); remiseMutation.reset(); }} disabled={impressionEnCours}>
             <option value="">Choisir une période</option>
             {periodesQuery.data?.map((periode) => (
               <option key={periode.id} value={periode.id}>{periode.nom}</option>
@@ -301,7 +321,7 @@ export function InscriptionsScreen() {
       {periodeBulletin && (
         <div className="mb-3 flex flex-wrap items-end gap-3">
           <Field label="Classe des bulletins et résultats">
-            <Select value={classeBulletinId} onChange={(event) => { setClasseBulletinId(event.target.value); setBilanImpression(""); setErreurBulletin(""); }} disabled={impressionEnCours}>
+            <Select aria-label="Classe des bulletins et résultats" value={classeBulletinId} onChange={(event) => { setClasseBulletinId(event.target.value); setBilanImpression(""); setErreurBulletin(""); }} disabled={impressionEnCours}>
               <option value="">Choisir une classe</option>
               {classesPeriode.map((classe) => (
                 <option key={classe.id} value={classe.id}>
@@ -318,6 +338,35 @@ export function InscriptionsScreen() {
           </Button>
           {impressionEnCours && <p role="status" className="text-sm text-slate-600">Préparation…</p>}
         </div>
+      )}
+      {classeBulletin && (
+        <Card className="mb-4 p-4">
+          <h2 className="text-sm font-semibold">Bulletins disponibles — {libelleClasse(classeBulletin)}</h2>
+          {apercuBulletins.isPending && <p role="status" className="mt-2 text-sm text-slate-600">Chargement de l’aperçu…</p>}
+          {apercuBulletins.isError && <p role="alert" className="mt-2 text-sm text-red-700">Impossible de charger l’aperçu des bulletins.</p>}
+          {apercuBulletins.data && (
+            apercuBulletins.data.length === 0 ? <p className="mt-2 text-sm text-slate-600">Aucun élève inscrit dans cette classe.</p> : (
+              <>
+                <p role="status" className="mt-2 text-sm text-slate-600">
+                  {disponibles} sur {apercuBulletins.data.length} élèves ont au moins un résultat publié.
+                </p>
+                <details className="mt-2 text-sm">
+                  <summary className="w-fit cursor-pointer font-medium text-ent-accent">Voir les élèves</summary>
+                  <ul className="mt-2 divide-y divide-slate-200">
+                    {apercuBulletins.data.map(({ id, nom, disponible }) => (
+                      <li key={id} className="flex flex-wrap justify-between gap-2 py-2">
+                        <span>{nom || "Élève"}</span>
+                        <span className={disponible ? "text-ent-accent" : "text-slate-600"}>
+                          {disponible ? "Bulletin disponible" : "Aucun résultat publié"}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              </>
+            )
+          )}
+        </Card>
       )}
       {bilanImpression && <p role="status" className="mb-3 text-sm text-slate-700">{bilanImpression}</p>}
       {periodeBulletin && decisionInscription && (

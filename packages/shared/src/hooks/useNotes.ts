@@ -3,6 +3,7 @@ import type { EntSupabaseClient } from "../supabase/createClient";
 import type { ReleveNotes } from "../api/notes";
 import {
   getMesAffectations,
+  getRelevesRenvoyes,
   getReleveOrCreate,
   getReleveById,
   getNotesForReleve,
@@ -24,6 +25,14 @@ export function usePeriodes(client: EntSupabaseClient) {
 
 export function useMesAffectations(client: EntSupabaseClient) {
   return useQuery({ queryKey: ["mes-affectations"], queryFn: () => getMesAffectations(client) });
+}
+
+export function useRelevesRenvoyes(client: EntSupabaseClient, professeurId: string | undefined, matiereClasseIds: string[]) {
+  return useQuery({
+    queryKey: ["releves-renvoyes", professeurId, matiereClasseIds],
+    queryFn: () => getRelevesRenvoyes(client, matiereClasseIds),
+    enabled: Boolean(professeurId && matiereClasseIds.length),
+  });
 }
 
 export function useReleve(client: EntSupabaseClient, matiereClasseId: string | null, periodeId: string | null) {
@@ -53,6 +62,7 @@ export function useNotesForReleve(client: EntSupabaseClient, releveId: string | 
 export function useUpdateNoteValeur(client: EntSupabaseClient, releveId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
+    mutationKey: ["modifier-note", releveId],
     mutationFn: ({ noteId, valeur }: { noteId: string; valeur: number | null }) =>
       updateNoteValeur(client, noteId, valeur),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notes", releveId] }),
@@ -64,6 +74,7 @@ export function useSoumettreReleve(client: EntSupabaseClient) {
   return useMutation({
     mutationFn: (releveId: string) => soumettreReleve(client, releveId),
     onSuccess: (_data, releveId) => {
+      queryClient.invalidateQueries({ queryKey: ["releves-renvoyes"] });
       queryClient.invalidateQueries({ queryKey: ["releve"] });
       queryClient.invalidateQueries({ queryKey: ["notes", releveId] });
       queryClient.invalidateQueries({ queryKey: ["releves-direction"] });
@@ -89,6 +100,8 @@ export function useRejeterReleve(client: EntSupabaseClient) {
     mutationFn: ({ releveId, commentaire }: { releveId: string; commentaire: string }) =>
       rejeterReleve(client, releveId, commentaire),
     onSuccess: (_data, { releveId }) => {
+      queryClient.invalidateQueries({ queryKey: ["releve"] });
+      queryClient.invalidateQueries({ queryKey: ["releves-renvoyes"] });
       queryClient.invalidateQueries({ queryKey: ["releves-direction"] });
       queryClient.invalidateQueries({ queryKey: ["releve-by-id", releveId] });
     },
@@ -100,6 +113,7 @@ export function usePublierReleve(client: EntSupabaseClient) {
   return useMutation({
     mutationFn: (releveId: string) => publierReleve(client, releveId),
     onSuccess: (_data, releveId) => {
+      queryClient.invalidateQueries({ queryKey: ["inscriptions", "apercu-bulletins"] });
       queryClient.invalidateQueries({ queryKey: ["releves-direction"] });
       queryClient.invalidateQueries({ queryKey: ["releve-by-id", releveId] });
     },

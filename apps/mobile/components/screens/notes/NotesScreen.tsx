@@ -7,7 +7,7 @@ import {
   useAuth,
   usePeriodes,
   useBulletin,
-  useMoyenneGenerale,
+  moyenneBulletin,
   formatMoyenne,
   getDetailsBulletin,
   getDecisionConseilPubliee,
@@ -33,13 +33,13 @@ export function NotesScreen() {
   }, [periodesQuery.data, periodeId]);
 
   const bulletinQuery = useBulletin(client, eleveId, periodeId);
-  const moyenneGeneraleQuery = useMoyenneGenerale(client, eleveId, periodeId);
+  const moyennePubliee = moyenneBulletin(bulletinQuery.data ?? []);
 
   const [telechargementEnCours, setTelechargementEnCours] = useState(false);
   const [erreurBulletin, setErreurBulletin] = useState("");
 
   async function handleTelechargerBulletin() {
-    if (!eleveId || !periodeId || !profile || !bulletinQuery.data) return;
+    if (!eleveId || !periodeId || !profile || !bulletinQuery.data || moyennePubliee === null) return;
     setErreurBulletin("");
     setTelechargementEnCours(true);
     try {
@@ -91,11 +91,11 @@ export function NotesScreen() {
 
       <ScrollView className="flex-1 px-4 py-4">
         <View className="mb-4 rounded-xl bg-slate-900 p-5">
-          <Text className="text-sm text-slate-300">Moyenne générale</Text>
-          <Text className="text-3xl font-semibold tabular-nums text-white">{formatMoyenne(moyenneGeneraleQuery.data ?? null)}</Text>
+          <Text className="text-sm text-slate-300">Moyenne des matières publiées</Text>
+          <Text className="text-3xl font-semibold tabular-nums text-white">{formatMoyenne(moyennePubliee)}</Text>
         </View>
 
-        {bulletinQuery.data && bulletinQuery.data.length > 0 && (
+        {bulletinQuery.isSuccess && moyennePubliee !== null && (
           <Pressable
             onPress={handleTelechargerBulletin}
             disabled={telechargementEnCours}

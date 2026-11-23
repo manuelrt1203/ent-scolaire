@@ -155,6 +155,34 @@ export async function getRelevesForDirection(client: EntSupabaseClient, statuts?
   return data;
 }
 
+export async function getRelevesRenvoyes(client: EntSupabaseClient, matiereClasseIds: string[]) {
+  if (matiereClasseIds.length === 0) return [];
+  const { data, error } = await client
+    .from("releves_notes")
+    .select("id, matiere_classe_id, periode_id, commentaire_direction")
+    .in("matiere_classe_id", matiereClasseIds)
+    .eq("statut", "brouillon")
+    .not("commentaire_direction", "is", null)
+    .order("updated_at", { ascending: false });
+  if (error) throw error;
+  return data;
+}
+
+export async function getSuiviRelevesClasse(
+  client: EntSupabaseClient,
+  classeId: string,
+  anneeId: string,
+  periodeId: string,
+) {
+  const { data, error } = await client.from("matiere_classe")
+    .select("id, matieres(nom), releves_notes(id, statut)")
+    .eq("classe_id", classeId)
+    .eq("annee_scolaire_id", anneeId)
+    .eq("releves_notes.periode_id", periodeId);
+  if (error) throw error;
+  return data;
+}
+
 export async function getMoyenneMatiere(
   client: EntSupabaseClient,
   eleveId: string,
@@ -193,6 +221,34 @@ export async function getBulletin(client: EntSupabaseClient, eleveId: string, pe
   return data;
 }
 
+export async function getElevesAvecBulletinClasse(
+  client: EntSupabaseClient,
+  classeId: string,
+  anneeId: string,
+  periodeId: string,
+) {
+  const { data: matieres, error: erreurMatieres } = await client.from("matiere_classe")
+    .select("id").eq("classe_id", classeId).eq("annee_scolaire_id", anneeId);
+  if (erreurMatieres) throw erreurMatieres;
+  const eleves = new Set<string>();
+  if (!matieres.length) return eleves;
+
+  const matiereIds = matieres.map(({ id }) => id);
+  const taillePage = 100;
+  for (let debut = 0; ; debut += taillePage) {
+    const { data, error } = await client.from("v_bulletin").select("eleve_id")
+      .eq("periode_id", periodeId).eq("statut", "publiee")
+      .in("matiere_classe_id", matiereIds)
+      .not("moyenne", "is", null)
+      .order("eleve_id").order("matiere_classe_id").range(debut, debut + taillePage - 1);
+    if (error) throw error;
+    for (const { eleve_id } of data) {
+      if (eleve_id) eleves.add(eleve_id);
+    }
+    if (data.length < taillePage) return eleves;
+  }
+}
+
 /** Détail publié sur la période, avec la classe de chaque relevé. */
 export async function getDetailsBulletin(client: EntSupabaseClient, eleveId: string, periodeId: string) {
   const { data, error } = await client.from("notes")
@@ -218,7 +274,8 @@ export async function getNotesEleveMatiere(
     .select("*, releves_notes!inner(matiere_classe_id, periode_id, statut)")
     .eq("eleve_id", eleveId)
     .eq("releves_notes.matiere_classe_id", matiereClasseId)
-    .eq("releves_notes.periode_id", periodeId);
+    .eq("releves_notes.periode_id", periodeId)
+    .eq("releves_notes.statut", "publiee");
   if (error) throw error;
   return data;
 }

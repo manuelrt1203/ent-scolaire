@@ -1,11 +1,10 @@
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useAuth, useNotesEleveMatiere } from "@ent/shared";
 import { useViewedEleveId } from "../../lib/ViewedEleveContext";
 import { Card, EmptyState } from "../../components/ui/Card";
 
 export function MatiereDetailScreen() {
   const { client } = useAuth();
-  const navigate = useNavigate();
   const eleveId = useViewedEleveId();
   const { matiereClasseId } = useParams<{ matiereClasseId: string }>();
   const [searchParams] = useSearchParams();
@@ -15,11 +14,17 @@ export function MatiereDetailScreen() {
 
   return (
     <div className="max-w-2xl">
-      <button onClick={() => navigate(-1)} className="mb-6 text-xs text-slate-500 hover:text-ent-accent hover:underline">
-        ← Retour
-      </button>
+      <Link
+        to={{ pathname: "../notes", search: periodeId ? new URLSearchParams({ periode: periodeId }).toString() : "" }}
+        className="mb-6 inline-block text-sm font-semibold text-ent-accent hover:underline"
+      >
+        ← Retour aux notes
+      </Link>
+      {!periodeId && <EmptyState message="Choisissez une période dans vos notes pour consulter cette matière." />}
+      {notesQuery.isError && <p role="alert" className="text-sm text-red-700">Impossible de charger les notes de cette matière.</p>}
+      {eleveId && periodeId && notesQuery.isPending && <p role="status" className="text-sm text-slate-600">Chargement des notes…</p>}
       <div className="space-y-2">
-        {notesQuery.data?.map((n: any) => (
+        {notesQuery.data?.map((n) => (
           <Card key={n.id} className="flex items-center justify-between p-4">
             <span className="text-sm text-slate-700">{n.libelle ?? "Note"}</span>
             <span className="text-base font-semibold tabular-nums text-slate-900">

@@ -7,6 +7,7 @@ import {
   useMesAffectations,
   usePeriodes,
   useReleve,
+  useRelevesRenvoyes,
   useNotesForReleve,
   useUpdateNoteValeur,
   useSoumettreReleve,
@@ -26,16 +27,34 @@ export function SaisieNotesScreen() {
   const [matiereClasseId, setMatiereClasseId] = useState<string>("");
   const [periodeId, setPeriodeId] = useState<string>("");
 
-  const releveQuery = useReleve(client, matiereClasseId || null, periodeId || null);
+  const affectations = (affectationsQuery.data ?? []).flatMap((affectation) =>
+    affectation.professeur_id === profile?.id && affectation.matiere_classe ? [affectation.matiere_classe] : []
+  );
+  const renvoyes = useRelevesRenvoyes(client, profile?.id, affectations.map(({ id }) => id).sort());
+  const matiereClasse = affectations.find(({ id }) => id === matiereClasseId);
+  const periodes = (periodesQuery.data ?? []).filter(({ annee_scolaire_id }) =>
+    annee_scolaire_id === matiereClasse?.annee_scolaire_id
+  );
+  const periode = periodes.find(({ id }) => id === periodeId);
+  const corrections = (renvoyes.data ?? []).flatMap((releve) => {
+    const matiere = affectations.find(({ id }) => id === releve.matiere_classe_id);
+    const periode = periodesQuery.data?.find(({ id }) => id === releve.periode_id);
+    return matiere && periode && matiere.annee_scolaire_id === periode.annee_scolaire_id && releve.commentaire_direction?.trim()
+      ? [{ releve, matiere, periode }]
+      : [];
+  });
+
+  const releveQuery = useReleve(client, matiereClasse?.id ?? null, periode?.id ?? null);
   const releve = releveQuery.data;
   const notesQuery = useNotesForReleve(client, releve?.id ?? null);
   const updateNote = useUpdateNoteValeur(client, releve?.id ?? null);
   const soumettre = useSoumettreReleve(client);
 
+  const enregistrementNotes = useIsMutating({ mutationKey: ["modifier-note", releve?.id] }) > 0;
   const enregistrementEvaluations = useIsMutating({ mutationKey: ["evaluations-lycee", releve?.id] }) > 0;
   const notes = notesQuery.data ?? [];
   const isBrouillon = releve?.statut === "brouillon";
-  const classe = affectationsQuery.data?.find((a) => a.matiere_classe?.id === matiereClasseId)?.matiere_classe?.classes;
+  const classe = matiereClasse?.classes;
   const evaluationsLycee = (reglages.evaluationsLyceePilote && classe?.cycle === "lycee") || notes.some(aDesEvaluationsLycee);
   const toutesRemplies = notes.length > 0 && notes.every((note) => note.valeur !== null);
   const erreur = releveQuery.error ?? notesQuery.error ?? updateNote.error ?? soumettre.error;
@@ -51,14 +70,40 @@ export function SaisieNotesScreen() {
     <div className="max-w-3xl">
       <PageHeader title="Saisie des notes" description="Saisir et soumettre les notes de vos élèves." />
 
+      {renvoyes.isError && (
+        <p role="alert" className="mb-4 text-sm text-red-700">Impossible de charger les relevés à corriger.</p>
+      )}
+      {corrections.length > 0 && (
+        <Card className="mb-6 p-4">
+          <h2 className="mb-3 text-lg font-semibold">Relevés à corriger</h2>
+          <ul className="divide-y divide-slate-200">
+            {corrections.map(({ releve, matiere, periode }) => (
+              <li key={releve.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                <div>
+                  <p className="font-medium">{matiere.matieres?.nom} — {libelleClasse(matiere.classes)}</p>
+                  <p className="text-sm text-slate-600">{periode.nom}</p>
+                </div>
+                <Button onClick={() => {
+                  setMatiereClasseId(matiere.id);
+                  setPeriodeId(periode.id);
+                }}>Corriger</Button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
       <Card className="mb-6 flex flex-col gap-3 p-4 sm:flex-row">
         <div className="flex-1">
           <Field label="Matière / Classe">
-            <Select value={matiereClasseId} onChange={(e) => setMatiereClasseId(e.target.value)}>
+            <Select aria-label="Matière / Classe" value={matiereClasse?.id ?? ""} onChange={(e) => {
+              setMatiereClasseId(e.target.value);
+              setPeriodeId("");
+            }}>
               <option value="">—</option>
-              {affectationsQuery.data?.map((a: any) => (
-                <option key={a.matiere_classe.id} value={a.matiere_classe.id}>
-                  {a.matiere_classe.matieres?.nom} — {libelleClasse(a.matiere_classe.classes)}
+              {affectations.map((matiere) => (
+                <option key={matiere.id} value={matiere.id}>
+                  {matiere.matieres?.nom} — {libelleClasse(matiere.classes)}
                 </option>
               ))}
             </Select>
@@ -66,9 +111,9 @@ export function SaisieNotesScreen() {
         </div>
         <div className="flex-1">
           <Field label="Période">
-            <Select value={periodeId} onChange={(e) => setPeriodeId(e.target.value)}>
+            <Select aria-label="Période" disabled={!matiereClasse} value={periode?.id ?? ""} onChange={(e) => setPeriodeId(e.target.value)}>
               <option value="">—</option>
-              {periodesQuery.data?.map((p) => (
+              {periodes.map((p) => (
                 <option key={p.id} value={p.id}>{p.nom}</option>
               ))}
             </Select>
@@ -83,10 +128,15 @@ export function SaisieNotesScreen() {
             <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700">
               Statut : {getStatutLabel(releve.statut)}
             </span>
-            {releve.commentaire_direction && (
-              <span className="text-xs text-amber-700">Commentaire direction : {releve.commentaire_direction}</span>
-            )}
           </div>
+
+          {releve.commentaire_direction?.trim() && (
+            <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+              <h2 className="font-semibold">{isBrouillon ? "Relevé renvoyé par la direction" : "Commentaire de la direction"}</h2>
+              <p className="mt-1 whitespace-pre-wrap break-words">{releve.commentaire_direction}</p>
+              {isBrouillon && <p className="mt-2">Corrigez les notes, puis soumettez à nouveau le relevé.</p>}
+            </div>
+          )}
 
           {evaluationsLycee && (
             <p className="mb-3 text-sm text-slate-600">
@@ -133,8 +183,8 @@ export function SaisieNotesScreen() {
           </Card>
 
           {isBrouillon && (
-            <Button onClick={() => soumettre.mutate(releve.id)} disabled={!charge || !toutesRemplies || soumettre.isPending || updateNote.isPending || enregistrementEvaluations}>
-              Soumettre à la direction
+            <Button onClick={() => soumettre.mutate(releve.id)} disabled={!charge || !toutesRemplies || soumettre.isPending || enregistrementNotes || enregistrementEvaluations}>
+              {releve.commentaire_direction?.trim() ? "Soumettre à nouveau" : "Soumettre à la direction"}
             </Button>
           )}
           {!toutesRemplies && isBrouillon && (

@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useIsMutating } from "@tanstack/react-query";
 import { aDesEvaluationsLycee, EvaluationsLycee } from "../../components/EvaluationsLycee";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import {
   useAuth,
   useReleveById,
@@ -11,14 +11,16 @@ import {
   useRejeterReleve,
   usePublierReleve,
   getStatutLabel,
+  libelleClasse,
 } from "@ent/shared";
 import { Button } from "../../components/ui/Button";
-import { Card } from "../../components/ui/Card";
+import { Card, PageHeader } from "../../components/ui/Card";
 import { Textarea } from "../../components/ui/Field";
+import { IconArrowLeft } from "../../components/icons";
 
 export function ReleveReviewScreen() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
+  const { search } = useLocation();
   const { client } = useAuth();
 
   const releveQuery = useReleveById(client, id ?? null);
@@ -33,6 +35,7 @@ export function ReleveReviewScreen() {
 
   const notes = notesQuery.data ?? [];
   const evaluationsLycee = notes.some(aDesEvaluationsLycee);
+  const enregistrementNotes = useIsMutating({ mutationKey: ["modifier-note", id] }) > 0;
   const enregistrementEvaluations = useIsMutating({ mutationKey: ["evaluations-lycee", id] }) > 0;
   const transitionEnCours = valider.isPending || rejeter.isPending || publier.isPending;
   const erreur = notesQuery.error ?? updateNote.error ?? valider.error ?? rejeter.error ?? publier.error;
@@ -48,21 +51,39 @@ export function ReleveReviewScreen() {
     return sommeCoeff > 0 ? sommePonderee / sommeCoeff : null;
   }, [notes]);
 
-  if (!releve) return <p className="text-sm text-slate-500">Chargement…</p>;
+  const retour = (
+    <Link
+      to={{ pathname: "/direction/releves", search }}
+      className="mb-4 inline-flex items-center gap-2 rounded-sm text-sm font-semibold text-ent-accent hover:underline focus-visible:outline-2 focus-visible:outline-offset-4"
+    >
+      <IconArrowLeft className="size-4" aria-hidden="true" />
+      Retour aux relevés
+    </Link>
+  );
+
+  if (!releve) {
+    return (
+      <div className="max-w-3xl">
+        {retour}
+        {releveQuery.isError ? (
+          <p role="alert" className="text-sm text-red-700">Impossible de charger ce relevé.</p>
+        ) : (
+          <p role="status" className="text-sm text-slate-600">Chargement du relevé…</p>
+        )}
+      </div>
+    );
+  }
 
   const isSoumise = releve.statut === "soumise";
   const isValidee = releve.statut === "validee";
 
   return (
     <div className="max-w-3xl">
-      <Button variant="ghost" className="mb-4" onClick={() => navigate(-1)}>← Retour</Button>
-
-      <h1 className="mb-1 text-lg font-semibold text-slate-900">
-        {releve.matiere_classe?.matieres?.nom} — {releve.matiere_classe?.classes?.nom}
-      </h1>
-      <p className="mb-6 text-sm text-slate-500">
-        {releve.periodes?.nom} · Coefficient {coefficient} · Statut : {getStatutLabel(releve.statut)}
-      </p>
+      {retour}
+      <PageHeader
+        title={`${releve.matiere_classe?.matieres?.nom ?? "Relevé"} — ${libelleClasse(releve.matiere_classe?.classes)}`}
+        description={`${releve.periodes?.nom ?? "Période inconnue"} · Coefficient ${coefficient} · ${getStatutLabel(releve.statut)}`}
+      />
 
       {apercuMoyenne !== null && (
         <p className="mb-4 text-sm text-slate-600">
@@ -125,7 +146,7 @@ export function ReleveReviewScreen() {
           <div className="flex gap-3">
             <Button
               onClick={() => valider.mutate({ releveId: releve.id, commentaire: commentaire || undefined })}
-              disabled={transitionEnCours || enregistrementEvaluations || updateNote.isPending || notes.some((note) => aDesEvaluationsLycee(note) && note.valeur === null)}
+              disabled={transitionEnCours || enregistrementEvaluations || enregistrementNotes || !notesQuery.isSuccess || notes.some((note) => aDesEvaluationsLycee(note) && note.valeur === null)}
             >
               Valider
             </Button>
@@ -135,7 +156,7 @@ export function ReleveReviewScreen() {
                 if (!commentaire.trim()) return;
                 rejeter.mutate({ releveId: releve.id, commentaire });
               }}
-              disabled={transitionEnCours || enregistrementEvaluations || updateNote.isPending || !commentaire.trim()}
+              disabled={transitionEnCours || enregistrementEvaluations || enregistrementNotes || !commentaire.trim()}
             >
               Rejeter (renvoyer au professeur)
             </Button>

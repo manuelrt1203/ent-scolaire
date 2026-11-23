@@ -1,6 +1,6 @@
 import type { getDetailsBulletin } from "../api/notes";
 import type { Tables } from "../types/database.types";
-import { libelleClasse } from "./classe";
+import { CYCLE_LABELS, libelleClasse } from "./classe";
 import { formatMoyenne } from "./moyenne";
 
 export interface BulletinHtmlInput {
@@ -32,27 +32,31 @@ export function moyenneBulletin(lignes: readonly Tables<"v_bulletin">[]): number
     return total;
   }, { points: 0, coefficients: 0 });
   return coefficients > 0 ? Math.round(points / coefficients) / 100 : null;
-
 }
 
 /** Les moyennes officielles sont lues dans le relevé publié. */
 function buildBulletinSection(input: BulletinHtmlInput): string {
+  const matieresPubliees = new Set(input.lignes.map(({ matiere_classe_id }) => matiere_classe_id));
+  const detailsPublies = input.details.filter(({ releves_notes }) =>
+    releves_notes?.matiere_classe_id && matieresPubliees.has(releves_notes.matiere_classe_id)
+  );
   const classes = new Map(
-    input.details.flatMap(({ releves_notes }) => {
+    detailsPublies.flatMap(({ releves_notes }) => {
       const classe = releves_notes?.matiere_classe?.classes;
       return classe ? [[classe.id, classe] as const] : [];
     }),
   );
   const classe = classes.size === 1 ? [...classes.values()][0] : undefined;
   const evaluations = new Map<string, BulletinHtmlInput["details"]>();
-  for (const detail of input.details) {
+  for (const detail of detailsPublies) {
     const id = detail.releves_notes?.matiere_classe_id;
     if (!id || ![detail.devoir_1, detail.devoir_2, detail.devoir_departemental, detail.composition].some((note) => note != null)) continue;
     const notes = evaluations.get(id) ?? [];
     notes.push(detail);
     evaluations.set(id, notes);
   }
-  const lycee = classe?.cycle === "lycee" || evaluations.size > 0;
+  const lycee = classe ? classe.cycle === "lycee" : evaluations.size > 0;
+  const cycle = classe?.cycle ? CYCLE_LABELS[classe.cycle] : lycee ? CYCLE_LABELS.lycee : null;
   const identiteClasse = [
     libelleClasse(classe),
     input.periodeNom,
@@ -85,7 +89,7 @@ function buildBulletinSection(input: BulletinHtmlInput): string {
 
   return `
       <article class="bulletin">
-        <h1>${lycee ? "Bulletin de notes — Lycée" : "Bulletin scolaire"}</h1>
+        <h1>Bulletin scolaire${cycle ? ` — ${cycle}` : ""}</h1>
         <div class="etablissement">${echapper(input.etablissementNom)}</div>
         <div class="identite">
           <strong>${echapper(input.elevePrenom)} ${echapper(input.eleveNom)}</strong><br />
@@ -104,7 +108,7 @@ function buildBulletinSection(input: BulletinHtmlInput): string {
           <tbody>${lignesHtml}</tbody>
         </table>
         <div class="moyenne-generale">
-          <div class="label">Moyenne générale</div>
+          <div class="label">Moyenne des matières publiées</div>
           <div class="valeur">${formatMoyenne(moyenne)}</div>
         </div>
         ${input.decisionConseil ? `<section class="decision">

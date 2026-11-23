@@ -33,9 +33,9 @@ export function PrioritesDirection() {
   const aPublier = releves.data?.filter(({ statut }) => statut === "validee").length ?? 0;
   return (
     <section aria-label="Priorités de la direction" className="grid gap-3 sm:grid-cols-3">
-      <Carte titre="Relevés à valider" lien="/direction/releves" action="Examiner les relevés" icone={IconClipboard}
+      <Carte titre="Relevés à valider" lien="/direction/releves?statut=soumise" action="Examiner les relevés" icone={IconClipboard}
         enfants={releves.isSuccess ? <><strong className="block text-3xl font-semibold tabular-nums text-midnight-ink">{aValider}</strong>Reçus des professeurs</> : <p>{releves.isError ? "Nombre indisponible" : "Chargement…"}</p>} />
-      <Carte titre="Relevés à publier" lien="/direction/releves" action="Suivre la publication" icone={IconBookOpen}
+      <Carte titre="Relevés à publier" lien="/direction/releves?statut=validee" action="Suivre la publication" icone={IconBookOpen}
         enfants={releves.isSuccess ? <><strong className="block text-3xl font-semibold tabular-nums text-midnight-ink">{aPublier}</strong>Validés par la direction</> : <p>{releves.isError ? "Nombre indisponible" : "Chargement…"}</p>} />
       <Carte titre="Bulletins" lien="/direction/inscriptions" action="Ouvrir les inscriptions" icone={IconShield}
         enfants={<p>Imprimer, exporter et suivre la remise par classe.</p>} />

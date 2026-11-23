@@ -25,17 +25,21 @@ export function AuthProvider({ client, children }: { client: EntSupabaseClient; 
 
   useEffect(() => {
     let mounted = true;
+    let profilDiffere: ReturnType<typeof setTimeout> | undefined;
+    loadedProfileUserId.current = null;
 
     async function loadProfileIfNeeded(userId: string) {
       if (loadedProfileUserId.current === userId) return;
       loadedProfileUserId.current = userId;
       try {
         const p = await getProfile(client, userId);
-        if (mounted) setProfile(p);
+        if (mounted && loadedProfileUserId.current === userId) setProfile(p);
       } catch (err) {
         console.error("[auth] Échec du chargement du profil :", err);
-        loadedProfileUserId.current = null;
-        if (mounted) setProfile(null);
+        if (mounted && loadedProfileUserId.current === userId) {
+          loadedProfileUserId.current = null;
+          setProfile(null);
+        }
       }
     }
 
@@ -55,18 +59,25 @@ export function AuthProvider({ client, children }: { client: EntSupabaseClient; 
     }
     loadInitialSession();
 
-    const { data: subscription } = client.auth.onAuthStateChange(async (_event, newSession) => {
+    const { data: subscription } = client.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
-      if (newSession) {
-        await loadProfileIfNeeded(newSession.user.id);
-      } else {
+      clearTimeout(profilDiffere);
+      if (loadedProfileUserId.current !== newSession?.user.id) {
         loadedProfileUserId.current = null;
         setProfile(null);
+      }
+      if (newSession) {
+        // La requête du profil utilise la session Supabase. Elle doit démarrer
+        // après la fin du callback d’authentification, hors du verrou interne.
+        profilDiffere = setTimeout(() => {
+          if (mounted) void loadProfileIfNeeded(newSession.user.id);
+        }, 0);
       }
     });
 
     return () => {
       mounted = false;
+      clearTimeout(profilDiffere);
       subscription.subscription.unsubscribe();
     };
   }, [client]);
